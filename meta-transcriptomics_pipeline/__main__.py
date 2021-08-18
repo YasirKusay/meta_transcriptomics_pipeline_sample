@@ -1,6 +1,6 @@
 import argparse
 import sys 
-from detect_contamination import detection
+from main_pipeline import detection
 
 def parse_args():
     parser = argparse.ArgumentParser(
