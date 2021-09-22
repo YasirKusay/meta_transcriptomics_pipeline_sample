@@ -78,11 +78,11 @@ def run_pipeline(args: argparse.Namespace):
     #                " --best 1 " #+ # 1 = all high candidate reference sequences will be searched for alignments
 
     sortmerna_command = sortmerna_path +\
-                    " --ref  " + args.sortmerna_index\
+                    " --ref  " + args.sortmerna_index +\
                     " --aligned " + "/srv/scratch/z5215055/HONS/res/sortmealigned" +\
                     " --other " + "/srv/scratch/z5215055/HONS/res/sortmeother" +\
                     " --fastx " +\
-                    " --reads " + "/srv/scratch/z5215055/HONS/res/out1.fastq" +\ + " --reads " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
+                    " --reads " + "/srv/scratch/z5215055/HONS/res/out1.fastq" + " --reads " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
                     " -a " + args.threads +\
                     " --num-alignments 1 " +\
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
