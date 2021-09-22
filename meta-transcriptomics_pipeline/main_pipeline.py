@@ -47,6 +47,8 @@ def run_pipeline(args: argparse.Namespace):
     fastp_command = fastp_path +\
                     " --in1 " + args.inp1 +\
                     " --in2 " + args.inp2 +\
+                    " --out1 " + "/srv/scratch/z5215055/HONS/res/out1.fastq" +\
+                    " --out2 " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
                     "  --dedup  " +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
@@ -77,10 +79,10 @@ def run_pipeline(args: argparse.Namespace):
 
     sortmerna_command = sortmerna_path +\
                     " --ref  " + args.sortmerna_index\
-                    " --aligned " +\
-                    " --other " +\
+                    " --aligned " + "/srv/scratch/z5215055/HONS/res/sortmealigned" +\
+                    " --other " + "/srv/scratch/z5215055/HONS/res/sortmeother" +\
                     " --fastx " +\
-                    " --reads " + + " --reads "\
+                    " --reads " + "/srv/scratch/z5215055/HONS/res/out1.fastq" +\ + " --reads " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
                     " -a " + args.threads +\
                     " --num-alignments 1 " +\
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
