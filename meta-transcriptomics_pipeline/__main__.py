@@ -9,34 +9,39 @@ def parse_args():
     )
 
     parser.add_argument(
-        "inp1"
+        "inp1",
         type=str,
         help="read1 input name"
     )
 
     parser.add_argument(
-        "inp2"
+        "inp2",
         type=str,
         help="read1 input name"
     )
 
+    parser.add_argument(
+        "sortmerna_index",
+        type=str,
+        help="sortmerna-index"
+    )
 
     parser.add_argument(
-        "--qualified_quality_phred"
+        "--qualified_quality_phred",
         type=int,
         default=15,
         help=" DURING QC. The quality value that a base is qualified. Default 15 means phred quality >=Q15 is qualified"
     )
 
     parser.add_argument(
-        "--unqualified_percent_limit"
+        "--unqualified_percent_limit",
         type=int,
         default=45,
         help=" DURING QC. How many percents of bases are allowed to be unqualified (0~100). Default 40 means 40%"
     )
 
     parser.add_argument(
-        "--average_qual"
+        "--average_qual",
         type=int,
         default=0,
         help=" DURING QC. if one read's average quality score <avg_qual, then this read/pair is discarded. Default 0 means no requirement (int [=0])"
@@ -68,7 +73,7 @@ def parse_args():
     # will we have access to a taxonmap/taxon names for make db
 
 
-    parser_detect.set_defaults(func=run_pipeline)
+    parser.set_defaults(func=run_pipeline)
     return parser.parse_args()
 
 

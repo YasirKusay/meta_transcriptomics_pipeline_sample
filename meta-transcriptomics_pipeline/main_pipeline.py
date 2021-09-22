@@ -76,7 +76,7 @@ def run_pipeline(args: argparse.Namespace):
     #                " --best 1 " #+ # 1 = all high candidate reference sequences will be searched for alignments
 
     sortmerna_command = sortmerna_path +\
-                    " --ref  " +\
+                    " --ref  " + args.sortmerna_index\
                     " --aligned " +\
                     " --other " +\
                     " --fastx " +\
