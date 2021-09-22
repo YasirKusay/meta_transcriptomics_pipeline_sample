@@ -58,7 +58,7 @@ def run_pipeline(args: argparse.Namespace):
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
     new_command = subprocess.run(fastp_command, shell=True, capture_output=True)
-    if check_fail(new_command, [file1, file2]) is False: return None
+    #if check_fail(new_command, [file1, file2]) is False: return None
 
 
 
@@ -88,4 +88,4 @@ def run_pipeline(args: argparse.Namespace):
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     new_command = subprocess.run(sortmerna_command, shell=True, capture_output=True)
-    if check_fail(new_command, [file1, file2]) is False: return None
+    #if check_fail(new_command, [file1, file2]) is False: return None
