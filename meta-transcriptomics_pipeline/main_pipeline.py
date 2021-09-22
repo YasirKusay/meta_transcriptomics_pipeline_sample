@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 
 def check_fail(command, to_remove):
     if (command.returncode != 0):
@@ -37,6 +38,24 @@ def check_command_exists(program_name):
         return path_command
 
 def run_pipeline(args: argparse.Namespace):
+
+    path_command = subprocess.run('module add software fastp',
+                                        check=True,
+                                        shell=True,
+                                        capture_output=True
+                                )
+
+    path_command = subprocess.run('module add software gcc/8.4.0',
+                                        check=True,
+                                        shell=True,
+                                        capture_output=True
+                                )
+
+    path_command = subprocess.run('module add software sortmerna/4.2.0',
+                                        check=True,
+                                        shell=True,
+                                        capture_output=True
+                                )
 
     ##################### FASTP ########################
 
