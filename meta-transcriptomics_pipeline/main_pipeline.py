@@ -92,7 +92,8 @@ def run_pipeline(args: argparse.Namespace):
                     " --fastx " +\
                     " --reads " + "/srv/scratch/z5215055/HONS/res/out1.fastq" + " --reads " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
                     " -threads " + str(args.threads) +\
-		    " --paired-out TRUE" +\
+		    " --out2 TRUE " +\
+		    " --paired_out TRUE" +\
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     new_command = subprocess.run(sortmerna_command, shell=True, capture_output=True)
