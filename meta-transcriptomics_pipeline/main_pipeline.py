@@ -101,3 +101,10 @@ def run_pipeline(args: argparse.Namespace):
     print(new_command.returncode)
     print('out: ', new_command.stdout.decode())
     print('err: ', new_command.stderr.decode())
+
+
+    ############################# SNAP HUMAN #############################
+    snap_human_path = 'snap'
+    snap_human_command = "module add snap; " + snap_human_path + " paired " +\
+                    args.snap_human_index + " " + "/srv/scratch/z5215055/HONS/res/sortmealigned" +\
+                    " "
