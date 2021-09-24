@@ -28,36 +28,36 @@ def parse_args():
 
     parser.add_argument(
         "--qualified_quality_phred",
-        type=int,
-        default=15,
+        type=str,
+        default="15",
         help=" DURING QC. The quality value that a base is qualified. Default 15 means phred quality >=Q15 is qualified"
     )
 
     parser.add_argument(
         "--unqualified_percent_limit",
-        type=int,
-        default=45,
+        type=str,
+        default="45",
         help=" DURING QC. How many percents of bases are allowed to be unqualified (0~100). Default 40 means 40%"
     )
 
     parser.add_argument(
         "--average_qual",
-        type=int,
-        default=0,
+        type=str,
+        default="0",
         help=" DURING QC. if one read's average quality score <avg_qual, then this read/pair is discarded. Default 0 means no requirement (int [=0])"
     )
 
     parser.add_argument(
         "--length_required",
-        type=int,
-        default=15,
+        type=str,
+        default="15",
         help="DURING QC. Reads shorter than length_required will be discarded, default is 15. (int [=15])"
     )
 
     parser.add_argument(
         "--complexity_threshold",
-        type=int,
-        default=30,
+        type=str,
+        default="30",
         help="DURING QC. The threshold for low complexity filter (0~100). Default is 30, which means 30% complexity is required. (int [=30])"
     )
 

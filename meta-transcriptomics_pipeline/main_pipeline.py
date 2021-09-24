@@ -20,72 +20,58 @@ def check_command_exists(program_name):
                                         capture_output=True
                                 )
 
-    if (path_command.returncode != 0):
-        path_command = subprocess.run('module add software ' + program_name,
-                                        check=True,
-                                        shell=True,
-                                        capture_output=True
-                                )
-        if (path_command.returncode != 0):
-            raise Exception(program_name + " is not installed or initialised")
+    #if (path_command.returncode != 0):
+    #    path_command = subprocess.run('module add software ' + program_name,
+    #                                    check=True,
+    #                                    shell=True,
+    #                                    capture_output=True
+    #                            )
+    #    if (path_command.returncode != 0):
+    #        raise Exception(program_name + " is not installed or initialised")
 
-        path_command = subprocess.run('which ' + program_name,
-                                        check=True,
-                                        shell=True,
-                                        capture_output=True
-                                )
+    #    path_command = subprocess.run('which ' + program_name,
+    #                                    check=True,
+    #                                    shell=True,
+    #                                    capture_output=True
+    #                            )
 
-        return path_command
+    return path_command
 
 def run_pipeline(args: argparse.Namespace):
 
-    path_command = subprocess.run('module add software fastp',
-                                        check=True,
-                                        shell=True,
-                                        capture_output=True
-                                )
-
-    path_command = subprocess.run('module add software gcc/8.4.0',
-                                        check=True,
-                                        shell=True,
-                                        capture_output=True
-                                )
-
-    path_command = subprocess.run('module add software sortmerna/4.2.0',
-                                        check=True,
-                                        shell=True,
-                                        capture_output=True
-                                )
-
     ##################### FASTP ########################
 
-    path_command = check_command_exists('fastp')
-    fastp_path = path_command.stdout.decode("utf-8").partition('\n')[0]
+    #path_command = check_command_exists('fastp')
+    #fastp_path = path_command.stdout.decode("utf-8").partition('\n')[0]
+
+    fastp_path = "fastp"
 
     # --dedup removes dups
-    fastp_command = fastp_path +\
+    fastp_command = "module add fastp; " + fastp_path +\
                     " --in1 " + args.inp1 +\
                     " --in2 " + args.inp2 +\
                     " --out1 " + "/srv/scratch/z5215055/HONS/res/out1.fastq" +\
                     " --out2 " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
-                    "  --dedup  " +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
-                    " --average_qual " + args.average_qual +\
                     " --length_required " + args.length_required +\
-                    " --thread " + args.threads
+                    " --thread " + str(args.threads)
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
     new_command = subprocess.run(fastp_command, shell=True, capture_output=True)
     #if check_fail(new_command, [file1, file2]) is False: return None
 
-
+    print("PART 1 DONE FASTP")
+    print(new_command.returncode)
+    print('out: ', new_command.stdout.decode())
+    print('err: ', new_command.stderr.decode()) 
 
     #################################### SORTMERNA ############################
 
-    path_command = check_command_exists('sortmerna')
-    sortmerna_path = path_command.stdout.decode("utf-8").partition('\n')[0]
-                       
+    #path_command = check_command_exists('sortmerna')
+    #sortmerna_path = path_command.stdout.decode("utf-8").partition('\n')[0]
+    sortmerna_path = 'sortmerna'
+                   
     #    " --aligned " + # stores rRNA reads, needs to be deleted afterwards
     #                " --other " + # stores non rRNA reads/ creates 2 files, one for forward and reverse strand
     #                " --fastx " + # output above 2 in fastx
@@ -95,16 +81,23 @@ def run_pipeline(args: argparse.Namespace):
     #                # below 2 are not necessary to edit, keep them low as they are concerned with rRNA alignment, which we are trying to get rid of anyways
     #                " --num-alignments 1 " + # 1 = all alignments reaching E value threshold are reported, 0 = the first alignment passing E-value threshold
     #                " --best 1 " #+ # 1 = all high candidate reference sequences will be searched for alignments
-
-    sortmerna_command = sortmerna_path +\
+    # ^[[0;31mERROR^[[0m: [validate:1587] 'best' [INT] and 'num_alignments' [INT] cannot be set together.
+    #'best' searches [INT] highest scoring reference sequences
+    #and outputs a single best alignment, whereas 'num_alignments'
+    #outputs the first [INT] alignments.
+    sortmerna_command = "module add gcc/8.4.0; module add sortmerna; "+ sortmerna_path +\
                     " --ref  " + args.sortmerna_index +\
                     " --aligned " + "/srv/scratch/z5215055/HONS/res/sortmealigned" +\
                     " --other " + "/srv/scratch/z5215055/HONS/res/sortmeother" +\
                     " --fastx " +\
                     " --reads " + "/srv/scratch/z5215055/HONS/res/out1.fastq" + " --reads " + "/srv/scratch/z5215055/HONS/res/out2.fastq" +\
-                    " -a " + args.threads +\
-                    " --num-alignments 1 " +\
+                    " -threads " + str(args.threads) +\
+		    " --paired-out TRUE" +\
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     new_command = subprocess.run(sortmerna_command, shell=True, capture_output=True)
     #if check_fail(new_command, [file1, file2]) is False: return None
+    print("PART 2 DONE SORTME")
+    print(new_command.returncode)
+    print('out: ', new_command.stdout.decode())
+    print('err: ', new_command.stderr.decode())
