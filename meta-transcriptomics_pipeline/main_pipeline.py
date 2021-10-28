@@ -26,7 +26,8 @@ def run_pipeline(args: argparse.Namespace):
 
     out1 = generate_temp_file("fastq", dirpath)
     out2 = generate_temp_file("fastq", dirpath)
-    generate_temp_file.append(out1, out2)
+    generated_files.append(out1)
+    generated_files.append(out2)
 
     fastp_path = "fastp"
     fastp_command = fastp_path +\
@@ -68,7 +69,8 @@ def run_pipeline(args: argparse.Namespace):
     new_command = subprocess.run(sortmerna_command, shell=True, capture_output=True)
     if check_fail(new_command, [out1, out2]) is False: return None
     os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
-    generated_files.append(other + "_fwd.fastq", other + "_rev.fastq")
+    generated_files.append(other + "_fwd.fastq")
+    generated_files.append(other + "_rev.fastq")
 
     #if check_fail(new_command, [file1, file2]) is False: return None
     print("PART 2 DONE SORTME")
@@ -101,7 +103,9 @@ def run_pipeline(args: argparse.Namespace):
 
     new_command = subprocess.run(snap_human_command, shell=True, capture_output=True)
     if check_fail(new_command, [human_subtract_1 + ".fastq", human_subtract_2 + ".fastq", human_spare + ".fastq"]) is False: return None
-    generated_files.append(human_subtract_1 + ".fastq", human_subtract_2 + ".fastq", human_spare + ".fastq")
+    generated_files.append(human_subtract_1 + ".fastq")
+    generated_files.append(human_subtract_2 + ".fastq")
+    generated_files.append(human_spare + ".fastq")
 
     #################### MEGAHIT ###########################
     megahit_path = "megahit"
@@ -121,6 +125,7 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail(new_command, [human_out]) is False: return None
 
     # now lets align reads
+    path_command = check_command_exists('diamond')
     diamond_path = "diamond"
     diamond_contigs = generate_temp_file("sam", dirpath)
     diamond_command = diamond_path + " blastx -db " + args.diamond_index +\

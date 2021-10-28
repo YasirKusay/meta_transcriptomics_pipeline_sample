@@ -35,7 +35,7 @@ def generate_temp_file(extension, working_dir):
         delete=False
     )
 
-    return file
+    return file.name
 
 def delete_temp_files(files):
     for file in files:
