@@ -44,6 +44,8 @@ def run_pipeline(args: argparse.Namespace):
     new_command = subprocess.run(fastp_command, shell=True, capture_output=True)
     if check_fail(new_command, [out1, out2]) is False: return None
 
+    new_command.
+
     print("PART 1 DONE FASTP")
     print(new_command.returncode)
     print('out: ', new_command.stdout.decode())
@@ -77,7 +79,6 @@ def run_pipeline(args: argparse.Namespace):
     print(new_command.returncode)
     print('out: ', new_command.stdout.decode())
     print('err: ', new_command.stderr.decode())
-
 
     ############################# SNAP HUMAN #############################
     path_command = check_command_exists('snap-aligner')
