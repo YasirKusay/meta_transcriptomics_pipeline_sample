@@ -2,16 +2,17 @@ import subprocess
 import os
 import tempfile
 
-def check_fail(command, to_remove):
+def check_fail(program_name, command, to_remove):
     exit_now = False
     if (command.returncode != 0):
         exit_now = True
         print(command.stderr)
 
     if (exit_now):
-        print(command + " failed")
+        print(program_name + " failed")
         for file in to_remove:
             os.remove(file)
+        return True
 
     return False
 

@@ -39,13 +39,11 @@ def run_pipeline(args: argparse.Namespace):
                     " --thread " + str(args.threads)
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
-    new_command = subprocess.run(fastp_command, shell=True)
-    if check_fail(new_command, [out1, out2]) is False: return None
+    new_command = subprocess.run(fastp_path, fastp_command, shell=True)
+    if check_fail(new_command, [out1, out2]) is True: return None
 
     print("PART 1 DONE FASTP")
     print(new_command.returncode)
-    print('out: ', new_command.stdout.decode())
-    print('err: ', new_command.stderr.decode()) 
 
     #################################### SORTMERNA ############################
     aligned = generate_temp_file("", dirpath)
@@ -64,7 +62,7 @@ def run_pipeline(args: argparse.Namespace):
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     new_command = subprocess.run(sortmerna_command, shell=True)
-    if check_fail(new_command, [out1, out2]) is False: return None
+    if check_fail(sortmerna_path, new_command, [out1, out2]) is True: return None
     os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
     generated_files.append(other + "_fwd.fastq")
     generated_files.append(other + "_rev.fastq")
@@ -72,17 +70,16 @@ def run_pipeline(args: argparse.Namespace):
     #if check_fail(new_command, [file1, file2]) is False: return None
     print("PART 2 DONE SORTME")
     print(new_command.returncode)
-    print('out: ', new_command.stdout.decode())
-    print('err: ', new_command.stderr.decode())
-
+    print('out: ', new_command.stdout)
+    print('err: ', new_command.stderr)
 
     ############################# SNAP HUMAN #############################
     human_out = generate_temp_file("sam", dirpath) # stores human output in sam file, can be explored further to align reads, etc.
     snap_path = 'snap-aligner'
     snap_human_command = snap_path + " paired " + args.snap_human_index + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads)
-    new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(new_command, [human_out]) is False: return None
+    new_command = subprocess.run(snap_path, snap_human_command, shell=True)
+    if check_fail(new_command, [human_out]) is True: return None
 
     human_subtract_1 = generate_temp_file("fastq", dirpath)
     human_subtract_2 = generate_temp_file("fastq", dirpath)
@@ -97,7 +94,7 @@ def run_pipeline(args: argparse.Namespace):
                         human_out
 
     new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(new_command, [human_subtract_1 + ".fastq", human_subtract_2 + ".fastq", human_spare + ".fastq"]) is False: return None
+    if check_fail(samtools_path, new_command, [human_subtract_1 + ".fastq", human_subtract_2 + ".fastq", human_spare + ".fastq"]) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -108,8 +105,9 @@ def run_pipeline(args: argparse.Namespace):
     megahit_command = megahit_path + " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
                         " -o " + contig_path # is an output directory 
-
     contigs = contig_path + "/final_contigs.fa"
+    new_command = subprocess.run(megahit_command, shell=True)
+    if check_fail(megahit_path, new_command, [contigs]) is True: return None
 
     # we can now align the contigs to the databases
     # lets do them sequentially for now
@@ -117,7 +115,7 @@ def run_pipeline(args: argparse.Namespace):
     snap_contig_command = snap_path + " single " + contigs +\
                     " -o " + snap_contigs + " -t " + str(args.threads)
     new_command = subprocess.run(snap_contig_command, shell=True)
-    if check_fail(new_command, [human_out]) is False: return None
+    if check_fail(snap_path, new_command, [snap_contigs]) is True: return None
 
     # now lets align reads
     diamond_path = "diamond"
@@ -126,6 +124,9 @@ def run_pipeline(args: argparse.Namespace):
                         " --query " + contigs + " --sensitive --max-target-seqs 1 --outfmt 101"\
                         " --threads " + args.threads +\
                         " --out " + diamond_contigs
+    new_command = subprocess.run(diamond_command, shell=True)
+    if check_fail(diamond_path, new_command, [diamond_contigs]) is True: return None
+
 
     # we are done, lets remove the temp directory
     #shutil.rmtree(dirpath)
