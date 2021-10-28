@@ -26,7 +26,7 @@ def run_pipeline(args: argparse.Namespace):
 
     out1 = generate_temp_file("fastq", dirpath)
     out2 = generate_temp_file("fastq", dirpath)
-    generate_temp_file.append(out1, out2)
+    generated_files.append(out1, out2)
 
     fastp_path = "fastp"
     fastp_command = fastp_path +\
