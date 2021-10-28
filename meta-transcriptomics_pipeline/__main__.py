@@ -23,7 +23,31 @@ def parse_args():
     parser.add_argument(
         "sortmerna_index",
         type=str,
-        help="sortmerna-index"
+        help="path to the sortmerna index"
+    )
+
+    parser.add_argument(
+        "snap_human_index",
+        type=str,
+        help="path to the snap human index"
+    )
+
+    parser.add_argument(
+        "snap_index",
+        type=str,
+        help="path to the snap index to align reads/contigs"
+    )
+
+    parser.add_argument(
+        "diamond_index",
+        type=str,
+        help="path to the diamond index to align reads/contigs"
+    )
+
+    parser.add_argument(
+        "dirpath",
+        type=str,
+        help="dirpath"
     )
 
     parser.add_argument(
