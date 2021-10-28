@@ -3,6 +3,7 @@ import os
 import tempfile
 
 def check_fail(command, to_remove):
+    exit_now = False
     if (command.returncode != 0):
         exit_now = True
         print(command.stderr)
@@ -35,7 +36,7 @@ def generate_temp_file(extension, working_dir):
         delete=False
     )
 
-    return file
+    return file.name
 
 def delete_temp_files(files):
     for file in files:
