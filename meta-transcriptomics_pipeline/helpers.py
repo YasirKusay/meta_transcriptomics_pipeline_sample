@@ -6,12 +6,12 @@ def check_fail(program_name, command, to_remove):
     exit_now = False
     if (command.returncode != 0):
         exit_now = True
-        print(command.stderr)
+        print("########### COMMMAND FAILED ###########")
 
     if (exit_now):
         print(program_name + " failed")
-        for file in to_remove:
-            os.remove(file)
+        for f in to_remove:
+            os.remove(f)
         return True
 
     return False
@@ -36,6 +36,8 @@ def generate_temp_file(extension, working_dir):
         mode="w",
         delete=False
     )
+
+    file.file.close()
 
     return file.name
 

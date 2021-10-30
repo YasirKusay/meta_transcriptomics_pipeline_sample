@@ -22,8 +22,8 @@ def run_pipeline(args: argparse.Namespace):
     #out2 = "/srv/scratch/z5215055/HONS/res/out2.fastq"
     generated_files = []
 
-    out1 = generate_temp_file("fastq", dirpath)
-    out2 = generate_temp_file("fastq", dirpath)
+    out1 = generate_temp_file(".fastq", dirpath)
+    out2 = generate_temp_file(".fastq", dirpath)
     generated_files.append(out1)
     generated_files.append(out2)
 
@@ -43,33 +43,45 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
 
     print("PART 1 DONE FASTP")
+    print(out1)
+    print(out2)
+    print(os.path.isfile(out1))
     print(new_command.returncode)
+    
 
     #################################### SORTMERNA ############################
-    aligned = generate_temp_file("", dirpath)
-    other = generate_temp_file("", dirpath)
+    aligned = dirpath + "/aligned"
+    other = dirpath + "/other"
     
     sortmerna_path = 'sortmerna'
     sortmerna_command = sortmerna_path +\
-                    " --ref  " + args.sortmerna_index +\
+                    " --ref " + args.sortmerna_index +\
                     " --aligned " + aligned +\
                     " --other " + other +\
                     " --fastx " +\
                     " --reads " + out1 + " --reads " + out2 +\
-                    " -threads " + str(args.threads) +\
+                    " --threads " + str(args.threads) +\
 		            " --out2 TRUE " +\
 		            " --paired_out TRUE" +\
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
+    print("PART 2 SORTME")
+    print(aligned)
+    print(other)
+    print(os.path.isfile(out1))
+    print(os.path.isfile(out2))
+    print(args.sortmerna_index)
+
     new_command = subprocess.run(sortmerna_command, shell=True)
-    if check_fail(sortmerna_path, new_command, [out1, out2]) is True: return None
-    os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
+    if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
+    #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
     generated_files.append(other + "_fwd.fastq")
     generated_files.append(other + "_rev.fastq")
 
     #if check_fail(new_command, [file1, file2]) is False: return None
     print("PART 2 DONE SORTME")
     print(new_command.returncode)
+    print(os.path.isfile(out1))
 
     print('out: ', new_command.stdout)
     print('err: ', new_command.stderr)
@@ -131,3 +143,4 @@ def run_pipeline(args: argparse.Namespace):
 
     # we are done, lets remove the temp directory
     #shutil.rmtree(dirpath)
+
