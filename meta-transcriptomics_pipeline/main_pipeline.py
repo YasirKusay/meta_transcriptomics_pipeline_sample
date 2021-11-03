@@ -87,16 +87,16 @@ def run_pipeline(args: argparse.Namespace):
     print('err: ', new_command.stderr)
 
     ############################# SNAP HUMAN #############################
-    human_out = generate_temp_file("sam", dirpath) # stores human output in sam file, can be explored further to align reads, etc.
+    human_out = dirpath + "/snap_human_out.sam"
     snap_path = 'snap-aligner'
-    snap_human_command = snap_path + " paired " + args.snap_human_index + other + "_fwd.fastq " + other + "_rev.fastq " +\
+    snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads)
-    new_command = subprocess.run(snap_path, snap_human_command, shell=True)
-    if check_fail(snap_path, new_command, [human_out]) is True: return None
+    new_command = subprocess.run(snap_human_command, shell=True)
+    if check_fail(snap_path, new_command, [generated_files]) is True: return None
 
-    human_subtract_1 = generate_temp_file("fastq", dirpath)
-    human_subtract_2 = generate_temp_file("fastq", dirpath)
-    human_spare = generate_temp_file("fastq", dirpath)
+    human_subtract_1 = dirpath + "/human_subtract1.fastq"
+    human_subtract_2 = dirpath + "/human_subtract2.fastq"
+    human_spare = dirpath + "/human_spare.fastq"
 
     # retrieving only human reads
     samtools_path = "samtools"
@@ -106,8 +106,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare +\
                         human_out
 
-    new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(samtools_path, new_command, [human_subtract_1 + ".fastq", human_subtract_2 + ".fastq", human_spare + ".fastq"]) is True: return None
+    new_command = subprocess.run(snap_human_subtract, shell=True)
+    if check_fail(samtools_path, new_command, [human_subtract_1, human_subtract_2, human_spare]) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -122,24 +122,30 @@ def run_pipeline(args: argparse.Namespace):
     new_command = subprocess.run(megahit_command, shell=True)
     if check_fail(megahit_path, new_command, [contigs]) is True: return None
 
+    # need to convert file above from fa to fq, simply done using seqtk
+    seqtk_path = "seqtk"
+    new_contigs = contig_path + "/final_contigs.fq"
+    seqtk_command = seqtk_path + " -F # " + contigs + " > " + new_contigs
+
     # we can now align the contigs to the databases
     # lets do them sequentially for now
-    snap_contigs = generate_temp_file("sam", dirpath)
-    snap_contig_command = snap_path + " single " + contigs +\
+    snap_contigs = dirpath + "/snap_contigs_out.sam"
+    snap_contig_command = snap_path + " single " + new_contigs +\
                     " -o " + snap_contigs + " -t " + str(args.threads)
     new_command = subprocess.run(snap_contig_command, shell=True)
     if check_fail(snap_path, new_command, [snap_contigs]) is True: return None
 
     # now lets align reads
     diamond_path = "diamond"
-    diamond_contigs = generate_temp_file("sam", dirpath)
+    diamond_contigs = dirpath + "/diamond_contigs_out.sam"
     diamond_command = diamond_path + " blastx -db " + args.diamond_index +\
-                        " --query " + contigs + " --sensitive --max-target-seqs 1 --outfmt 101"\
+                        " --query " + new_contigs + " --sensitive --max-target-seqs 1 --outfmt 101"\
                         " --threads " + args.threads +\
                         " --out " + diamond_contigs
     new_command = subprocess.run(diamond_command, shell=True)
     if check_fail(diamond_path, new_command, [diamond_contigs]) is True: return None
 
+    print("DONE!!!")
 
     # we are done, lets remove the temp directory
     #shutil.rmtree(dirpath)
