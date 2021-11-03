@@ -106,7 +106,7 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare +\
                         human_out
 
-    new_command = subprocess.run(snap_human_subtract, shell=True)
+    new_command = subprocess.run(samtools_human_subtrack_command, shell=True)
     if check_fail(samtools_path, new_command, [human_subtract_1, human_subtract_2, human_spare]) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
