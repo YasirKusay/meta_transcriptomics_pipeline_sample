@@ -107,25 +107,27 @@ def run_pipeline(args: argparse.Namespace):
                         human_out
 
     new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    if check_fail(samtools_path, new_command, [human_subtract_1, human_subtract_2, human_spare]) is True: return None
+    if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
 
     #################### MEGAHIT ###########################
     megahit_path = "megahit"
-    contig_path = dirpath + "_out"
+    contig_path = dirpath + "/megahit_out"
     megahit_command = megahit_path + " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
                         " -o " + contig_path # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     new_command = subprocess.run(megahit_command, shell=True)
-    if check_fail(megahit_path, new_command, [contigs]) is True: return None
+    if check_fail(megahit_path, new_command, []) is True: return None
 
     # need to convert file above from fa to fq, simply done using seqtk
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
     seqtk_command = seqtk_path + " -F # " + contigs + " > " + new_contigs
+    new_command = subprocess.run(seqtk_command, shell=True)
+    if check_fail(seqtk_path, new_command, []) is True: return None
 
     # we can now align the contigs to the databases
     # lets do them sequentially for now
@@ -133,17 +135,17 @@ def run_pipeline(args: argparse.Namespace):
     snap_contig_command = snap_path + " single " + new_contigs +\
                     " -o " + snap_contigs + " -t " + str(args.threads)
     new_command = subprocess.run(snap_contig_command, shell=True)
-    if check_fail(snap_path, new_command, [snap_contigs]) is True: return None
+    if check_fail(snap_path, new_command, []) is True: return None
 
     # now lets align reads
     diamond_path = "diamond"
     diamond_contigs = dirpath + "/diamond_contigs_out.sam"
     diamond_command = diamond_path + " blastx -db " + args.diamond_index +\
-                        " --query " + new_contigs + " --sensitive --max-target-seqs 1 --outfmt 101"\
-                        " --threads " + args.threads +\
+                        " --query " + new_contigs + " --sensitive --max-target-seqs 1 --outfmt 101" +\
+                        " --threads " + str(args.threads) +\
                         " --out " + diamond_contigs
     new_command = subprocess.run(diamond_command, shell=True)
-    if check_fail(diamond_path, new_command, [diamond_contigs]) is True: return None
+    if check_fail(diamond_path, new_command, []) is True: return None
 
     print("DONE!!!")
 
