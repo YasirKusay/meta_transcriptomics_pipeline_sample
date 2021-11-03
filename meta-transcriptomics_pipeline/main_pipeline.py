@@ -100,13 +100,13 @@ def run_pipeline(args: argparse.Namespace):
 
     # retrieving only human reads
     samtools_path = "samtools"
-    samtools_human_subtrack_command = samtools_path + " fastq  -f 4 -@ " + str(args.threads) +\
+    samtools_human_subtract_command = samtools_path + " fastq  -f 4 -@ " + str(args.threads) +\
                         " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
                         " -s " + human_spare +\
                         human_out
 
-    new_command = subprocess.run(samtools_human_subtrack_command, shell=True)
+    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
     if check_fail(samtools_path, new_command, [human_subtract_1, human_subtract_2, human_spare]) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
