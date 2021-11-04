@@ -103,7 +103,7 @@ def run_pipeline(args: argparse.Namespace):
     samtools_human_subtract_command = samtools_path + " fastq  -f 4 -@ " + str(args.threads) +\
                         " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
-                        " -s " + human_spare +\
+                        " -s " + human_spare + " " +\
                         human_out
 
     new_command = subprocess.run(samtools_human_subtract_command, shell=True)
