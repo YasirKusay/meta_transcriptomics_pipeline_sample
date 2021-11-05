@@ -1,5 +1,4 @@
 import argparse
-import sys 
 import multiprocessing
 from main_pipeline import run_pipeline
 
@@ -48,6 +47,18 @@ def parse_args():
         "dirpath",
         type=str,
         help="dirpath"
+    )
+
+    parser.add_argument(
+        "nucl_accession_taxid_mapping",
+        type=str,
+        help="nucl_accession_taxid_mapping"
+    )
+
+    parser.add_argument(
+        "prot_accession_taxid_mapping",
+        type=str,
+        help="prot_accession_taxid_mapping"
     )
 
     parser.add_argument(

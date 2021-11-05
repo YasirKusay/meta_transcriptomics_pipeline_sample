@@ -1,10 +1,28 @@
 import argparse
 import subprocess
-import tempfile
-import shutil
 import os
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
 from helpers import check_command_exists, check_fail, generate_temp_file
+from merge_sams import merge_sams
+from join_taxid_contigs import join_taxid_contigs
+
+def run_snap_single(index, in_path, out_path, threads):
+    snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
+                    " -o " + out_path + " -t " + str(threads)
+    new_command = subprocess.run(snap_contig_command, shell=True)
+    if check_fail("snap-aligner", new_command, []) is True: return False
+    
+    return True
+
+def run_diamond(index, in_path, out_path, threads):
+    diamond_command = "diamond" + " blastx -db " + index +\
+                        " --query " + in_path + " --sensitive --max-target-seqs 1 --outfmt 101" +\
+                        " --threads " + str(threads) +\
+                        " --out " + out_path
+    new_command = subprocess.run(diamond_command, shell=True)
+    if check_fail("diamond", new_command, []) is True: return False
+
+    return True
 
 
 def run_pipeline(args: argparse.Namespace):
@@ -132,20 +150,59 @@ def run_pipeline(args: argparse.Namespace):
     # we can now align the contigs to the databases
     # lets do them sequentially for now
     snap_contigs = dirpath + "/snap_contigs_out.sam"
-    snap_contig_command = snap_path + " single " + new_contigs +\
-                    " -o " + snap_contigs + " -t " + str(args.threads)
-    new_command = subprocess.run(snap_contig_command, shell=True)
-    if check_fail(snap_path, new_command, []) is True: return None
+    if run_snap_single(args.snap_index, new_contigs, snap_contigs, args.threads) == False: return None
 
     # now lets align reads
-    diamond_path = "diamond"
     diamond_contigs = dirpath + "/diamond_contigs_out.sam"
-    diamond_command = diamond_path + " blastx -db " + args.diamond_index +\
-                        " --query " + new_contigs + " --sensitive --max-target-seqs 1 --outfmt 101" +\
-                        " --threads " + str(args.threads) +\
-                        " --out " + diamond_contigs
-    new_command = subprocess.run(diamond_command, shell=True)
-    if check_fail(diamond_path, new_command, []) is True: return None
+    if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads) == False: return None
+
+    snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
+    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
+    #if join_taxid_contigs(snap_contig_out, diamond_contig_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids) is False: return None
+
+    # we must retrieve the unaligned reads
+    bbwrap_path = "bbmap/bbwrap.sh"
+    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
+    align_reads_to_contigs_cmd = bbwrap_path + " ref=" + contigs +\
+                                " in=" + human_subtract_1 + ".fastq" +\
+                                " in2=" + human_subtract_2 + ".fastq" +\
+                                " -out=" + reads_mapped_to_contigs_file  
+    new_command = subprocess.run(align_reads_to_contigs_cmd)
+    if check_fail(bbwrap_path, new_command, []) is True: return None 
+
+    # now lets retrieve the reads that did not align
+    new_fwd = dirpath + "/new_fwd.fq"
+    new_rev = dirpath + "/new_rev.fq"
+
+    align_command = "samtools fastq -f4 -1 " + new_fwd +\
+                    " -2 " + new_rev + " " + reads_mapped_to_contigs_file
+    new_command = subprocess.run(align_command)
+    if check_fail(samtools_path, new_command, []) is True: return None 
+
+    # running exact set of commands above but for unaligned reads this time
+
+    snap_reads = dirpath + "/snap_reads_out.sam"
+    snap_read_command = "snap-aligner" + " paired " + args.snap_index + " " + new_fwd + " " + new_rev +\
+                    " -o " + snap_reads + " -t " + str(args.threads)
+    new_command = subprocess.run(snap_read_command, shell=True)
+    if check_fail("snap-aligner", new_command, []) is True: return False
+
+    # now lets align reads
+    # need to merge paired end reads first though
+    merged_pe = dirpath + "merged_reads.fq"
+    merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
+    new_command = subprocess.run(merge_command, shell=True)
+    if check_fail("seqtk mergepe", new_command, []) is True: return False 
+
+    diamond_reads = dirpath + "/diamond_reads_out.sam"
+    if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads) == False: return None
+
+    snap_contig_out, diamond_contig_out = merge_sams(snap_reads, diamond_reads, dirpath)
+    #if join_taxid_contigs(snap_contig_out, diamond_contig_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids) is False: return None
+
+    # running tpm calculations via rsem
+    # need to firstly build an index
+
 
     print("DONE!!!")
 

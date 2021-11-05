@@ -6,7 +6,7 @@ import sys
 import os
 import subprocess
 
-def merge_fasta(snap_sam, diamond_sam, path):
+def merge_sams(snap_sam, diamond_sam, path):
     output_snap = open(path + "/nucl_alignments.txt", "w")
     output_diamond = open(path + "/prot_alignments.txt", "w")
     best_hits = {}
