@@ -5,9 +5,8 @@
 import sys
 import os
 import subprocess
-from helpers import check_fail
 
-def merge_fasta(snap_sam, diamond_sam, path, seq_type):
+def merge_fasta(snap_sam, diamond_sam, path):
     output_snap = open(path + "/nucl_alignments.txt", "w")
     output_diamond = open(path + "/prot_alignments.txt", "w")
     best_hits = {}
@@ -45,3 +44,5 @@ def merge_fasta(snap_sam, diamond_sam, path, seq_type):
     
     output_snap.close()
     output_diamond.close()
+
+    return output_snap, output_diamond
