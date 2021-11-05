@@ -27,11 +27,15 @@ def run_diamond(index, in_path, out_path, threads):
 
 def run_pipeline(args: argparse.Namespace):
 
+    
+
     # setting up a temporary dir for all intermediate files generated
     #dirpath = tempfile.mkdtemp()
 
     # lets instead check if pipeline works ok :)
     dirpath = args.dirpath
+
+    '''
 
     ##################### FASTP ########################
 
@@ -139,6 +143,14 @@ def run_pipeline(args: argparse.Namespace):
     contigs = contig_path + "/final_contigs.fa"
     new_command = subprocess.run(megahit_command, shell=True)
     if check_fail(megahit_path, new_command, []) is True: return None
+
+    '''
+
+    contig_path = dirpath + "/megahit_out"
+    contigs = contig_path + "/final_contigs.fa"
+    human_subtract_1 = dirpath + "/human_subtract1.fastq"
+    human_subtract_2 = dirpath + "/human_subtract2.fastq"
+    samtools_path = "samtools"
 
     # need to convert file above from fa to fq, simply done using seqtk
     seqtk_path = "seqtk"
