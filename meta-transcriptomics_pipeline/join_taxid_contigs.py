@@ -27,12 +27,12 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     # lets firstly join the contig and read files 
     combined_file_temp = path + "/combined_file_temp.txt"
     combined_file_sorted = path + "/combined_file_sorted.txt"
-    subprocess.run("cat " + contig_file + " > " + combined_file_temp, shell=True)
-    subprocess.run("cat " + read_file + " >> " + combined_file_temp, shell=True)
-    subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
+    new_command = subprocess.run("cat " + contig_file + " > " + combined_file_temp, shell=True)
+    new_command = subprocess.run("cat " + read_file + " >> " + combined_file_temp, shell=True)
+    new_command = subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
 
     unique_accessions = path + "/unique_accessions.txt"
-    subprocess.run("cut -f2 | uniq " + combined_file_sorted + " > " + unique_accessions, shell=True)
+    new_command = subprocess.run("cut -f2 | uniq " + combined_file_sorted + " > " + unique_accessions, shell=True)
 
     relevant_taxids = path + "/relevant_taxids.txt"
     obtain_relevant_taxids(unique_accessions, mapping_file, relevant_taxids)
