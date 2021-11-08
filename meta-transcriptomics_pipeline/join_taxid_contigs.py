@@ -28,7 +28,7 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     combined_file_temp = path + "/combined_file_temp.txt"
     combined_file_sorted = path + "/combined_file_sorted.txt"
     subprocess.run("cat " + contig_file + " > " + combined_file_temp, shell=True)
-    subprocess.run("cat " + read_file + " > " + combined_file_temp, shell=True)
+    subprocess.run("cat " + read_file + " >> " + combined_file_temp, shell=True)
     subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
 
     unique_accessions = path + "/unique_accessions.txt"

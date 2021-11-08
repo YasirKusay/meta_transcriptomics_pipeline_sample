@@ -169,8 +169,6 @@ def run_pipeline(args: argparse.Namespace):
     if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads) == False: return None
 
     snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
-    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    #if join_taxid_contigs(snap_contig_out, diamond_contig_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids) is False: return None
 
     # we must retrieve the unaligned reads
     bbwrap_path = "bbmap/bbwrap.sh"
@@ -210,7 +208,9 @@ def run_pipeline(args: argparse.Namespace):
     if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads) == False: return None
 
     snap_contig_out, diamond_contig_out = merge_sams(snap_reads, diamond_reads, dirpath)
-    #if join_taxid_contigs(snap_contig_out, diamond_contig_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids) is False: return None
+
+    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
+    if join_taxid_contigs(snap_contig_out, snap_reads, diamond_contig_out, diamond_reads, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids, dirpath) is False: return None
 
     # running tpm calculations via rsem
     # need to firstly build an index
