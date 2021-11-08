@@ -28,33 +28,34 @@ def merge_sams(snap_sam, diamond_sam, path):
         best_line = "NULL"
         for line in f:
             curr = line.split()
-            assert curr[12].split(":")[0] == "NM"
-            curr_line = line
-            if (prev_query == curr[0]):
-                if (int(curr[12].split(":")[2]) > best_edit_dist): # checking if line has higher edit dist
-                    best_line = line
-                    best_edit_dist = int(curr[12].split(":")[2])  
-                    best_mapq = int(curr[4])
-                elif (int(curr[12].split(":")[2]) == best_edit_dist): # checking if line has a higher mapq, if edit dists are equal
-                    if (int(curr[4]) > best_mapq and int(curr[4]) != 255):
+            if (curr[2] != "*")
+                assert curr[12].split(":")[0] == "NM"
+                curr_line = line
+                if (prev_query == curr[0]):
+                    if (int(curr[12].split(":")[2]) > best_edit_dist): # checking if line has higher edit dist
                         best_line = line
                         best_edit_dist = int(curr[12].split(":")[2])  
                         best_mapq = int(curr[4])
-                prev_query = curr[0]
+                    elif (int(curr[12].split(":")[2]) == best_edit_dist): # checking if line has a higher mapq, if edit dists are equal
+                        if (int(curr[4]) > best_mapq and int(curr[4]) != 255):
+                            best_line = line
+                            best_edit_dist = int(curr[12].split(":")[2])  
+                            best_mapq = int(curr[4])
+                    prev_query = curr[0]
 
-            else:
-                if (best_line != "NULL"):
-                    # diamond file, because it stores E-value 
-                    to_print = best_line.split()
-                    if to_print[15].split(":")[0] == "ZE":
-                        output_diamond.write(to_print[0] + "\t" + to_print[2])
-                    else:
-                        output_snap.write(to_print[0] + "\t" + to_print[2])
+                else:
+                    if (best_line != "NULL"):
+                        # diamond file, because it stores E-value 
+                        to_print = best_line.split()
+                        if to_print[15].split(":")[0] == "ZE":
+                            output_diamond.write(to_print[0] + "\t" + to_print[2])
+                        else:
+                            output_snap.write(to_print[0] + "\t" + to_print[2])
 
-                prev_query = curr[0]
-                best_edit_dist = int(curr[12].split(":")[2])
-                best_mapq = int(curr[4])
-                best_line = line
+                    prev_query = curr[0]
+                    best_edit_dist = int(curr[12].split(":")[2])
+                    best_mapq = int(curr[4])
+                    best_line = line
 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
