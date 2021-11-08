@@ -168,7 +168,7 @@ def run_pipeline(args: argparse.Namespace):
     diamond_contigs = dirpath + "/diamond_contigs_out.sam"
     if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads) == False: return None
 
-    snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
+    #snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
 
     # we must retrieve the unaligned reads
     bbwrap_path = "bbmap/bbwrap.sh"
