@@ -28,7 +28,7 @@ def merge_sams(snap_sam, diamond_sam, path):
         best_line = "NULL"
         for line in f:
             curr = line.split()
-            if (curr[2] != "*")
+            if (curr[2] != "*"):
                 assert curr[12].split(":")[0] == "NM"
                 curr_line = line
                 if (prev_query == curr[0]):
