@@ -35,7 +35,7 @@ def run_pipeline(args: argparse.Namespace):
     # lets instead check if pipeline works ok :)
     dirpath = args.dirpath
 
-    '''
+    
 
     ##################### FASTP ########################
 
@@ -139,12 +139,11 @@ def run_pipeline(args: argparse.Namespace):
     contig_path = dirpath + "/megahit_out"
     megahit_command = megahit_path + " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
-                        " -o " + contig_path # is an output directory 
+                        " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     new_command = subprocess.run(megahit_command, shell=True)
     if check_fail(megahit_path, new_command, []) is True: return None
-
-    '''
+    new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
 
     contig_path = dirpath + "/megahit_out"
     contigs = contig_path + "/final_contigs.fa"
@@ -155,7 +154,7 @@ def run_pipeline(args: argparse.Namespace):
     # need to convert file above from fa to fq, simply done using seqtk
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
-    seqtk_command = seqtk_path + " -F # " + contigs + " > " + new_contigs
+    seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
     new_command = subprocess.run(seqtk_command, shell=True)
     if check_fail(seqtk_path, new_command, []) is True: return None
 
@@ -171,7 +170,7 @@ def run_pipeline(args: argparse.Namespace):
     #snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
 
     # we must retrieve the unaligned reads
-    bbwrap_path = "bbmap/bbwrap.sh"
+    bbwrap_path = "bbwrap.sh"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
     align_reads_to_contigs_cmd = bbwrap_path + " ref=" + contigs +\
                                 " in=" + human_subtract_1 + ".fastq" +\

@@ -48,9 +48,9 @@ def merge_sams(snap_sam, diamond_sam, path):
                         # diamond file, because it stores E-value 
                         to_print = best_line.split()
                         if to_print[15].split(":")[0] == "ZE":
-                            output_diamond.write(to_print[0] + "\t" + to_print[2])
+                            output_diamond.write(to_print[0] + "\t" + to_print[2] + "\n")
                         else:
-                            output_snap.write(to_print[0] + "\t" + to_print[2])
+                            output_snap.write(to_print[0] + "\t" + to_print[2] + "\n")
 
                     prev_query = curr[0]
                     best_edit_dist = int(curr[12].split(":")[2])

@@ -8,7 +8,7 @@ from helpers import check_fail
 def obtain_relevant_taxids(accession_file, mapping_file, write_file):
 
     mf = open(accession_file, "r")
-    curr_accession = mf.readline()
+    curr_accession = mf.readline().strip()
     wf = open(write_file, "w")
     
     with open(mapping_file, "r") as cf:
@@ -16,7 +16,10 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
             curr = line.split()
             if (curr[0] == curr_accession):
                 wf.write(line)
-                curr_accession = mf.readline()
+                curr_accession = mf.readline().strip()
+
+            if (curr[0][0] > curr_accession[0]): # check if first character is greater in taxlist
+                curr_accession = mf.readline().strip()
 
     mf.close()
     wf.close()
@@ -29,10 +32,10 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     combined_file_sorted = path + "/combined_file_sorted.txt"
     new_command = subprocess.run("cat " + contig_file + " > " + combined_file_temp, shell=True)
     new_command = subprocess.run("cat " + read_file + " >> " + combined_file_temp, shell=True)
-    new_command = subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
+    new_command = subprocess.run("sort -k3 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
 
     unique_accessions = path + "/unique_accessions.txt"
-    new_command = subprocess.run("cut -f2 | uniq " + combined_file_sorted + " > " + unique_accessions, shell=True)
+    new_command = subprocess.run("cut -f3 " + combined_file_sorted + " | uniq > " + unique_accessions, shell=True)
 
     relevant_taxids = path + "/relevant_taxids.txt"
     obtain_relevant_taxids(unique_accessions, mapping_file, relevant_taxids)
