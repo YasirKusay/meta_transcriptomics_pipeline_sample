@@ -16,7 +16,7 @@ def run_snap_single(index, in_path, out_path, threads):
     return True
 
 def run_diamond(index, in_path, out_path, threads, outfmt):
-    diamond_command = "diamond" + " blastx -db " + index +\
+    diamond_command = "diamond" + " blastx --db " + index +\
                         " --query " + in_path + " --sensitive --max-target-seqs 1 --outfmt " + str(outfmt) +\
                         " --threads " + str(threads) +\
                         " --out " + out_path
