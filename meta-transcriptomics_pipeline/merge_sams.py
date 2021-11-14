@@ -45,12 +45,17 @@ def merge_sams(snap_sam, diamond_sam, path):
 
                 else:
                     if (best_line != "NULL"):
-                        # diamond file, because it stores E-value 
                         to_print = best_line.split()
+                        accession = to_print[2]
+                        full_accession = accession.split("_")
+                        actual_accession = full_accession[:2]
+                        print_accession = "_".join(actual_accession)
+
+                        # diamond file, because it stores E-value 
                         if to_print[15].split(":")[0] == "ZE":
-                            output_diamond.write(to_print[0] + "\t" + to_print[2] + "\n")
+                            output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
                         else:
-                            output_snap.write(to_print[0] + "\t" + to_print[2] + "\n")
+                            output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
                     prev_query = curr[0]
                     best_edit_dist = int(curr[12].split(":")[2])
