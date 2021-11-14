@@ -182,10 +182,10 @@ def run_pipeline(args: argparse.Namespace):
     bbwrap_path = "bbwrap.sh"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
     align_reads_to_contigs_cmd = bbwrap_path + " ref=" + contigs +\
-                                " in=" + human_subtract_1 + ".fastq" +\
-                                " in2=" + human_subtract_2 + ".fastq" +\
+                                " in=" + human_subtract_1 +\
+                                " in2=" + human_subtract_2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    new_command = subprocess.run(align_reads_to_contigs_cmd)
+    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
     if check_fail(bbwrap_path, new_command, []) is True: return None 
 
     # now lets retrieve the reads that did not align
@@ -194,7 +194,7 @@ def run_pipeline(args: argparse.Namespace):
 
     align_command = "samtools fastq -f4 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
-    new_command = subprocess.run(align_command)
+    new_command = subprocess.run(align_command, shell=True)
     if check_fail(samtools_path, new_command, []) is True: return None 
 
     # running exact set of commands above but for unaligned reads this time
