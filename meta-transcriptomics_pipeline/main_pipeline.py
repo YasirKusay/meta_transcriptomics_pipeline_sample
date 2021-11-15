@@ -5,6 +5,7 @@ import time
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
 from helpers import check_command_exists, check_fail, generate_temp_file
 from merge_sams import merge_sams
+from merge_contigs import merge_contigs
 from join_taxid_contigs import join_taxid_contigs
 
 def run_snap_single(index, in_path, out_path, threads):
@@ -176,7 +177,7 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
-    #snap_contig_out, diamond_contig_out = merge_sams(snap_contigs, diamond_contigs, dirpath)
+    snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
 
     # we must retrieve the unaligned reads
     bbwrap_path = "bbwrap.sh"
@@ -221,7 +222,7 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
-    '''
+    
 
     snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
 
@@ -251,5 +252,5 @@ def run_pipeline(args: argparse.Namespace):
     # we are done, lets remove the temp directory
     #shutil.rmtree(dirpath)
 
-    '''
+    
     print("DONE!!!")
