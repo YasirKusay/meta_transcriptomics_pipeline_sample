@@ -56,6 +56,22 @@ def re_adjust_tpms(file, numlines, path):
     wf.close()
     return new_tpm_file
 
+def get_abundance(joined, final_file):
+    wf = open(final_file, "w")
+    final_res = {}
+    with open(joined, "r") as f:
+        for line in f:
+            curr = line.split()
+            if curr[3] in final_res.keys():
+                final_res[curr[3]] += float(curr[2])
+            else:
+                final_res[curr[3]] = float(curr[2])
+
+    for key in final_res.keys():
+        wf.write(key + "\t" + final_res[key])
+
+    wf.close()
+
 def run_pipeline(args: argparse.Namespace):
 
     
@@ -283,12 +299,21 @@ def run_pipeline(args: argparse.Namespace):
     num_lines = sum(1 for line in open(all_sorted))
 
     combined_tpms = dirpath + "/combined_tpms"
-    new_command = subprocess.run("awk 'NR > 1' " + gene_file | "cut -f1, 6 | sort -k2 > combined_tpms", shell=True)
+    new_command = subprocess.run("awk 'NR > 1' " + gene_file | "cut -f1, 6 | sort -k2 -n > combined_tpms", shell=True)
     final_tpms = re_adjust_tpms(combined_tpms, num_lines)
 
     new_command = subprocess.run("cat " + all_sorted_tpm + " >> " + final_tpms, shell=True)
+    final_tpms_sorted = dirpath + "/final_tpms_sorted"
+    new_command = subprocess.run("sort -k1 " + final_tpms + " > " + final_tpms_sorted, shell=True)
+    contigs_reads_taxids_sorted = dirpath + "/nucl_prot_taxids_sorted.txt"
+    new_command = subprocess.run("sort -k2 " + contigs_reads_taxids + " > " + contigs_reads_taxids_sorted, shell=True)
 
+    join_file = dirpath + "/join_file"
+    join_tpms_taxids = "join -1 1 -2 2 -o \"2.1 2.2 1.2 2.3\" " + final_tpms + " " + contigs_reads_taxids_sorted + "-t '\t'" + " > " + join_file
+    new_command = subprocess.run(join_tpms_taxids, shell=True)
 
+    final_res = dirpath + "/final_res" 
+    get_abundance(join_file, final_res)
 
     print("DONE!!!")
 

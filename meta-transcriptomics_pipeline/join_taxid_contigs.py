@@ -9,7 +9,7 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
 
     mf = open(accession_file, "r")
     curr_accession = mf.readline().strip()
-    wf = open(write_file, "w")
+    wf = open(write_file, "a")
 
     while True:
         if (curr_accession is None or curr_accession == "" or curr_accession == "*"):
@@ -51,7 +51,12 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     relevant_taxids = path + "/relevant_taxids.txt"
     obtain_relevant_taxids(unique_accessions, mapping_file, relevant_taxids)
 
-    command = "join -1 2 -2 1 -o \"1.1, 1.2, 2.1\" <(sort -k2 " + combined_file_sorted + ") <(sort -k1 " + relevant_taxids + ") >> " + join_file
+    combined_file_sorted_sorted = path + "/combined_file_sorted_sorted"
+    new_command = subprocess.run("sort -k2 " + combined_file_sorted + " > " + combined_file_sorted_sorted, shell = True)
+    relevant_taxids_sorted = path + "/relevant_taxids_sorted"
+    new_command = subprocess.run("sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
+
+    command = "join -1 2 -2 1 -o \"1.1, 1.2, 2.1\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " >> " + join_file
     new_command = subprocess.run(command, shell=True)
     if check_fail("join", new_command, []) is True: return None
     
