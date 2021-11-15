@@ -270,7 +270,7 @@ def run_pipeline(args: argparse.Namespace):
     # running tpm calculations via rsem
     # need to firstly build an index
     path_to_rsem_index = dirpath + "/rsem_ref"
-    rsem_command_prep = "rsem-prepare-reference --bowtie2 " + contigs + path_to_rsem_index
+    rsem_command_prep = "rsem-prepare-reference --bowtie2 " + " " + contigs + " " + path_to_rsem_index
     new_command = subprocess.run(rsem_command_prep, shell=True)
     if check_fail("rsem-prepare-reference", new_command, []) is True: return False 
 
