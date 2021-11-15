@@ -53,7 +53,7 @@ def merge_contigs(snap_sam, diamond_sam, path):
             else:
                 if (best_line != "NULL"):
                     to_print = best_line.split()
-                    accession = to_print[2]
+                    accession = to_print[1]
                     full_accession = accession.split("_")
                     actual_accession = full_accession[:2]
                     print_accession = "_".join(actual_accession)
