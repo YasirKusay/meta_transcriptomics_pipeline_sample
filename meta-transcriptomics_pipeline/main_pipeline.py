@@ -38,7 +38,7 @@ def re_adjust_tpms(file, numlines, path):
             if (float(curr[1]) == 0):
                 total_lines = total_lines + 1
             else:
-                total_original = total_original + 1
+                total_original = total_original + float(curr[1])
 
     to_subtract = total_lines/total_original
     wf = open(new_tpm_file, "w")

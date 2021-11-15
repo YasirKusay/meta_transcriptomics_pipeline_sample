@@ -63,10 +63,11 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     else:
         command = "join -1 2 -2 1 -o \"1.1 1.2 2.2\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " > " + join_file
     new_command = subprocess.run(command, shell=True)
-    if check_fail("join", new_command, []) is True: return None
+    #if check_fail("join", new_command, []) is True: return None
+    return True
     
 def join_taxid_contigs(output_contig_snap, output_read_snap, output_contig_diamond, output_read_diamond, nucl_map, prot_map, final_out, path):
-    if join(output_contig_snap, output_read_snap, nucl_map, final_out, path) == None or join(output_contig_diamond, output_read_diamond, prot_map, final_out, path) == None: 
+    if join(output_contig_snap, output_read_snap, nucl_map, final_out, path) is False or join(output_contig_diamond, output_read_diamond, prot_map, final_out, path) is False: 
         return False
 
     return True
