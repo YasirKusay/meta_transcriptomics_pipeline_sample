@@ -3,6 +3,7 @@
 # best hits are decided by edit distance (1) and mapq (2)
 
 import subprocess
+import os
 from helpers import check_fail
 
 def obtain_relevant_taxids(accession_file, mapping_file, write_file):
@@ -56,7 +57,11 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     relevant_taxids_sorted = path + "/relevant_taxids_sorted"
     new_command = subprocess.run("sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
 
-    command = "join -1 2 -2 1 -o \"1.1 1.2 2.2\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " >> " + join_file
+    command = ""
+    if (os.path.isfile(join_file)):
+        command = "join -1 2 -2 1 -o \"1.1 1.2 2.2\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " >> " + join_file
+    else:
+        command = "join -1 2 -2 1 -o \"1.1 1.2 2.2\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " > " + join_file
     new_command = subprocess.run(command, shell=True)
     if check_fail("join", new_command, []) is True: return None
     
