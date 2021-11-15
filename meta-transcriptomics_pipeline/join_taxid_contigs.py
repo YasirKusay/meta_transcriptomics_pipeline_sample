@@ -40,12 +40,12 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     # lets firstly join the contig and read files 
     combined_file_temp = path + "/combined_file_temp.txt"
     combined_file_sorted = path + "/combined_file_sorted.txt"
-    new_command = subprocess.run("cat " + contig_file + " > " + combined_file_temp, shell=True)
-    new_command = subprocess.run("cat " + read_file + " >> " + combined_file_temp, shell=True)
-    new_command = subprocess.run("sort -k3 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
+    new_command = subprocess.run("cat " + contig_file + " | cut -f1,2" + " > " + combined_file_temp, shell=True)
+    new_command = subprocess.run("cat " + read_file + " | cut -f1,3" + " >> " + combined_file_temp, shell=True)
+    new_command = subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
 
     unique_accessions = path + "/unique_accessions.txt"
-    new_command = subprocess.run("cut -f3 " + combined_file_sorted + " | uniq | egrep -v 'SNAP|Illumina|unsorted|LN:' | cut -d'_' -f1,2  > " + unique_accessions, shell=True)
+    new_command = subprocess.run("cut -f2 " + combined_file_sorted + " | uniq | egrep -v 'SNAP|Illumina|unsorted|LN:' | cut -d'_' -f1,2  > " + unique_accessions, shell=True)
     # for the above command, some of the nt accessions may have e.g. NR_001_name, hence cut -d'_' -f1,2 takes care of that
 
     relevant_taxids = path + "/relevant_taxids.txt"
