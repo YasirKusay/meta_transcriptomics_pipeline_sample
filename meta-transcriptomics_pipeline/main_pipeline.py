@@ -210,7 +210,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now lets align reads
     # need to merge paired end reads first though
-    merged_pe = dirpath + "merged_reads.fq"
+    merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
     new_command = subprocess.run(merge_command, shell=True)
     if check_fail("seqtk mergepe", new_command, []) is True: return False 
