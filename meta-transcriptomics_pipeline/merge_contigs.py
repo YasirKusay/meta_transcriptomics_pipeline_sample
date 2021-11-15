@@ -5,8 +5,8 @@
 import subprocess
 
 def merge_contigs(snap_sam, diamond_sam, path):
-    output_snap = open(path + "/nucl_alignments.txt", "w")
-    output_diamond = open(path + "/prot_alignments.txt", "w")
+    output_snap = open(path + "/nucl_alignments_contigs.txt", "w")
+    output_diamond = open(path + "/prot_alignments_contigs.txt", "w")
 
     # need to firstly merge and sort the 2 files
     temp_sam = path + "/temp_sam"
@@ -39,15 +39,15 @@ def merge_contigs(snap_sam, diamond_sam, path):
             curr = line.split()
             curr_line = line
             if (prev_query == curr[0]):
-                if (int(curr[10]) > best_e_value): # checking if line has higher edit dist
+                if (float(curr[10]) > best_e_value): # checking if line has higher edit dist
                     best_line = line
-                    best_e_value = int(curr[10])
-                    best_bitscore = int(curr[11])
-                elif (int(curr[10]) == best_e_value): # checking if line has a higher mapq, if edit dists are equal
-                    if (int(curr[11]) > best_bitscore ):
+                    best_e_value = float(curr[10])
+                    best_bitscore = float(curr[11])
+                elif (float(curr[10]) == best_e_value): # checking if line has a higher mapq, if edit dists are equal
+                    if (float(curr[11]) > best_bitscore ):
                         best_line = line
-                        best_e_value = int(curr[10])
-                        best_bitscore = int(curr[11])
+                        best_e_value = float(curr[10])
+                        best_bitscore = float(curr[11])
                 prev_query = curr[0]
 
             else:
@@ -64,8 +64,8 @@ def merge_contigs(snap_sam, diamond_sam, path):
                         output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
                 prev_query = curr[0]
-                best_e_value = int(curr[10])
-                best_bitscore = int(curr[11])
+                best_e_value = float(curr[10])
+                best_bitscore = float(curr[11])
                 best_line = line
                 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
@@ -74,4 +74,4 @@ def merge_contigs(snap_sam, diamond_sam, path):
     output_snap.close()
     output_diamond.close()
 
-    return output_snap, output_diamond
+    return path + "/nucl_alignments_contigs.txt", path + "/prot_alignments_contigs.txt"
