@@ -5,8 +5,8 @@
 import subprocess
 
 def merge_sams(snap_sam, diamond_sam, path):
-    output_snap = open(path + "/nucl_alignments.txt", "w")
-    output_diamond = open(path + "/prot_alignments.txt", "w")
+    output_snap = open(path + "/nucl_alignments_reads.txt", "w")
+    output_diamond = open(path + "/prot_alignments_reads.txt", "w")
 
     # need to firstly merge and sort the 2 files
     snap_diamond_combined_file = path + "/snap_diamond_combined_file"
@@ -68,4 +68,4 @@ def merge_sams(snap_sam, diamond_sam, path):
     output_snap.close()
     output_diamond.close()
 
-    return output_snap, output_diamond
+    return path + "/nucl_alignments_reads.txt", path + "/prot_alignments_reads.txt"
