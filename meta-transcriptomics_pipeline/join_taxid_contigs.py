@@ -56,7 +56,7 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     relevant_taxids_sorted = path + "/relevant_taxids_sorted"
     new_command = subprocess.run("sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
 
-    command = "join -1 2 -2 1 -o \"1.1, 1.2, 2.1\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " >> " + join_file
+    command = "join -1 2 -2 1 -o \"1.1 1.2 2.2\" " + combined_file_sorted_sorted + " " + relevant_taxids_sorted +  " >> " + join_file
     new_command = subprocess.run(command, shell=True)
     if check_fail("join", new_command, []) is True: return None
     
