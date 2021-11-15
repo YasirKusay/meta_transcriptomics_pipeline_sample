@@ -26,6 +26,35 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 
     return True
 
+def re_adjust_tpms(file, numlines, path):
+    total_lines = numlines
+    total_original = 0
+
+    new_tpm_file = path + "/new_tpm_file"
+
+    with open(file, "r") as f:
+        for line in f:
+            curr = line.split()
+            if (float(curr[1]) == 0):
+                total_lines = total_lines + 1
+            else:
+                total_original = total_original + 1
+
+    to_subtract = total_lines/total_original
+    wf = open(new_tpm_file, "w")
+
+    with open(file, "r") as f:
+        for line in f:
+            curr = line.split()
+            if (float(curr[1]) == 0):
+                curr[1] = "1"
+            else:
+                curr[1] = str(float(curr[1] - to_subtract))
+
+            wf.write(curr[0] + "\t" + curr[1] + "\n")
+
+    wf.close()
+    return new_tpm_file
 
 def run_pipeline(args: argparse.Namespace):
 
@@ -68,13 +97,6 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
     end = time.time()
     print("fastp took: " + str(end - start))
-
-    print("PART 1 DONE FASTP")
-    print(out1)
-    print(out2)
-    print(os.path.isfile(out1))
-    print(new_command.returncode)
-    
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -246,6 +268,27 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail("rsem-calculate-expression", new_command, []) is True: return False 
 
     gene_file = rsem_out + ".genes.results"
+
+    # now lets rescale the tpm's
+    all_unmapped = dirpath + "/all_unmapped"
+    cmd1 = 'egrep "@" ' + new_fwd + " > " + all_unmapped
+    new_command = subprocess.run(cmd1, shell=True)
+    cmd2 = 'egrep "@" ' + new_rev + " >> " + all_unmapped
+    new_command = subprocess.run(cmd2, shell=True)
+    all_sorted = dirpath + "/all_sorted"
+    cmd3 = "sort -k1 " + all_unmapped + " sort | uniq | sed 's/@//' > " + all_sorted
+    new_command = subprocess.run(cmd3, shell=True)
+    all_sorted_tpm = dirpath + "/all_sorted_tpm" # tpm refers to transcripts per million
+    add_p = "awk '{print $0, \"1\"}' " + all_sorted + " > " + all_sorted_tpm
+    num_lines = sum(1 for line in open(all_sorted))
+
+    combined_tpms = dirpath + "/combined_tpms"
+    new_command = subprocess.run("awk 'NR > 1' " + gene_file | "cut -f1, 6 | sort -k2 > combined_tpms", shell=True)
+    final_tpms = re_adjust_tpms(combined_tpms, num_lines)
+
+    new_command = subprocess.run("cat " + all_sorted_tpm + " >> " + final_tpms, shell=True)
+
+
 
     print("DONE!!!")
 
