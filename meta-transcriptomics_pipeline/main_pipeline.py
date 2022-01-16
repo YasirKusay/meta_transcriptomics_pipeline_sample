@@ -1,12 +1,15 @@
 import argparse
 import subprocess
 import os
+import operator
 import time
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
 from helpers import check_command_exists, check_fail, generate_temp_file
+from map_reads_to_contigs import map_reads_to_contigs
 from merge_sams import merge_sams
 from merge_contigs import merge_contigs
 from join_taxid_contigs import join_taxid_contigs
+from map_reads_to_contigs import map_reads_to_contigs
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
@@ -26,63 +29,151 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 
     return True
 
-def re_adjust_tpms(file, numlines, path):
-    total_lines = numlines
-    total_original = 0
+# returns the number of reads assigned to each contig
+def getContigReadCount(infile):
+    counts = {}
+    with open(infile, "r") as r:
+        for line in r:
+            curr = line.split()
 
-    new_tpm_file = path + "/new_tpm_file"
+            if (len(curr) <= 3):
+                next
 
-    with open(file, "r") as f:
+            if (curr[2] != "*"):
+                contig = curr[2]
+
+                if contig in counts.keys():
+                    counts[contig] += 1
+                else:
+                    counts[contig] = 1
+
+    return counts
+
+def countReads(infile, total_reads, outfile):
+    results = {}
+    num_reads = 0
+    with open(infile, "r") as f:
         for line in f:
             curr = line.split()
-            if (float(curr[1]) == 0):
-                total_lines = total_lines + 1
+            taxid = curr[1]
+            if taxid in results.keys():
+                results[taxid] += 1
             else:
-                total_original = total_original + float(curr[1])
+                results[taxid] = 1
 
-    to_subtract = total_lines/total_original
-    wf = open(new_tpm_file, "w")
+        num_reads += 1
 
-    with open(file, "r") as f:
-        for line in f:
-            curr = line.split()
-            if (float(curr[1]) == 0):
-                curr[1] = "1"
-            else:
-                curr[1] = str(float(curr[1]) - to_subtract)
+    for key in results.keys():
+        results[key] = (results[key]/total_reads) * 100
 
-            wf.write(curr[0] + "\t" + curr[1] + "\n")
+    unassigned_reads = total_reads - num_reads
+
+    if (unassigned_reads != 0):
+        results["Unknown"] = (unassigned_reads/total_reads) * 100
+    
+    sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
+
+    wf = open(outfile, "w")
+
+    for key in sorted_results.keys():
+        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
 
     wf.close()
-    return new_tpm_file
 
-def get_abundance(joined, final_file):
-    wf = open(final_file, "w")
+# infile must be in fastq
+def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
+
+    wf = open(outfile, "w")
+    with open(infile, "r") as f:
+        divisible_int = 1
+        curr_name = ""
+        curr_seq = ""
+        curr_length = -1
+        for line in f:
+            if (divisible_int%4 == 1):
+                curr_name = line.rstrip("\n")
+            elif (divisible_int%4 == 2):
+                curr_seq = line.rstrip("\n")
+                curr_length = len(curr_seq)
+            elif (divisible_int%4 == 3):
+                # for reads
+                if (readsTrue):
+                    wf.write(curr_name + "\t" + str(curr_length) + "\t" + "1" + "\n")
+                # for contigs
+                else:
+                    # assume contig_counts will never be NULL
+                    count = contig_counts[curr_name]
+                    wf.write(curr_name + "\t" + str(curr_length) + "\t" + str(count) + "\n")
+            else:
+                divisible_int = 1
+                next
+
+            divisible_int += 1
+
+    wf.close()
+
+def get_abundance(joined, total_reads, final_file):
     final_res = {}
+    taxids = {}
+    lengths = {}
+    counts = {}
+
+    denom = 0.0
+
     with open(joined, "r") as f:
         for line in f:
             curr = line.split()
-            if curr[3] in final_res.keys():
-                final_res[curr[3]] += float(curr[2])
-            else:
-                final_res[curr[3]] = float(curr[2])
+            name = curr[0]
+            length = int(curr[1])
+            count = int(curr[2])/total_reads
+            taxid = int(curr[3])
 
-    for key in final_res.keys():
-        wf.write(key + "\t" + str(final_res[key]) + "\n")
+            taxids[name] = taxid
+            lengths[name] = length
+            counts[name] = count
+            denom += counts
+            
+    # solution below adapted from RSEM
+    # https://github.com/deweylab/RSEM/blob/e4dda70e90fb5eb9b831306f1c381f8bbf71ef0e/WriteResults.h
+    # function adapted: calcExpressionValues
+    # only difference is I did not use expected length, using the real length instead
 
+    for key in lengths:
+        counts[key] = counts[key]/denom
+
+    fpkm = {}
+    # calculate FPKM
+    for key in lengths:
+        fpkm[key] = (counts[key] * 1e9)/lengths[key]
+
+    denom = 0.0
+    for key in lengths:
+        denom += fpkm[key]
+
+    tpm = {}
+    for key in lengths:
+        tpm[key] = fpkm[key]/(denom * 1e6)
+
+    final_tpm = {}
+    # calculating tpm but for the taxids
+    for key in lengths:
+        if taxids[key] in final_tpm.keys():
+            final_tpm[taxids[key]] += tpm[key]
+        else:
+            final_tpm[taxids[key]] = tpm[key]
+
+    wf = open(final_file, "w")
+    for key in final_tpm:
+        wf.write(key + "\t" + final_tpm + "\n")
     wf.close()
 
 def run_pipeline(args: argparse.Namespace):
-
-    
 
     # setting up a temporary dir for all intermediate files generated
     #dirpath = tempfile.mkdtemp()
 
     # lets instead check if pipeline works ok :)
     dirpath = args.dirpath
-
-    
 
     ##################### FASTP ########################
 
@@ -91,8 +182,8 @@ def run_pipeline(args: argparse.Namespace):
     #out2 = "/srv/scratch/z5215055/HONS/res/out2.fastq"
     generated_files = []
 
-    out1 = generate_temp_file(".fastq", dirpath)
-    out2 = generate_temp_file(".fastq", dirpath)
+    out1 = dirpath + "/qc_1.fastq"
+    out2 = dirpath + "/qc_2.fastq"
     generated_files.append(out1)
     generated_files.append(out2)
 
@@ -105,6 +196,7 @@ def run_pipeline(args: argparse.Namespace):
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
                     " --length_required " + args.length_required +\
+                    " --detect_adapter_for_pe" +\
                     " --thread " + str(args.threads)
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
@@ -260,61 +352,64 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
-    
-
     snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
 
+    # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
+    contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
+    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids, dirpath) is False: return None
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids) # change space to tabs
 
-    # running tpm calculations via rsem
-    # need to firstly build an index
-    path_to_rsem_index = dirpath + "/rsem_ref"
-    rsem_command_prep = "rsem-prepare-reference --bowtie2 " + " " + contigs + " " + path_to_rsem_index
-    new_command = subprocess.run(rsem_command_prep, shell=True)
-    if check_fail("rsem-prepare-reference", new_command, []) is True: return False 
+    # firstly lets count the reads
+    num_reads_bytes = subprocess.check_output(['grep', '-c', '".*"', human_subtract_1])
+    num_reads_str = num_reads_bytes.decode('utf-8')
+    num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
 
-    # now lets run rsem
-    rsem_out = dirpath + "/rsem_out"
-    rsem_command_calc = "rsem-calculate-expression --paired-end --bowtie2 " +\
-                        human_subtract_1 + " " + human_subtract_2 + " " +\
-                        path_to_rsem_index + " " + rsem_out
+    # map reads to their contigs
+    mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
+    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads)
 
-    new_command = subprocess.run(rsem_command_calc, shell=True)
-    if check_fail("rsem-calculate-expression", new_command, []) is True: return False 
+    # now lets map the contig taxids to their reads
+    # firstly retrieve all the dna/protein aligned reads
 
-    gene_file = rsem_out + ".genes.results"
+    reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
+    command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " >> " + reads_taxids_temp
+    subprocess.run(command)
+    reads_taxids = dirpath + "/all_reads_taxids.txt"
+    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids) # change space to tabs
 
-    # now lets rescale the tpm's
-    all_unmapped = dirpath + "/all_unmapped"
-    cmd1 = 'egrep "@" ' + new_fwd + " > " + all_unmapped
-    new_command = subprocess.run(cmd1, shell=True)
-    cmd2 = 'egrep "@" ' + new_rev + " >> " + all_unmapped
-    new_command = subprocess.run(cmd2, shell=True)
-    all_sorted = dirpath + "/all_sorted"
-    cmd3 = "sort -k1 " + all_unmapped + " | uniq | sed 's/@//' > " + all_sorted
-    new_command = subprocess.run(cmd3, shell=True)
-    all_sorted_tpm = dirpath + "/all_sorted_tpm" # tpm refers to transcripts per million
-    add_p = "awk 'BEGIN { FS = OFS = \"\t\" } {print($0, \"1\")}' " + all_sorted + " > " + all_sorted_tpm
-    new_command = subprocess.run(add_p, shell=True)
-    num_lines = sum(1 for line in open(all_sorted))
+    # we need to now combine the contig aligned reads to the non contig aligned reads
+    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids)
 
-    combined_tpms = dirpath + "/combined_tpms"
-    new_command = subprocess.run("awk 'NR > 1' " + gene_file + " | cut -f1,6 | sort -k2 -n > " + combined_tpms, shell=True)
-    final_tpms = re_adjust_tpms(combined_tpms, num_lines, dirpath)
+    # now we can calculate read count method
+    outfile = dirpath + "/readCountsOut.txt"
+    countReads(reads_taxids, num_reads, outfile)
 
-    new_command = subprocess.run("cat " + all_sorted_tpm + " >> " + final_tpms, shell=True)
-    final_tpms_sorted = dirpath + "/final_tpms_sorted"
-    new_command = subprocess.run("sort -k1 " + final_tpms + " > " + final_tpms_sorted, shell=True)
-    contigs_reads_taxids_sorted = dirpath + "/nucl_prot_taxids_sorted.txt"
-    new_command = subprocess.run("sort -k1 " + contigs_reads_taxids + " > " + contigs_reads_taxids_sorted, shell=True)
+    # now lets do abundance calculations via the tpm method
+    # firstly get the length of the contigs
+    # then get the number of reads aligned to them
 
-    join_file = dirpath + "/join_file"
-    join_tpms_taxids = "join -1 1 -2 1 -o \"2.1 2.2 1.2 2.3\" " + final_tpms_sorted + " " + contigs_reads_taxids_sorted + " > " + join_file
-    new_command = subprocess.run(join_tpms_taxids, shell=True)
+    # firstly lets get the number of reads assigned to each contig
+    contig_counts = getContigReadCount(reads_mapped_to_contigs_file)
 
-    final_res = dirpath + "/final_res" 
-    get_abundance(join_file, final_res)
+    contig_unaligned_read_counts_temp = dirpath + "/contig_unaligned_read_counts_temp.txt"
+    getReadsLength(new_contigs, contig_unaligned_read_counts_temp, contig_counts, False)
+
+    # then repeat process of unaligned reads
+    unaligned_read_counts = dirpath + "/unaligned_read_counts.txt"
+    getReadsLength(human_subtract_1, contig_unaligned_read_counts_temp, None, True)
+
+    # lets join contig_unaligned_read_counts with their taxid
+    contig_unaligned_read_counts_temp2 = dirpath + "/contig_unaligned_read_counts_temp2.txt"
+    command = "join -1 1 -2 1 -o \"1.1 1.2 1.3 2.3\" " + contig_unaligned_read_counts_temp + " " + contigs_reads_taxids +  " >> " + contig_unaligned_read_counts_temp2
+    subprocess.run(command)
+
+    contig_unaligned_read_counts = dirpath + "/contig_unaligned_read_counts.txt"
+    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts) # change space to tabs
+
+    # now we can finally calculate TPM/FPKM
+    abundance_file = dirpath + "/tpm_fpkm.txt"
+    get_abundance(contig_unaligned_read_counts, num_reads, abundance_file)
 
     print("DONE!!!")
 
