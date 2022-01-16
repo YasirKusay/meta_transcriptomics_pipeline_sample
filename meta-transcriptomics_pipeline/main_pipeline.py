@@ -358,7 +358,7 @@ def run_pipeline(args: argparse.Namespace):
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
     if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids, shell=True) # change space to tabs
 
     # firstly lets count the reads
     num_reads_bytes = subprocess.check_output(['grep', '-c', '".*"', human_subtract_1])
@@ -374,12 +374,12 @@ def run_pipeline(args: argparse.Namespace):
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " >> " + reads_taxids_temp
-    subprocess.run(command)
+    subprocess.run(command, shell=True)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
-    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids)
+    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
 
     # now we can calculate read count method
     outfile = dirpath + "/readCountsOut.txt"
@@ -402,10 +402,10 @@ def run_pipeline(args: argparse.Namespace):
     # lets join contig_unaligned_read_counts with their taxid
     contig_unaligned_read_counts_temp2 = dirpath + "/contig_unaligned_read_counts_temp2.txt"
     command = "join -1 1 -2 1 -o \"1.1 1.2 1.3 2.3\" " + contig_unaligned_read_counts_temp + " " + contigs_reads_taxids +  " >> " + contig_unaligned_read_counts_temp2
-    subprocess.run(command)
+    subprocess.run(command, shell=True)
 
     contig_unaligned_read_counts = dirpath + "/contig_unaligned_read_counts.txt"
-    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
 
     # now we can finally calculate TPM/FPKM
     abundance_file = dirpath + "/tpm_fpkm.txt"
