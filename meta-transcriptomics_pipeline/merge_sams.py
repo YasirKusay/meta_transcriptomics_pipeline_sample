@@ -3,8 +3,14 @@
 # best hits are decided by edit distance (1) and mapq (2)
 
 import subprocess
+import os
 
 def merge_sams(snap_sam, diamond_sam, path):
+    if os.path.isfile(path + "/nucl_alignments_reads.txt"):
+        os.remove(path + "/nucl_alignments_reads.txt")
+    if os.path.isfile(path + "/prot_alignments_reads.txt"):
+        os.remove(path + "/prot_alignments_reads.txt") 
+
     output_snap = open(path + "/nucl_alignments_reads.txt", "w")
     output_diamond = open(path + "/prot_alignments_reads.txt", "w")
 

@@ -3,6 +3,7 @@ import subprocess
 import os
 import operator
 import time
+import re
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
 from helpers import check_command_exists, check_fail, generate_temp_file
 from map_reads_to_contigs import map_reads_to_contigs
@@ -29,6 +30,33 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 
     return True
 
+def fetch_contig_taxids(infile):
+    assignments = {}
+    with open(infile, "r") as r:
+        for line in r:
+            curr = line.split()
+            if (len(re.findall("^k[0-9]*", curr[0])) > 0):
+                assignments[curr[0]] = curr[2]
+           
+    print("LEN " + str(len(assignments))) 
+    return assignments
+
+def assign_taxids_to_reads(assignments, infile, outfile):
+    if os.path.isfile(outfile):
+        os.remove(outfile)
+    wf = open(outfile, "w")
+    with open(infile, "r") as r:
+        for line in r:
+            #print(line)
+            curr = line.split()
+            name = curr[0]
+            contig = curr[1]
+            if (contig in assignments.keys()):
+                wf.write(name + "\t" + str(assignments[contig]) + "\n")
+
+    wf.close()
+              
+
 # returns the number of reads assigned to each contig
 def getContigReadCount(infile):
     counts = {}
@@ -37,7 +65,7 @@ def getContigReadCount(infile):
             curr = line.split()
 
             if (len(curr) <= 3):
-                next
+                continue
 
             if (curr[2] != "*"):
                 contig = curr[2]
@@ -52,6 +80,7 @@ def getContigReadCount(infile):
 def countReads(infile, total_reads, outfile):
     results = {}
     num_reads = 0
+    print("total_reads: " + str(total_reads))
     with open(infile, "r") as f:
         for line in f:
             curr = line.split()
@@ -61,18 +90,23 @@ def countReads(infile, total_reads, outfile):
             else:
                 results[taxid] = 1
 
-        num_reads += 1
+            num_reads += 1
 
     for key in results.keys():
         results[key] = (results[key]/total_reads) * 100
 
+    print(str(num_reads))
+ 
     unassigned_reads = total_reads - num_reads
+    print("unassigned_reads: " + str(unassigned_reads))
 
     if (unassigned_reads != 0):
         results["Unknown"] = (unassigned_reads/total_reads) * 100
     
     sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
 
+    if os.path.isfile(outfile):
+        os.remove(outfile)
     wf = open(outfile, "w")
 
     for key in sorted_results.keys():
@@ -83,6 +117,8 @@ def countReads(infile, total_reads, outfile):
 # infile must be in fastq
 def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
 
+    if os.path.isfile(outfile):
+        os.remove(outfile)
     wf = open(outfile, "w")
     with open(infile, "r") as f:
         divisible_int = 1
@@ -91,7 +127,8 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
         curr_length = -1
         for line in f:
             if (divisible_int%4 == 1):
-                curr_name = line.rstrip("\n")
+                curr = line.split()
+                curr_name = curr[0][1:].rstrip("\n")
             elif (divisible_int%4 == 2):
                 curr_seq = line.rstrip("\n")
                 curr_length = len(curr_seq)
@@ -102,11 +139,11 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
                 # for contigs
                 else:
                     # assume contig_counts will never be NULL
-                    count = contig_counts[curr_name]
-                    wf.write(curr_name + "\t" + str(curr_length) + "\t" + str(count) + "\n")
+                    # count = contig_counts[curr_name]
+                    wf.write(curr_name + "\t" + str(curr_length) + "\t" + str(contig_counts[curr_name]) + "\n")
             else:
                 divisible_int = 1
-                next
+                continue
 
             divisible_int += 1
 
@@ -131,7 +168,7 @@ def get_abundance(joined, total_reads, final_file):
             taxids[name] = taxid
             lengths[name] = length
             counts[name] = count
-            denom += counts
+            denom += count
             
     # solution below adapted from RSEM
     # https://github.com/deweylab/RSEM/blob/e4dda70e90fb5eb9b831306f1c381f8bbf71ef0e/WriteResults.h
@@ -162,9 +199,12 @@ def get_abundance(joined, total_reads, final_file):
         else:
             final_tpm[taxids[key]] = tpm[key]
 
+    if os.path.isfile(final_file):
+        os.remove(final_file)
     wf = open(final_file, "w")
-    for key in final_tpm:
-        wf.write(key + "\t" + final_tpm + "\n")
+    final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
+    for key in final_tpm_sorted:
+        wf.write(str(key) + "\t" + str(final_tpm) + "\n")
     wf.close()
 
 def run_pipeline(args: argparse.Namespace):
@@ -201,8 +241,8 @@ def run_pipeline(args: argparse.Namespace):
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
     start = time.time()
-    new_command = subprocess.run(fastp_command, shell=True)
-    if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
+    #new_command = subprocess.run(fastp_command, shell=True)
+    #if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
     end = time.time()
     print("fastp took: " + str(end - start))
 
@@ -223,8 +263,8 @@ def run_pipeline(args: argparse.Namespace):
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     start = time.time()
-    new_command = subprocess.run(sortmerna_command, shell=True)
-    if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
+    #new_command = subprocess.run(sortmerna_command, shell=True)
+    #if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
     end = time.time()
     print("sortmerna took: " + str(end - start))
     #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
@@ -237,8 +277,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads)
     start = time.time()
-    new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(snap_path, new_command, [generated_files]) is True: return None
+    #new_command = subprocess.run(snap_human_command, shell=True)
+    #if check_fail(snap_path, new_command, [generated_files]) is True: return None
     end = time.time()
     print("human subtraction via snap took: " + str(end - start))
 
@@ -254,8 +294,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare + " " +\
                         human_out
 
-    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None
+    #new_command = subprocess.run(samtools_human_subtract_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -268,11 +308,11 @@ def run_pipeline(args: argparse.Namespace):
                         " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     start = time.time()
-    new_command = subprocess.run(megahit_command, shell=True)
-    if check_fail(megahit_path, new_command, []) is True: return None
+    #new_command = subprocess.run(megahit_command, shell=True)
+    #if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
-    new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
+    #new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
 
     contig_path = dirpath + "/megahit_out"
     contigs = contig_path + "/final_contigs.fa"
@@ -284,8 +324,8 @@ def run_pipeline(args: argparse.Namespace):
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
     seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    new_command = subprocess.run(seqtk_command, shell=True)
-    if check_fail(seqtk_path, new_command, []) is True: return None
+    #new_command = subprocess.run(seqtk_command, shell=True)
+    #if check_fail(seqtk_path, new_command, []) is True: return None
 
     # we can now align the contigs to the databases
     # lets do them sequentially for now
@@ -295,15 +335,15 @@ def run_pipeline(args: argparse.Namespace):
     new_contigs_fa = contig_path + "/final_contigs.fa"
     blast_command = "blastn -query " + new_contigs_fa + " -db nt -out " + snap_contigs + " -outfmt 6"
     start = time.time()
-    new_command = subprocess.run(blast_command, shell=True)
-    if check_fail("blastn", new_command, []) is True: return None
+    #new_command = subprocess.run(blast_command, shell=True)
+    #if check_fail("blastn", new_command, []) is True: return None
     end = time.time()
     print("contig alignment against nt took: " + str(end - start))
 
     # now lets align reads
     diamond_contigs = dirpath + "/diamond_contigs_out"
     start = time.time()
-    if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads, 6) == False: return None
+    #if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads, 6) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
@@ -316,8 +356,8 @@ def run_pipeline(args: argparse.Namespace):
                                 " in=" + human_subtract_1 +\
                                 " in2=" + human_subtract_2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
-    if check_fail(bbwrap_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
+    #if check_fail(bbwrap_path, new_command, []) is True: return None 
 
     # now lets retrieve the reads that did not align
     new_fwd = dirpath + "/new_fwd.fq"
@@ -325,8 +365,8 @@ def run_pipeline(args: argparse.Namespace):
 
     align_command = "samtools fastq -f4 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
-    new_command = subprocess.run(align_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None 
 
     # running exact set of commands above but for unaligned reads this time
 
@@ -334,8 +374,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_read_command = "snap-aligner" + " paired " + args.snap_index + " " + new_fwd + " " + new_rev +\
                     " -o " + snap_reads + " -t " + str(args.threads)
     start = time.time()
-    new_command = subprocess.run(snap_read_command, shell=True)
-    if check_fail("snap-aligner", new_command, []) is True: return False
+    #new_command = subprocess.run(snap_read_command, shell=True)
+    #if check_fail("snap-aligner", new_command, []) is True: return False
     end = time.time()
     print("read alignment against nt took: " + str(end - start))
 
@@ -343,12 +383,12 @@ def run_pipeline(args: argparse.Namespace):
     # need to merge paired end reads first though
     merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
-    new_command = subprocess.run(merge_command, shell=True)
-    if check_fail("seqtk mergepe", new_command, []) is True: return False 
+    #new_command = subprocess.run(merge_command, shell=True)
+    #if check_fail("seqtk mergepe", new_command, []) is True: return False 
 
     diamond_reads = dirpath + "/diamond_reads_out.sam"
     start = time.time()
-    if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads, 101) == False: return None
+    #if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads, 101) == False: return None
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
@@ -356,25 +396,31 @@ def run_pipeline(args: argparse.Namespace):
 
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
-    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids, shell=True) # change space to tabs
+    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
     # firstly lets count the reads
-    num_reads_bytes = subprocess.check_output(['grep', '-c', '".*"', human_subtract_1])
-    num_reads_str = num_reads_bytes.decode('utf-8')
+    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
+    num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
 
     # map reads to their contigs
-    mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
-    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads)
+    mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
+    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted)
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
-    command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " >> " + reads_taxids_temp
-    subprocess.run(command, shell=True)
+    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
+    subprocess.run("sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
+    subprocess.run("sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
+    assignments = fetch_contig_taxids(contigs_reads_taxids)
+    #command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " > " + reads_taxids_temp
+    assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
+    #subprocess.run(command, shell=True)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
     subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
 
