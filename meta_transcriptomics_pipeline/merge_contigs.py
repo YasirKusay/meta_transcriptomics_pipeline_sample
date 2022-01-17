@@ -73,6 +73,18 @@ def merge_contigs(snap_sam, diamond_sam, path):
                 best_e_value = float(curr[10])
                 best_bitscore = float(curr[11])
                 best_line = line
+
+        if (best_line != "NULL"):
+            to_print = best_line.split()
+            accession = to_print[1]
+            full_accession = accession.split("_")
+            actual_accession = full_accession[:2]
+            print_accession = "_".join(actual_accession)
+            # diamond file, because it stores E-value 
+            if to_print[12] == "P":
+                output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
+            else:
+                output_snap.write(to_print[0] + "\t" + print_accession + "\n")
                 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)

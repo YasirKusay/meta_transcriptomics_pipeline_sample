@@ -1,7 +1,11 @@
 import pytest
 import os
+import sys
 
-from meta-transcriptomics_pipeline_sample_meta_transcriptomics_pipeline.merge_contigs import merge_contigs
+from meta_transcriptomics_pipeline_sample.meta_transcriptomics_pipeline.merge_contigs import merge_contigs
+
+#sys.path.insert(1, "/Users/yasir/Desktop/honours2/meta_transcriptomics_pipeline_sample/meta_transcriptomics_pipeline")
+#from merge_contigs import merge_contigs
 
 nucl_file = "/sample/nucl.sam"
 prot_file = "/sample/prot.sam"

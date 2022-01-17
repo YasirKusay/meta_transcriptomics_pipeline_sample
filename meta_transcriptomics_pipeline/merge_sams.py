@@ -43,10 +43,16 @@ def merge_sams(snap_sam, diamond_sam, path):
                         best_edit_dist = int(curr[12].split(":")[2])  
                         best_mapq = int(curr[4])
                     elif (int(curr[12].split(":")[2]) == best_edit_dist): # checking if line has a higher mapq, if edit dists are equal
-                        if (int(curr[4]) > best_mapq and int(curr[4]) != 255):
-                            best_line = line
-                            best_edit_dist = int(curr[12].split(":")[2])  
-                            best_mapq = int(curr[4])
+                        if (best_mapq != 255):
+                            if (int(curr[4]) > best_mapq):
+                                best_line = line
+                                best_edit_dist = int(curr[12].split(":")[2])  
+                                best_mapq = int(curr[4])
+                        else: 
+                            if (int(curr[4]) != 255):
+                                best_line = line
+                                best_edit_dist = int(curr[12].split(":")[2])  
+                                best_mapq = int(curr[4])
                     prev_query = curr[0]
 
                 else:
@@ -67,6 +73,19 @@ def merge_sams(snap_sam, diamond_sam, path):
                     best_edit_dist = int(curr[12].split(":")[2])
                     best_mapq = int(curr[4])
                     best_line = line
+        
+        if (best_line != "NULL"):
+            to_print = best_line.split()
+            accession = to_print[2]
+            full_accession = accession.split("_")
+            actual_accession = full_accession[:2]
+            print_accession = "_".join(actual_accession)
+
+            # diamond file, because it stores E-value 
+            if to_print[15].split(":")[0] == "ZE":
+                output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
+            else:
+                output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
