@@ -25,7 +25,7 @@ def get_lineage_info(input_file, output_file):
         for rank in ranks:
             r = ranks2lineage.get(rank, 'Unknown')
             wf.write("\t" + r)
-            
+
         wf.write("\n")
 
     wf.close()

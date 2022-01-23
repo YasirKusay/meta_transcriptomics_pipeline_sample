@@ -4,6 +4,7 @@ import os
 import operator
 import time
 import re
+from get_lineage_info import get_lineage_info
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
 from helpers import check_command_exists, check_fail, generate_temp_file
 from map_reads_to_contigs import map_reads_to_contigs
@@ -477,7 +478,7 @@ def run_pipeline(args: argparse.Namespace):
     subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
 
     # now we can calculate read count method
-    outfile = dirpath + "/readCountsOut.txt"
+    readCountsOutfile = dirpath + "/readCountsOut.txt"
     #countReads(reads_taxids, num_reads, outfile)
 
     # now lets do abundance calculations via the tpm method
@@ -505,10 +506,23 @@ def run_pipeline(args: argparse.Namespace):
     subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
 
     # now we can finally calculate TPM/FPKM
-    abundance_file = dirpath + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts, num_reads, abundance_file)
+    tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
+    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
 
     print("DONE!!!")
+
+    # now lets get plot the abundances as krona charts
+    # need to find lineages first
+    readAbundances = "readAbundances.txt"
+    get_lineage_info(readCountsOutfile, readAbundances)
+    subprocess.run("ktImportText + " + readAbundances, shell=True)
+
+    tpmAbundances = "tpmAbundances.txt"
+    get_lineage_info(tpm_abundance_file, tpmAbundances)
+    subprocess.run("ktImportText + " + tpmAbundances, shell=True)
+
+    # alternative method, does not require you to find lineage
+    #command = "ktImportTaxonomy " + input_file
 
     # we are done, lets remove the temp directory
     #shutil.rmtree(dirpath)
