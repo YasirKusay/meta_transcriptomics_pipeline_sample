@@ -8,6 +8,12 @@ from helpers import check_fail
 
 def obtain_relevant_taxids(accession_file, mapping_file, write_file):
 
+    size = 0
+
+    with open(accession_file, "r") as f:
+        for line in f:
+            size += 1
+
     mf = open(accession_file, "r")
     curr_accession = mf.readline().strip()
     wf = open(write_file, "a")
@@ -18,19 +24,19 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
         else:
             break
     
+    curr_iter = 1
+    print("MAX ITER IS " + str(size))
+
     with open(mapping_file, "r") as cf:
         for line in cf:
             curr = line.split()
             if (curr[0] == curr_accession):
                 wf.write(line)
-                curr_accession = mf.readline().strip()
-                if (curr_accession is None or curr_accession == "" or curr_accession == "\n" or curr_accession == "\r\n" or len(curr_accession) == 0):
+                if (curr_iter == size):
                     break
-
-            if (curr[0][0] > curr_accession[0]): # check if first character is greater in taxlist
                 curr_accession = mf.readline().strip()
-                if (curr_accession is None or curr_accession == "" or curr_accession == "\n" or curr_accession == "\r\n" or len(curr_accession) == 0):
-                    break
+                print(curr_iter)
+                curr_iter += 1
 
     mf.close()
     wf.close()
