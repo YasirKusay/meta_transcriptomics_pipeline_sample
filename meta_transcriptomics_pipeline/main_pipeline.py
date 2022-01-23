@@ -30,16 +30,31 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 
     return True
 
-def fetch_contig_read_taxids(infile, outfile):
+def fetch_contig_read_taxids(infile):
+    assignments = {}
+    with open(infile, "r") as r:
+        for line in r:
+            curr = line.split()
+            assignments[curr[0]] = curr[2]
+
+    return assignments
+
+def compile_tpm_input_info(assignments, infile, outfile):
     if os.path.isfile(outfile):
         os.remove(outfile)
     wf = open(outfile, "w")
     with open(infile, "r") as r:
         for line in r:
             curr = line.split()
-            wf.write(curr[0] + "\t" + curr[2] + "\n")
+            if (curr[0] in assignments.keys()):
+                name = curr[0]
+                length = curr[1]
+                count = curr[2]
+                taxid = assignments[curr[0]]
+                wf.write(name + "\t" + str(length) + "\t" + str(count) + "\t" + str(taxid) + "\n")
 
     wf.close()
+    
 
 def fetch_contig_taxids(infile):
     assignments = {}
@@ -214,6 +229,9 @@ def get_abundance(joined, total_reads, final_file):
     for key in lengths:
         tpm[key] = fpkm[key]/(denom * 1e6)
 
+    for key in tpm:
+        print(str(key) + "\t" + str(tpm[key]) + "\n")
+
     final_tpm = {}
     # calculating tpm but for the taxids
     for key in lengths:
@@ -227,7 +245,7 @@ def get_abundance(joined, total_reads, final_file):
     wf = open(final_file, "w")
     final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
     for key in final_tpm_sorted:
-        wf.write(str(key) + "\t" + str(final_tpm) + "\n")
+        wf.write(str(key) + "\t" + str(final_tpm_sorted[key]) + "\n")
     wf.close()
 
 def run_pipeline(args: argparse.Namespace):
@@ -425,9 +443,9 @@ def run_pipeline(args: argparse.Namespace):
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if os.path.isfile(contigs_reads_taxids_temp):
-        os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if os.path.isfile(contigs_reads_taxids_temp):
+    #    os.remove(contigs_reads_taxids_temp)
+    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
@@ -460,7 +478,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can calculate read count method
     outfile = dirpath + "/readCountsOut.txt"
-    countReads(reads_taxids, num_reads, outfile)
+    #countReads(reads_taxids, num_reads, outfile)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -479,9 +497,11 @@ def run_pipeline(args: argparse.Namespace):
 
     # lets join contig_unaligned_read_counts with their taxid
     contig_unaligned_read_counts_temp2 = dirpath + "/contig_unaligned_read_counts_temp2.txt"
-    fetch_contig_read_taxids(contigs_reads_taxids, contig_unaligned_read_counts_temp2) 
+    assignments = fetch_contig_read_taxids(contigs_reads_taxids)
+     
 
     contig_unaligned_read_counts = dirpath + "/contig_unaligned_read_counts.txt"
+    compile_tpm_input_info(assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
     subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
 
     # now we can finally calculate TPM/FPKM
