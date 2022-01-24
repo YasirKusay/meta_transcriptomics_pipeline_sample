@@ -468,9 +468,9 @@ def run_pipeline(args: argparse.Namespace):
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
     subprocess.run("sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
     assignments = fetch_contig_taxids(contigs_reads_taxids)
-    command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " > " + reads_taxids_temp
+    #command = "join -1 2 -2 1 -o \"1.1 2.3\" " + mapped_reads + " " + contigs_reads_taxids +  " > " + reads_taxids_temp
     assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
-    subprocess.run(command, shell=True)
+    #subprocess.run(command, shell=True)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
     subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
 
@@ -479,7 +479,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
-    #countReads(reads_taxids, num_reads, outfile)
+    countReads(reads_taxids, num_reads, readCountsOutfile)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
