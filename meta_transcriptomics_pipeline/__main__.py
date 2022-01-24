@@ -62,6 +62,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        "taxdump_location",
+        type=str,
+        help="taxdump_location"
+    )
+
+    parser.add_argument(
         "--qualified_quality_phred",
         type=str,
         default="15",

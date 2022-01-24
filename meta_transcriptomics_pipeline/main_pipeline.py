@@ -513,13 +513,15 @@ def run_pipeline(args: argparse.Namespace):
 
     # now lets get plot the abundances as krona charts
     # need to find lineages first
-    readAbundances = "readAbundances.txt"
-    get_lineage_info(readCountsOutfile, readAbundances)
-    subprocess.run("ktImportText + " + readAbundances, shell=True)
+    readAbundances = dirpath + "/readAbundances.txt"
+    #get_lineage_info(readCountsOutfile, readAbundances, argv$taxdump_location)
+    readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
+    #subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
 
-    tpmAbundances = "tpmAbundances.txt"
-    get_lineage_info(tpm_abundance_file, tpmAbundances)
-    subprocess.run("ktImportText + " + tpmAbundances, shell=True)
+    tpmAbundances = dirpath + "/tpmAbundances.txt"
+    #get_lineage_info(tpm_abundance_file, tpmAbundances, argv$taxdump_location)
+    tpmAbundancesKrona = dirpath + "/tpmAbundancesKrona.html"
+    #subprocess.run("ktImportText " + tpmAbundances + " -o " + tpmAbundancesKrona, shell=True)
 
     # alternative method, does not require you to find lineage
     #command = "ktImportTaxonomy " + input_file

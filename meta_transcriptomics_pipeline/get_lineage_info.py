@@ -1,4 +1,5 @@
 from ete3 import NCBITaxa
+from getScientificNames import getScientificNames
 
 def get_taxids(input_file):
     taxids = {}
@@ -11,21 +12,40 @@ def get_taxids(input_file):
 
     return taxids
 
-def get_lineage_info(input_file, output_file):
+def get_lineage_info(input_file, output_file, taxids_location):
     taxids = get_taxids(input_file)
     ranks = ['superkingdom', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
-    wf = open(output_file, "w")
     ncbi = NCBITaxa()
+    lst = []
+    all_taxids = []
 
     for taxid in taxids.keys():
+        # TODO, NEED A WAY TO DEAL WITH "UNKNOWN"
+        if taxid == "Unknown":
+            continue
         lineage = ncbi.get_lineage(taxid)
         lineage2ranks = ncbi.get_rank(lineage)
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
-        wf.write(taxid)
+        sublst = []
+        sublst.append(taxids[taxid])
         for rank in ranks:
             r = ranks2lineage.get(rank, 'Unknown')
-            wf.write("\t" + r)
+            if r != "Unknown":
+                all_taxids.append(str(r))
+            sublst.append(r)
+        
+        lst.append(sublst)
 
-        wf.write("\n")
+    sci_names = getScientificNames(all_taxids, taxids_locations) 
+
+    wf = open(output_file, "w")
+    for minlst in lst:
+        inc = 1
+        for item in minlst:
+            if (inc < len(minlst)):
+                wf.write(str(sci_names[item]) + "\t")
+            else: 
+                wf.write(str(sci_names[item]) + "\n")
+            inc += 1
 
     wf.close()
