@@ -27,7 +27,7 @@ def get_lineage_info(input_file, output_file, taxids_location):
         lineage2ranks = ncbi.get_rank(lineage)
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
         sublst = []
-        sublst.append(taxids[taxid])
+        sublst.append(taxid)
         for rank in ranks:
             r = ranks2lineage.get(rank, 'Unknown')
             if r != "Unknown":
@@ -36,7 +36,7 @@ def get_lineage_info(input_file, output_file, taxids_location):
         
         lst.append(sublst)
 
-    sci_names = getScientificNames(all_taxids, taxids_locations) 
+    sci_names = getScientificNames(all_taxids, taxids_location) 
 
     wf = open(output_file, "w")
     for minlst in lst:

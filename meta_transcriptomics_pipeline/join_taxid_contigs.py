@@ -71,9 +71,9 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     new_command = subprocess.run("sort -k2 " + combined_file_temp + " > " + combined_file_sorted, shell=True)
 
     unique_accessions = path + "/unique_accessions.txt"
-    new_command = subprocess.run("cut -f2 " + combined_file_sorted + " | uniq | egrep -v 'SNAP|Illumina|unsorted|LN:' | cut -d'_' -f1,2  > " + unique_accessions, shell=True)
+    new_command = subprocess.run("cut -f2 " + combined_file_sorted + " | uniq | egrep -v 'SNAP|Illumina|unsorted|LN:' | sort -k1  > " + unique_accessions, shell=True)
     # for the above command, some of the nt accessions may have e.g. NR_001_name, hence cut -d'_' -f1,2 takes care of that
-
+    
     relevant_taxids = path + "/relevant_taxids.txt"
     obtain_relevant_taxids(unique_accessions, mapping_file, relevant_taxids)
 
@@ -86,6 +86,9 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     return True
     
 def join_taxid_contigs(output_contig_snap, output_read_snap, output_contig_diamond, output_read_diamond, nucl_map, prot_map, final_out, path):
+    relevant_taxids = path + "/relevant_taxids.txt"
+    if os.path.isfile(relevant_taxids):
+        os.remove(relevant_taxids)
     if join(output_contig_snap, output_read_snap, nucl_map, final_out, path) is False or join(output_contig_diamond, output_read_diamond, prot_map, final_out, path) is False: 
         return False
 

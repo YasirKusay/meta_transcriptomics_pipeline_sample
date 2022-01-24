@@ -444,9 +444,9 @@ def run_pipeline(args: argparse.Namespace):
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if os.path.isfile(contigs_reads_taxids_temp):
-        os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if os.path.isfile(contigs_reads_taxids_temp):
+    #    os.remove(contigs_reads_taxids_temp)
+    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
@@ -477,7 +477,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
-    countReads(reads_taxids, num_reads, readCountsOutfile)
+    #countReads(reads_taxids, num_reads, readCountsOutfile)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -505,21 +505,21 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
+    #get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
 
     print("DONE!!!")
 
     # now lets get plot the abundances as krona charts
     # need to find lineages first
     readAbundances = dirpath + "/readAbundances.txt"
-    #get_lineage_info(readCountsOutfile, readAbundances, argv$taxdump_location)
+    get_lineage_info(readCountsOutfile, readAbundances, args.taxdump_location)
     readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
-    #subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
+    subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
 
     tpmAbundances = dirpath + "/tpmAbundances.txt"
-    #get_lineage_info(tpm_abundance_file, tpmAbundances, argv$taxdump_location)
+    get_lineage_info(tpm_abundance_file, tpmAbundances, args.taxdump_location)
     tpmAbundancesKrona = dirpath + "/tpmAbundancesKrona.html"
-    #subprocess.run("ktImportText " + tpmAbundances + " -o " + tpmAbundancesKrona, shell=True)
+    subprocess.run("ktImportText " + tpmAbundances + " -o " + tpmAbundancesKrona, shell=True)
 
     # alternative method, does not require you to find lineage
     #command = "ktImportTaxonomy " + input_file
