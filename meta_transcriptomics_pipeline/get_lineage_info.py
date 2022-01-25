@@ -31,11 +31,13 @@ def get_lineage_info(input_file, output_file, taxids_location):
         for rank in ranks:
             r = ranks2lineage.get(rank, 'Unknown')
             if r != "Unknown":
-                all_taxids.append(str(r))
+                #print("RADIO")
+                all_taxids.append(int(r))
+                #print(all_taxids)
             sublst.append(r)
         
         lst.append(sublst)
-
+    
     sci_names = getScientificNames(all_taxids, taxids_location) 
 
     wf = open(output_file, "w")
