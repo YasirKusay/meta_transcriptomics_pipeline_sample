@@ -38,7 +38,8 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
                 print(curr_iter)
                 curr_iter += 1
             elif min(curr[0], curr_accession) == curr[0]:
-                curr_accession = mf.readline().strip()
+                while min(curr[0], curr_accession) == curr[0]:
+                    curr_accession = mf.readline().strip()
                 if (curr[0] == curr_accession):
                     wf.write(line)
                     if (curr_iter == size):
