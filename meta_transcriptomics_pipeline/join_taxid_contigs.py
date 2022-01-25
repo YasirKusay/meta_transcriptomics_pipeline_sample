@@ -40,6 +40,9 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
             elif min(curr[0], curr_accession) == curr[0]:
                 while min(curr[0], curr_accession) == curr[0]:
                     curr_accession = mf.readline().strip()
+                    curr_iter += 1
+                    if (curr_iter == size):
+                        break
                 if (curr[0] == curr_accession):
                     wf.write(line)
                     if (curr_iter == size):
