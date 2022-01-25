@@ -28,6 +28,8 @@ def get_lineage_info(input_file, output_file, taxids_location):
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
         sublst = []
         sublst.append(taxid)
+        if taxid != "Unknown":
+            all_taxids.append(int(taxid))
         for rank in ranks:
             r = ranks2lineage.get(rank, 'Unknown')
             if r != "Unknown":
@@ -45,9 +47,9 @@ def get_lineage_info(input_file, output_file, taxids_location):
         inc = 1
         for item in minlst:
             if (inc < len(minlst)):
-                wf.write(str(sci_names[item]) + "\t")
+                wf.write(str(sci_names[str(item)]) + "\t")
             else: 
-                wf.write(str(sci_names[item]) + "\n")
+                wf.write(str(sci_names[str(item)]) + "\n")
             inc += 1
 
     wf.close()

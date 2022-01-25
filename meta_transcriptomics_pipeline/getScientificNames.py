@@ -2,6 +2,9 @@ def getScientificNames(taxids, folder_location):
     ranked_lineage = folder_location + "/names.dmp"
     sci_names = {}
 
+    for item in taxids:
+        print(item)
+
     taxids = list(dict.fromkeys(taxids))
     taxids.sort()
     inc = 0
@@ -14,13 +17,13 @@ def getScientificNames(taxids, folder_location):
             curr = line.split("\t|\t")
             if int(curr[0]) == int(taxids[inc]):
                 if curr[3] == "scientific name\t|\n":
-                    sci_names[curr[0]] = curr[1]
+                    sci_names[str(curr[0])] = curr[1]
                     inc += 1
                     found += 1
                     if inc == len(taxids):
                         break
             elif int(curr[0]) > int(taxids[inc]): # has been a problem before, e.g. #115782 is not in names.dmp for some reason, simply skips that taxid
-                sci_names[curr[0]] = taxids[inc] 
+                sci_names[str(taxids[inc])] = str(taxids[inc])
                 # if taxid is not in names.dmp, simply have the "scientific name" be its taxid
                 inc += 1
 
@@ -28,7 +31,7 @@ def getScientificNames(taxids, folder_location):
                 
                 if int(curr[0]) == int(taxids[inc]):
                     if curr[3] == "scientific name\t|\n":
-                        sci_names[curr[0]] = curr[1]
+                        sci_names[str(curr[0])] = curr[1]
                         inc += 1
                         if inc == len(taxids):
                             break
@@ -36,8 +39,12 @@ def getScientificNames(taxids, folder_location):
 
     if (inc < len(taxids)):
         while (inc < len(taxids)):
-            sci_names[taxids[inc]] = taxids[inc]
+            sci_names[str(taxids[inc])] = str(taxids[inc])
             inc += 1    
 
+    for item in sci_names.keys():
+        print(str(item) + " " + str(sci_names[item]))
+
+    sci_names["Unknown"] = "Unknown"
 
     return sci_names
