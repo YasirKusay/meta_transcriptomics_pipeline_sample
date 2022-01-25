@@ -21,6 +21,9 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
     while True:
         if (curr_accession is None or curr_accession == "" or curr_accession == "*"):
             curr_accession = mf.readline().rstrip()
+            size += 1
+            if (curr_iter == size):
+                    break
         else:
             break
     
@@ -30,26 +33,29 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
     with open(mapping_file, "r") as cf:
         for line in cf:
             curr = line.split()
+            print(curr[0] + " " + curr_accession)
             if (curr[0] == curr_accession):
                 wf.write(line)
+                print(curr_accession)
                 if (curr_iter == size):
                     break
                 curr_accession = mf.readline().strip()
-                print(curr_iter)
                 curr_iter += 1
-            elif min(curr[0], curr_accession) == curr[0]:
-                while min(curr[0], curr_accession) == curr[0]:
+            elif min(curr[0], curr_accession) == curr_accession:
+                print("TRUE")
+                while min(curr[0], curr_accession) == curr_accession:
                     curr_accession = mf.readline().strip()
                     curr_iter += 1
                     if (curr_iter == size):
                         break
                 if (curr[0] == curr_accession):
+                    print(curr_accession)
                     wf.write(line)
                     if (curr_iter == size):
                         break
                     curr_accession = mf.readline().strip()
-                    print(curr_iter)
                     curr_iter += 1
+ 
 
     mf.close()
     wf.close()
@@ -102,7 +108,7 @@ def join_taxid_contigs(output_contig_snap, output_read_snap, output_contig_diamo
     relevant_taxids = path + "/relevant_taxids.txt"
     if os.path.isfile(relevant_taxids):
         os.remove(relevant_taxids)
-    if join(output_contig_snap, output_read_snap, nucl_map, final_out, path) is False or join(output_contig_diamond, output_read_diamond, prot_map, final_out, path) is False: 
+    if join(output_contig_snap, output_read_snap, nucl_map, final_out, path) is False: # or join(output_contig_diamond, output_read_diamond, prot_map, final_out, path) is False: 
         return False
 
     return True
