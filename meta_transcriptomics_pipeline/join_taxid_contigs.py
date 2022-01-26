@@ -30,31 +30,29 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
     curr_iter = 1
     print("MAX ITER IS " + str(size))
 
+    unmapped = {}
+
     with open(mapping_file, "r") as cf:
+        # skipping first line as it is a header
+        next(cf)
         for line in cf:
             curr = line.split()
-            print(curr[0] + " " + curr_accession)
+            #print(curr[0] + " " + curr_accession)
             if (curr[0] == curr_accession):
                 wf.write(line)
-                print(curr_accession)
-                if (curr_iter == size):
-                    break
+                #print("found " + curr_accession)
                 curr_accession = mf.readline().strip()
-                curr_iter += 1
             elif min(curr[0], curr_accession) == curr_accession:
-                print("TRUE")
                 while min(curr[0], curr_accession) == curr_accession:
+                    #print("skipping " + curr_accession)
+                    unmapped[curr_accession] = curr_accession
                     curr_accession = mf.readline().strip()
-                    curr_iter += 1
-                    if (curr_iter == size):
-                        break
-                if (curr[0] == curr_accession):
-                    print(curr_accession)
-                    wf.write(line)
-                    if (curr_iter == size):
-                        break
-                    curr_accession = mf.readline().strip()
-                    curr_iter += 1
+            #if (unmapped[curr[0]] != None):
+            # if (curr[0] in unmapped):
+            if unmapped.get(curr[0]) is not None:
+                #print("found " + unmapped.get(curr[0]) + " " + curr[0])
+                wf.write(line)
+                unmapped.pop(curr[0])
  
 
     mf.close()
