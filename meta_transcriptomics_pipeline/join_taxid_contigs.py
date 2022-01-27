@@ -5,7 +5,9 @@
 import subprocess
 import os
 from helpers import check_fail
+from obtain_relevant_taxids import obtain_relevant_taxids
 
+'''
 def obtain_relevant_taxids(accession_file, mapping_file, write_file):
 
     size = 0
@@ -69,6 +71,7 @@ def obtain_relevant_taxids(accession_file, mapping_file, write_file):
 
     mf.close()
     wf.close()
+'''
    
 def join_accessions_taxids(combined_file_sorted, relevant_taxids, out):
     accessions_mapped = {}
