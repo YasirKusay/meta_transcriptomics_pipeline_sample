@@ -450,7 +450,6 @@ def run_pipeline(args: argparse.Namespace):
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
-    exit()
 
     # firstly lets count the reads
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
@@ -466,9 +465,9 @@ def run_pipeline(args: argparse.Namespace):
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
-    subprocess.run("sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
+    subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
     assignments = fetch_contig_taxids(contigs_reads_taxids)
     assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
@@ -479,7 +478,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
-    #countReads(reads_taxids, num_reads, readCountsOutfile)
+    countReads(reads_taxids, num_reads, readCountsOutfile)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -507,7 +506,9 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
-    #get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
+    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
+
+    exit()
 
     print("DONE!!!")
 
