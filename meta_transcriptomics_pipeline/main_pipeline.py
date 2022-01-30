@@ -444,11 +444,11 @@ def run_pipeline(args: argparse.Namespace):
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if os.path.isfile(contigs_reads_taxids_temp):
-        os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if os.path.isfile(contigs_reads_taxids_temp):
+    #    os.remove(contigs_reads_taxids_temp)
+    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
     # firstly lets count the reads
@@ -458,27 +458,27 @@ def run_pipeline(args: argparse.Namespace):
 
     # map reads to their contigs
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
-    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted)
+    #map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted)
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    #subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
-    subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
-    assignments = fetch_contig_taxids(contigs_reads_taxids)
-    assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
+    #subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
+    #assignments = fetch_contig_taxids(contigs_reads_taxids)
+    #assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
+    #subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
     subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
 
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
-    countReads(reads_taxids, num_reads, readCountsOutfile)
+    #countReads(reads_taxids, num_reads, readCountsOutfile)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -488,29 +488,31 @@ def run_pipeline(args: argparse.Namespace):
     contig_counts = getContigReadCount(reads_mapped_to_contigs_file)
 
     contig_unaligned_read_counts_temp = dirpath + "/contig_unaligned_read_counts_temp.txt"
-    if os.path.isfile(contig_unaligned_read_counts_temp):
-        os.remove(contig_unaligned_read_counts_temp)
-    getReadsLength(new_contigs, contig_unaligned_read_counts_temp, contig_counts, False)
+    #if os.path.isfile(contig_unaligned_read_counts_temp):
+    #    os.remove(contig_unaligned_read_counts_temp)
+    #getReadsLength(new_contigs, contig_unaligned_read_counts_temp, contig_counts, False)
 
     # then repeat process of unaligned reads
-    getReadsLength(new_fwd, contig_unaligned_read_counts_temp, None, True)
+    #getReadsLength(new_fwd, contig_unaligned_read_counts_temp, None, True)
 
     # lets join contig_unaligned_read_counts with their taxid
     contig_unaligned_read_counts_temp2 = dirpath + "/contig_unaligned_read_counts_temp2.txt"
-    assignments = fetch_contig_read_taxids(contigs_reads_taxids)
+    #assignments = fetch_contig_read_taxids(contigs_reads_taxids)
      
 
     contig_unaligned_read_counts = dirpath + "/contig_unaligned_read_counts.txt"
-    compile_tpm_input_info(assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
-    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
+    #compile_tpm_input_info(assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
+    #subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
+    #get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
 
-    exit()
+    #exit()
 
     print("DONE!!!")
+
+    print("In the white room")
 
     # now lets get plot the abundances as krona charts
     # need to find lineages first
