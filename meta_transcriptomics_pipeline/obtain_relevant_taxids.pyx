@@ -156,3 +156,5 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
     fclose(mf)
     fclose(wf)
     fclose(cf)
+
+    print("Sad XD")

@@ -15,6 +15,9 @@ def getScientificNames(taxids, folder_location):
     with open(ranked_lineage, "r") as f:
         for line in f:
             curr = line.split("\t|\t")
+            #print(line)
+            #print(len(taxids))
+            #print(taxids[inc-1])
             if int(curr[0]) == int(taxids[inc]):
                 if curr[3] == "scientific name\t|\n":
                     sci_names[str(curr[0])] = curr[1]
@@ -23,9 +26,21 @@ def getScientificNames(taxids, folder_location):
                     if inc == len(taxids):
                         break
             elif int(curr[0]) > int(taxids[inc]): # has been a problem before, e.g. #115782 is not in names.dmp for some reason, simply skips that taxid
-                sci_names[str(taxids[inc])] = str(taxids[inc])
+                #sci_names[str(taxids[inc])] = str(taxids[inc])
                 # if taxid is not in names.dmp, simply have the "scientific name" be its taxid
-                inc += 1
+                #inc += 1
+
+                cancel = False
+                # need to check if the next few taxids are missing.
+                while int(curr[0]) > int(taxids[inc]):
+                    sci_names[str(taxids[inc])] = str(taxids[inc])
+                    inc += 1
+                    if inc == len(taxids):
+                        cancel = True
+                        break
+
+                if (cancel == True):
+                    break
 
                 # good idea to check anyways, in case we may accidentally skip it
                 
