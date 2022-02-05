@@ -283,8 +283,8 @@ def run_pipeline(args: argparse.Namespace):
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
     start = time.time()
-    new_command = subprocess.run(fastp_command, shell=True)
-    if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
+    #new_command = subprocess.run(fastp_command, shell=True)
+    #if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
     end = time.time()
     print("fastp took: " + str(end - start))
 
@@ -305,8 +305,8 @@ def run_pipeline(args: argparse.Namespace):
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     start = time.time()
-    new_command = subprocess.run(sortmerna_command, shell=True)
-    if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
+    #new_command = subprocess.run(sortmerna_command, shell=True)
+    #if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
     end = time.time()
     print("sortmerna took: " + str(end - start))
     #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
@@ -319,8 +319,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads)
     start = time.time()
-    new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(snap_path, new_command, [generated_files]) is True: return None
+    #new_command = subprocess.run(snap_human_command, shell=True)
+    #if check_fail(snap_path, new_command, [generated_files]) is True: return None
     end = time.time()
     print("human subtraction via snap took: " + str(end - start))
 
@@ -336,8 +336,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare + " " +\
                         human_out
 
-    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None
+    #new_command = subprocess.run(samtools_human_subtract_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -350,8 +350,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     start = time.time()
-    new_command = subprocess.run(megahit_command, shell=True)
-    if check_fail(megahit_path, new_command, []) is True: return None
+    #new_command = subprocess.run(megahit_command, shell=True)
+    #if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
     new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
@@ -366,30 +366,30 @@ def run_pipeline(args: argparse.Namespace):
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
     seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    new_command = subprocess.run(seqtk_command, shell=True)
-    if check_fail(seqtk_path, new_command, []) is True: return None
+    #new_command = subprocess.run(seqtk_command, shell=True)
+    #if check_fail(seqtk_path, new_command, []) is True: return None
 
     # we can now align the contigs to the databases
     # lets do them sequentially for now
     snap_contigs = dirpath + "/snap_contigs_out"
-    if run_snap_single(args.snap_index, new_contigs, snap_contigs, args.threads) == False: return None
+    #if run_snap_single(args.snap_index, new_contigs, snap_contigs, args.threads) == False: return None
 
     new_contigs_fa = contig_path + "/final_contigs.fa"
     blast_command = "blastn -query " + new_contigs_fa + " -db nt -out " + snap_contigs + " -outfmt 6"
     start = time.time()
-    new_command = subprocess.run(blast_command, shell=True)
-    if check_fail("blastn", new_command, []) is True: return None
+    #new_command = subprocess.run(blast_command, shell=True)
+    #if check_fail("blastn", new_command, []) is True: return None
     end = time.time()
     print("contig alignment against nt took: " + str(end - start))
 
     # now lets align reads
     diamond_contigs = dirpath + "/diamond_contigs_out"
     start = time.time()
-    if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads, 6) == False: return None
+    #if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads, 6) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
-    snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
+    #snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
 
     snap_contig_out = dirpath + "/nucl_alignments_contigs.txt"
     diamond_contig_out = dirpath + "/prot_alignments_contigs.txt"
@@ -401,8 +401,8 @@ def run_pipeline(args: argparse.Namespace):
                                 " in=" + human_subtract_1 +\
                                 " in2=" + human_subtract_2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
-    if check_fail(bbwrap_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
+    #if check_fail(bbwrap_path, new_command, []) is True: return None 
 
     # now lets retrieve the reads that did not align
     new_fwd = dirpath + "/new_fwd.fq"
@@ -410,8 +410,8 @@ def run_pipeline(args: argparse.Namespace):
 
     align_command = "samtools fastq -f4 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
-    new_command = subprocess.run(align_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None 
 
     # running exact set of commands above but for unaligned reads this time
 
@@ -419,8 +419,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_read_command = "snap-aligner" + " paired " + args.snap_index + " " + new_fwd + " " + new_rev +\
                     " -o " + snap_reads + " -I " + " -t " + str(args.threads)
     start = time.time()
-    new_command = subprocess.run(snap_read_command, shell=True)
-    if check_fail("snap-aligner", new_command, []) is True: return False
+    #new_command = subprocess.run(snap_read_command, shell=True)
+    #if check_fail("snap-aligner", new_command, []) is True: return False
     end = time.time()
     print("read alignment against nt took: " + str(end - start))
 
@@ -428,16 +428,16 @@ def run_pipeline(args: argparse.Namespace):
     # need to merge paired end reads first though
     merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
-    new_command = subprocess.run(merge_command, shell=True)
-    if check_fail("seqtk mergepe", new_command, []) is True: return False 
+    #new_command = subprocess.run(merge_command, shell=True)
+    #if check_fail("seqtk mergepe", new_command, []) is True: return False 
 
     diamond_reads = dirpath + "/diamond_reads_out.sam"
     start = time.time()
-    if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads, 101) == False: return None
+    #if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads, 101) == False: return None
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
-    snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
+    #snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
 
     snap_reads_out = dirpath + "/nucl_alignments_reads.txt"
     diamond_reads_out = dirpath + "/prot_alignments_reads.txt"

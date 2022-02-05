@@ -54,9 +54,7 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
                 curr[i] = '\0'
                 break
             curr[i] = line[i];
-        printf("CURR_LINE: %s\n", curr)
         if (strcmp(curr, curr_accession) == 0):
-            printf("GENERIC\n")
             fprintf(wf, line)
             curr_iter += 1
             if (curr_iter == size):
@@ -69,7 +67,6 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
         elif (strcmp(curr, curr_accession) > 0):
             cancel = 0
             while (strcmp(curr, curr_accession) > 0):
-                printf("SKIPPING %s, %s\n", curr_accession, curr)
                 curr_iter += 1
                 if (curr_iter == size):
                     cancel = 1
@@ -78,23 +75,14 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
                 len_accession = strlen(curr_accession)
                 if (curr_accession[len_accession - 1] == "\n"):
                     curr_accession[len_accession-1] = '\0';
-                printf("NOW: %s\n", curr_accession)
                 if (strcmp(curr, curr_accession) == 0):
                     break
 
             if cancel == 1:
                 break
 
-            printf("STRCMP: %s %s\n", curr_accession, curr_accession)
-            printf("%d\n", strcmp(curr, curr_accession))
-
             if (strcmp(curr, curr_accession) == 0):
-                printf("HELLO\n")
                 fprintf(wf, line)
-                printf("EXTRA\n")
-                printf("%s\n", curr)
-                printf("%s\n", curr_accession)
-                printf("HEHE XD\n")
                 curr_iter += 1
                 if (curr_iter == size):
                     break
