@@ -358,7 +358,7 @@ def run_pipeline(args: argparse.Namespace):
     #if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
-    new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
+    #new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
 
     contig_path = dirpath + "/megahit_out"
     contigs = contig_path + "/final_contigs.fa"
@@ -454,6 +454,8 @@ def run_pipeline(args: argparse.Namespace):
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
+
+    print("CHECKPOINT")
 
     # firstly lets count the reads
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
