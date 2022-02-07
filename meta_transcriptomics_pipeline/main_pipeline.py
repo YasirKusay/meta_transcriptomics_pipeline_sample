@@ -1,4 +1,5 @@
 import argparse
+import imp
 import subprocess
 import os
 import operator
@@ -10,6 +11,7 @@ from helpers import check_command_exists, check_fail, generate_temp_file
 from map_reads_to_contigs import map_reads_to_contigs
 from merge_sams import merge_sams
 from merge_contigs import merge_contigs
+from remove_contaminants_control import remove_contaminants_control
 from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs
 
@@ -118,7 +120,7 @@ def getContigReadCount(infile):
 
     return counts
 
-def countReads(infile, total_reads, outfile):
+def countReads(infile, total_reads, outfile, contaminants):
     results = {}
     num_reads = 0
     print("total_reads: " + str(total_reads))
@@ -151,7 +153,8 @@ def countReads(infile, total_reads, outfile):
     wf = open(outfile, "w")
 
     for key in sorted_results.keys():
-        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+        if (key not in contaminants):
+            wf.write(key + "\t" + str(sorted_results[key]) + "\n")
 
     wf.close()
 
@@ -188,7 +191,7 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
 
     wf.close()
 
-def get_abundance(joined, total_reads, final_file):
+def get_abundance(joined, total_reads, final_file, contaminants):
     final_res = {}
     taxids = {}
     lengths = {}
@@ -246,7 +249,8 @@ def get_abundance(joined, total_reads, final_file):
     wf = open(final_file, "w")
     final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
     for key in final_tpm_sorted:
-        wf.write(str(key) + "\t" + str(final_tpm_sorted[key]) + "\n")
+        if (key not in contaminants):
+            wf.write(str(key) + "\t" + str(final_tpm_sorted[key]) + "\n")
     wf.close()
 
 def run_pipeline(args: argparse.Namespace):
@@ -476,9 +480,27 @@ def run_pipeline(args: argparse.Namespace):
     # we need to now combine the contig aligned reads to the non contig aligned reads
     subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
 
+
+    # before proceeeding any further, lets remove the contaminants, simply remove the taxids
+    contaminant_removal = True
+
+    if args.kraken_db is None:
+        print("Path to kraken index is not provided, skipping contamination removal")
+        contaminant_removal = False
+
+    if len(args.control_sequences + args.other_sequences) == 0 and contaminant_removal == True:
+        print("No control/additional sample files have been provided, skipping contamination removal")
+        contaminant_removal = False
+
+    contaminants = []
+    rcf_out = "rcf_out.txt"
+    if contaminant_removal is True:
+        contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, args.kraken_db, rcf_out, args.taxdump_location, args.threads)
+
+
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
-    countReads(reads_taxids, num_reads, readCountsOutfile)
+    countReads(reads_taxids, num_reads, readCountsOutfile, contaminants)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -506,7 +528,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file)
+    get_abundance(contig_unaligned_read_counts, num_reads, tpm_abundance_file, contaminants)
 
     #exit()
 

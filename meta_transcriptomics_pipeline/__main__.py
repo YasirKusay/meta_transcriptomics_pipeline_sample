@@ -68,6 +68,26 @@ def parse_args():
     )
 
     parser.add_argument(
+        "kraken_db",
+        type=str,
+        help="kraken_db_location"
+    )
+
+    parser.add_argument(
+        "--control_sequences",
+        type=str,
+        nargs="+",
+        help="control sequences for contamination detection"
+    )
+
+    parser.add_argument(
+        "--other_sequences",
+        type=str,
+        nargs="+",
+        help="normal sequences for contamination detection"
+    )
+
+    parser.add_argument(
         "--qualified_quality_phred",
         type=str,
         default="15",
