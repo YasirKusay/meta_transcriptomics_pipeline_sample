@@ -68,7 +68,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "kraken_db",
+        "--kraken_db",
         type=str,
         help="kraken_db_location"
     )
