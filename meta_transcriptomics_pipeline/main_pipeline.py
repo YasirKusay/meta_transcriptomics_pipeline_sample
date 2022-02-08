@@ -393,7 +393,7 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
-    #snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
+    snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
 
     snap_contig_out = dirpath + "/nucl_alignments_contigs.txt"
     diamond_contig_out = dirpath + "/prot_alignments_contigs.txt"
@@ -441,18 +441,18 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
-    #snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
+    snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
 
     snap_reads_out = dirpath + "/nucl_alignments_reads.txt"
     diamond_reads_out = dirpath + "/prot_alignments_reads.txt"
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if os.path.isfile(contigs_reads_taxids_temp):
-        os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if os.path.isfile(contigs_reads_taxids_temp):
+    #    os.remove(contigs_reads_taxids_temp)
+    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
     # firstly lets count the reads
@@ -469,7 +469,7 @@ def run_pipeline(args: argparse.Namespace):
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    #subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
     subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
     assignments = fetch_contig_taxids(contigs_reads_taxids)
@@ -488,14 +488,17 @@ def run_pipeline(args: argparse.Namespace):
         print("Path to kraken index is not provided, skipping contamination removal")
         contaminant_removal = False
 
-    if len(args.control_sequences + args.other_sequences) == 0 and contaminant_removal == True:
+    if args.control_sequences is None or args.other_sequences is None or len(args.control_sequences + args.other_sequences) == 0 and contaminant_removal == True:
         print("No control/additional sample files have been provided, skipping contamination removal")
         contaminant_removal = False
 
     contaminants = []
-    rcf_out = "rcf_out.txt"
+    rcf_out = dirpath + "/rcf_out.txt"
     if contaminant_removal is True:
-        contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, args.kraken_db, rcf_out, args.taxdump_location, args.threads)
+        others = args.other_sequences
+        others.append(args.inp1)
+        others.append(args.inp2)
+        contaminants = remove_contaminants_control(args.control_sequences, others, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
 
 
     # now we can calculate read count method
