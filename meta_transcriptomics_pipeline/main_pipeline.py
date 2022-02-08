@@ -455,6 +455,8 @@ def run_pipeline(args: argparse.Namespace):
     #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
+    print("Checkpoint 1")
+
     # firstly lets count the reads
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
@@ -470,6 +472,9 @@ def run_pipeline(args: argparse.Namespace):
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
     #subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    
+    print("Checkpoint 2")
+
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
     subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
     assignments = fetch_contig_taxids(contigs_reads_taxids)
@@ -484,6 +489,8 @@ def run_pipeline(args: argparse.Namespace):
     # before proceeeding any further, lets remove the contaminants, simply remove the taxids
     contaminant_removal = True
 
+    print("Hey?")
+
     if args.kraken_db is None:
         print("Path to kraken index is not provided, skipping contamination removal")
         contaminant_removal = False
@@ -491,6 +498,8 @@ def run_pipeline(args: argparse.Namespace):
     if args.control_sequences is None or args.other_sequences is None or len(args.control_sequences + args.other_sequences) == 0 and contaminant_removal == True:
         print("No control/additional sample files have been provided, skipping contamination removal")
         contaminant_removal = False
+
+    print("Starting decontamination")
 
     contaminants = []
     rcf_out = dirpath + "/rcf_out.txt"
@@ -500,6 +509,8 @@ def run_pipeline(args: argparse.Namespace):
         others.append(args.inp2)
         contaminants = remove_contaminants_control(args.control_sequences, others, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
 
+
+    print("Finished decontam")
 
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"

@@ -1,6 +1,7 @@
 import subprocess
 import os
 import math
+import re
 from helpers import check_fail
 
 def run_kraken(combined, kraken_index, threads, path):
@@ -42,28 +43,43 @@ def remove_contaminants_control(controls, sequences, kraken_index, rcf_out, taxd
     kraken_outs = []
     # assume that it is paired end for now
     combined = controls + sequences
-
+ 
+    print("Running kraken")
     kraken_outs = run_kraken(combined, kraken_index, threads, path)
     if kraken_outs is None:
         return None
 
     # now we can run the actual recentrifuge command
-    if run_rcf(taxdump_location, kraken_outs, len(controls), rcf_out, path) is None:
-        return None
+    print("Running RCF")
+    #if run_rcf(taxdump_location, kraken_outs, len(controls), rcf_out, path) is None:
+    #    return None
 
     # now need to look through file to return the contaminant samples
     # contaminants are stored at the taxid level
     contaminants = []
     print("CONT")
     #contaminant_levels = ["critical", "severe", "mild cont", "just-ctrl", "other cont"]
-    contaminant_levels = ["critical", "severe", "mild cont", "crossover", "other cont"]
+    # contaminant_levels = ["critical", "severe", "mild cont", "crossover", "other cont"]
+    contaminant_levels = ["critical", "severe", "crossover"]
+    contaminant_levels_2 = ["mild", "other"]
     with open(rcf_out, "r") as r:
         for line in r:
             for level in contaminant_levels:
-                if (level in line):
+                #if (level in line):
+                #if re.search("^\^\[\[[0-9]+m" + level, line) is not None:
+                if level in line:
                     splits = line.split()
                     contaminants.append(splits[2])
                     print(splits[2])
+                    break
+
+            for level in contaminant_levels_2:
+                #if (level in line):
+                #if re.search("^\^\[\[[0-9]+m" + level + " cont", line) is not None:
+                if level + " cont" in line:
+                    splits = line.split()
+                    contaminants.append(splits[3])
+                    print(splits[3])
                     break
 
     return contaminants 
