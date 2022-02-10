@@ -462,7 +462,7 @@ def run_pipeline(args: argparse.Namespace):
 
     # map reads to their contigs
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
-    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted)
+    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads

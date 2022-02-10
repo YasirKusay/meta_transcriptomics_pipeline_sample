@@ -5,14 +5,20 @@
 import subprocess
 import os
 
-def merge_sams(snap_sam, diamond_sam, path):
-    if os.path.isfile(path + "/nucl_alignments_reads.txt"):
-        os.remove(path + "/nucl_alignments_reads.txt")
-    if os.path.isfile(path + "/prot_alignments_reads.txt"):
-        os.remove(path + "/prot_alignments_reads.txt") 
+def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None):
 
-    output_snap = open(path + "/nucl_alignments_reads.txt", "w")
-    output_diamond = open(path + "/prot_alignments_reads.txt", "w")
+    if snap_out is None:
+        snap_out = path + "/nucl_alignments_reads.txt"
+    if diamond_out is None:
+        diamond_out = path + "/prot_alignments_reads.txt"
+
+    if os.path.isfile(snap_out):
+        os.remove(snap_out)
+    if os.path.isfile(diamond_out):
+        os.remove(diamond_out) 
+
+    output_snap = open(snap_out, "w")
+    output_diamond = open(diamond_out, "w")
 
     # need to firstly merge and sort the 2 files
     snap_diamond_combined_file = path + "/snap_diamond_combined_file"
@@ -93,4 +99,4 @@ def merge_sams(snap_sam, diamond_sam, path):
     output_snap.close()
     output_diamond.close()
 
-    return path + "/nucl_alignments_reads.txt", path + "/prot_alignments_reads.txt"
+    return snap_out, diamond_out
