@@ -26,7 +26,11 @@ def get_lineage_info(input_file, output_file, taxids_location):
         # TODO, NEED A WAY TO DEAL WITH "UNKNOWN"
         if taxid == "Unknown":
             continue
-        lineage = ncbi.get_lineage(taxid)
+        try:
+            lineage = ncbi.get_lineage(taxid)
+        except:
+            print(str(taxid) + " NOT FOUND")
+            continue
         lineage2ranks = ncbi.get_rank(lineage)
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
         sublst = []
