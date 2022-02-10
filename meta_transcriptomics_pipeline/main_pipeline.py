@@ -153,7 +153,7 @@ def countReads(infile, total_reads, outfile, contaminants):
     wf = open(outfile, "w")
 
     for key in sorted_results.keys():
-        if (key not in contaminants):
+        if (contaminants is not None and key not in contaminants):
             wf.write(key + "\t" + str(sorted_results[key]) + "\n")
 
     wf.close()
