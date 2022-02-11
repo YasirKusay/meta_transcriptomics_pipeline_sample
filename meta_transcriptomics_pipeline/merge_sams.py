@@ -29,7 +29,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
 
     # now lets sort based on read/contig id
     snap_diamond_sorted_file = path + "/snap_diamond_sorted_file"
-    sort_command = "sort -k1 " + snap_diamond_combined_file + " > " + snap_diamond_sorted_file
+    sort_command = "LC_COLLATE=C sort -k1 " + snap_diamond_combined_file + " > " + snap_diamond_sorted_file
     command = subprocess.run(sort_command, shell=True) 
 
     # now we can go about selecting the best hit
