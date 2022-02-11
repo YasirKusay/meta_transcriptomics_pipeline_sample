@@ -47,8 +47,6 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     if curr[edit_dist_inc].split(":")[0] == "NM":
                         break
                     edit_dist_inc += 1
-
-                assert curr[edit_dist_inc].split(":")[0] == "NM"
                 curr_line = line
                 if (prev_query == curr[0]):
                     if (int(curr[edit_dist_inc].split(":")[2]) > best_edit_dist): # checking if line has higher edit dist
@@ -77,10 +75,11 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                         print_accession = "_".join(actual_accession)
 
                         # diamond file, because it stores E-value 
-                        if to_print[15].split(":")[0] == "ZE":
-                            output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
-                        else:
-                            output_snap.write(to_print[0] + "\t" + print_accession + "\n")
+                        if (15 < len(curr)):
+                            if to_print[15].split(":")[0] == "ZE":
+                                output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
+                            else:
+                                output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
                     prev_query = curr[0]
                     best_edit_dist = int(curr[edit_dist_inc].split(":")[2])
@@ -95,10 +94,11 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
             print_accession = "_".join(actual_accession)
 
             # diamond file, because it stores E-value 
-            if to_print[15].split(":")[0] == "ZE":
-                output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
-            else:
-                output_snap.write(to_print[0] + "\t" + print_accession + "\n")
+            if (15 < len(curr)):
+                if to_print[15].split(":")[0] == "ZE":
+                    output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
+                else:
+                    output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
