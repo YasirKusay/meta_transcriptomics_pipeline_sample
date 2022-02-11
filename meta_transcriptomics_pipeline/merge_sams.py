@@ -48,21 +48,24 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                         break
                     edit_dist_inc += 1
                 curr_line = line
+                curr_edit_dist = -1
+                if edit_dist_inc == len(curr):
+                    curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
                 if (prev_query == curr[0]):
-                    if (int(curr[edit_dist_inc].split(":")[2]) > best_edit_dist): # checking if line has higher edit dist
+                    if (curr_edit_dist > best_edit_dist): # checking if line has higher edit dist
                         best_line = line
-                        best_edit_dist = int(curr[edit_dist_inc].split(":")[2])  
+                        best_edit_dist = curr_edit_dist
                         best_mapq = int(curr[4])
-                    elif (int(curr[edit_dist_inc].split(":")[2]) == best_edit_dist): # checking if line has a higher mapq, if edit dists are equal
+                    elif (curr_edit_dist == best_edit_dist): # checking if line has a higher mapq, if edit dists are equal
                         if (best_mapq != 255):
                             if (int(curr[4]) > best_mapq):
                                 best_line = line
-                                best_edit_dist = int(curr[edit_dist_inc].split(":")[2])  
+                                best_edit_dist = curr_edit_dist
                                 best_mapq = int(curr[4])
                         else: 
                             if (int(curr[4]) != 255):
                                 best_line = line
-                                best_edit_dist = int(curr[edit_dist_inc].split(":")[2])  
+                                best_edit_dist = curr_edit_dist
                                 best_mapq = int(curr[4])
                     prev_query = curr[0]
 
@@ -82,7 +85,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                                 output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
                     prev_query = curr[0]
-                    best_edit_dist = int(curr[edit_dist_inc].split(":")[2])
+                    best_edit_dist = curr_edit_dist
                     best_mapq = int(curr[4])
                     best_line = line
         
