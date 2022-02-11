@@ -39,7 +39,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
         best_mapq = -1
         best_line = "NULL"
         for line in f:
-            curr = line.split()
+            curr = line.split("\t")
             if (curr[2] != "*"):
                 assert curr[12].split(":")[0] == "NM"
                 curr_line = line
@@ -63,7 +63,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
 
                 else:
                     if (best_line != "NULL"):
-                        to_print = best_line.split()
+                        to_print = best_line.split("\t")
                         accession = to_print[2]
                         full_accession = accession.split("_")
                         actual_accession = full_accession[:2]
@@ -81,7 +81,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     best_line = line
         
         if (best_line != "NULL"):
-            to_print = best_line.split()
+            to_print = best_line.split("\t")
             accession = to_print[2]
             full_accession = accession.split("_")
             actual_accession = full_accession[:2]

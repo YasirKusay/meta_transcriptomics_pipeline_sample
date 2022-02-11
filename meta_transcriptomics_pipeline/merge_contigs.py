@@ -42,7 +42,7 @@ def merge_contigs(snap_sam, diamond_sam, path):
         best_bitscore = -1
         best_line = "NULL"
         for line in f:
-            curr = line.split()
+            curr = line.split("\t")
             curr_line = line
             if (prev_query == curr[0]):
                 if (float(curr[10]) > best_e_value): # e value
@@ -58,7 +58,7 @@ def merge_contigs(snap_sam, diamond_sam, path):
 
             else:
                 if (best_line != "NULL"):
-                    to_print = best_line.split()
+                    to_print = best_line.split("\t")
                     accession = to_print[1]
                     full_accession = accession.split("_")
                     actual_accession = full_accession[:2]
@@ -75,7 +75,7 @@ def merge_contigs(snap_sam, diamond_sam, path):
                 best_line = line
 
         if (best_line != "NULL"):
-            to_print = best_line.split()
+            to_print = best_line.split("\t")
             accession = to_print[1]
             full_accession = accession.split("_")
             actual_accession = full_accession[:2]
