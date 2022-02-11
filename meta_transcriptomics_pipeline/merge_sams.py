@@ -48,7 +48,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     edit_dist_inc += 1
                 curr_line = line
                 curr_edit_dist = -1
-                if edit_dist_inc == len(curr):
+                if edit_dist_inc < len(curr):
                     curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
                 if (prev_query == curr[0]):
                     if (curr_edit_dist > best_edit_dist): # checking if line has higher edit dist
