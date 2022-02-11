@@ -393,7 +393,7 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
-    snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
+    #snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
 
     snap_contig_out = dirpath + "/nucl_alignments_contigs.txt"
     diamond_contig_out = dirpath + "/prot_alignments_contigs.txt"
@@ -465,6 +465,8 @@ def run_pipeline(args: argparse.Namespace):
     # map reads to their contigs
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
     map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
+
+    exit()
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
