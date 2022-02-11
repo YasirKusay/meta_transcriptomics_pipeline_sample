@@ -82,6 +82,8 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                                 output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
                             else:
                                 output_snap.write(to_print[0] + "\t" + print_accession + "\n")
+                        else: 
+                            output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
                     prev_query = curr[0]
                     best_edit_dist = curr_edit_dist
@@ -101,6 +103,8 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
                 else:
                     output_snap.write(to_print[0] + "\t" + print_accession + "\n")
+            else: 
+                output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
     command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
