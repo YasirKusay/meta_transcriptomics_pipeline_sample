@@ -45,7 +45,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                 while (edit_dist_inc < len(curr)):
                     if curr[best_edit_dist].split(":")[0] == "NM":
                         break
-                    edit_dist_inc
+                    edit_dist_inc += 1
 
                 assert curr[edit_dist_inc].split(":")[0] == "NM"
                 curr_line = line
