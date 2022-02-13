@@ -152,8 +152,12 @@ def countReads(infile, total_reads, outfile, contaminants):
         os.remove(outfile)
     wf = open(outfile, "w")
 
+    print(sorted_results)
+
     for key in sorted_results.keys():
         if (contaminants is not None and key not in contaminants):
+            wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+        elif (contaminants is None):
             wf.write(key + "\t" + str(sorted_results[key]) + "\n")
 
     wf.close()
@@ -161,7 +165,7 @@ def countReads(infile, total_reads, outfile, contaminants):
 # infile must be in fastq
 def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
 
-    wf = open(outfile, "w")
+    wf = open(outfile, "a")
     with open(infile, "r") as f:
         divisible_int = 1
         curr_name = ""
@@ -466,14 +470,14 @@ def run_pipeline(args: argparse.Namespace):
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
     map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
 
-    exit()
+   # #exit()
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    #subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
     
     print("Checkpoint 2")
 
