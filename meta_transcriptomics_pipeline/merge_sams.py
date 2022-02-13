@@ -43,7 +43,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
             if (curr[2] != "*"):
                 edit_dist_inc = 11
                 while (edit_dist_inc < len(curr)):
-                    if curr[best_edit_dist].split(":")[0] == "NM":
+                    if curr[edit_dist_inc].split(":")[0] == "NM":
                         break
                     edit_dist_inc += 1
                 curr_line = line
