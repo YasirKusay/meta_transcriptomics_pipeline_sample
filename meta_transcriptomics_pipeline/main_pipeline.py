@@ -106,17 +106,12 @@ def getContigReadCount(infile):
     with open(infile, "r") as r:
         for line in r:
             curr = line.split()
+            contig = curr[1]
 
-            if (len(curr) <= 3):
-                continue
-
-            if (curr[2] != "*"):
-                contig = curr[2]
-
-                if contig in counts.keys():
-                    counts[contig] += 1
-                else:
-                    counts[contig] = 1
+            if contig in counts.keys():
+                counts[contig] += 1
+            else:
+                counts[contig] = 1
 
     return counts
 
@@ -445,7 +440,9 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("read alignment against nr took: " + str(end - start))
 
-    snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
+    #snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
+
+    #exit()
 
     snap_reads_out = dirpath + "/nucl_alignments_reads.txt"
     diamond_reads_out = dirpath + "/prot_alignments_reads.txt"
@@ -459,6 +456,8 @@ def run_pipeline(args: argparse.Namespace):
     #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
+    #exit()
+
     print("Checkpoint 1")
 
     # firstly lets count the reads
@@ -470,7 +469,7 @@ def run_pipeline(args: argparse.Namespace):
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
     map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
 
-   # #exit()
+    # #exit()
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
@@ -527,7 +526,7 @@ def run_pipeline(args: argparse.Namespace):
     # then get the number of reads aligned to them
 
     # firstly lets get the number of reads assigned to each contig
-    contig_counts = getContigReadCount(reads_mapped_to_contigs_file)
+    contig_counts = getContigReadCount(mapped_reads)
 
     contig_unaligned_read_counts_temp = dirpath + "/contig_unaligned_read_counts_temp.txt"
     if os.path.isfile(contig_unaligned_read_counts_temp):

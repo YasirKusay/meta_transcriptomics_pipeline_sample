@@ -107,8 +107,8 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
             else: 
                 output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
-    command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
-    command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
+    #command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
+    #command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
     
     output_snap.close()
     output_diamond.close()

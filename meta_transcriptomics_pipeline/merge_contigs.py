@@ -63,8 +63,9 @@ def merge_contigs(snap_sam, diamond_sam, path):
                     full_accession = accession.split("_")
                     actual_accession = full_accession[:2]
                     print_accession = "_".join(actual_accession)
-                    # diamond file, because it stores E-value 
-                    if to_print[12] == "P":
+                    # diamond file, because it stores E-value
+                    print(to_print[12]) 
+                    if to_print[12].strip() == "P":
                         output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
                     else:
                         output_snap.write(to_print[0] + "\t" + print_accession + "\n")
@@ -80,14 +81,15 @@ def merge_contigs(snap_sam, diamond_sam, path):
             full_accession = accession.split("_")
             actual_accession = full_accession[:2]
             print_accession = "_".join(actual_accession)
-            # diamond file, because it stores E-value 
-            if to_print[12] == "P":
+            # diamond file, because it stores E-value
+            print(to_print[12]) 
+            if to_print[12].strip() == "P":
                 output_diamond.write(to_print[0] + "\t" + print_accession + "\n")
             else:
                 output_snap.write(to_print[0] + "\t" + print_accession + "\n")
                 
-    command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
-    command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
+    #command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
+    #command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
     
     output_snap.close()
     output_diamond.close()
