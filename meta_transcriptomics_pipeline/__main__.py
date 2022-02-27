@@ -8,15 +8,10 @@ def parse_args():
     )
 
     parser.add_argument(
-        "inp1",
+        "input",
         type=str,
-        help="read1 input name"
-    )
-
-    parser.add_argument(
-        "inp2",
-        type=str,
-        help="read1 input name"
+        nargs="+",
+        help="input reads, 2 reads are for paired end reads"
     )
 
     parser.add_argument(
