@@ -14,6 +14,8 @@ from merge_contigs import merge_contigs
 from remove_contaminants_control import remove_contaminants_control
 from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs
+from filter_files import filter_files
+from paf2blast6 import paf2blast6
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
@@ -359,44 +361,6 @@ def run_pipeline(args: argparse.Namespace):
     print("assembly via megahit took: " + str(end - start))
     #new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
 
-    contig_path = dirpath + "/megahit_out"
-    contigs = contig_path + "/final_contigs.fa"
-    human_subtract_1 = dirpath + "/human_subtract1.fastq"
-    human_subtract_2 = dirpath + "/human_subtract2.fastq"
-    samtools_path = "samtools"
-
-    # need to convert file above from fa to fq, simply done using seqtk
-    seqtk_path = "seqtk"
-    new_contigs = contig_path + "/final_contigs.fq"
-    seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    #new_command = subprocess.run(seqtk_command, shell=True)
-    #if check_fail(seqtk_path, new_command, []) is True: return None
-
-    # we can now align the contigs to the databases
-    # lets do them sequentially for now
-    snap_contigs = dirpath + "/snap_contigs_out"
-    #if run_snap_single(args.snap_index, new_contigs, snap_contigs, args.threads) == False: return None
-
-    new_contigs_fa = contig_path + "/final_contigs.fa"
-    blast_command = "blastn -query " + new_contigs_fa + " -db nt -out " + snap_contigs + " -outfmt 6"
-    start = time.time()
-    #new_command = subprocess.run(blast_command, shell=True)
-    #if check_fail("blastn", new_command, []) is True: return None
-    end = time.time()
-    print("contig alignment against nt took: " + str(end - start))
-
-    # now lets align reads
-    diamond_contigs = dirpath + "/diamond_contigs_out"
-    start = time.time()
-    #if run_diamond(args.diamond_index, new_contigs, diamond_contigs, args.threads, 6) == False: return None
-    end = time.time()
-    print("contig alignment against nr took: " + str(end - start))
-
-    #snap_contig_out, diamond_contig_out = merge_contigs(snap_contigs, diamond_contigs, dirpath)
-
-    snap_contig_out = dirpath + "/nucl_alignments_contigs.txt"
-    diamond_contig_out = dirpath + "/prot_alignments_contigs.txt"
-
     # we must retrieve the unaligned reads
     bbwrap_path = "bbwrap.sh"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
@@ -416,16 +380,64 @@ def run_pipeline(args: argparse.Namespace):
     #new_command = subprocess.run(align_command, shell=True)
     #if check_fail(samtools_path, new_command, []) is True: return None 
 
-    # running exact set of commands above but for unaligned reads this time
+    smaller_1 = "smaller_1.fq"
+    smaller_2 = "smaller_2.fq"
+    bigger_1 = "bigger_1.fq"
+    bigger_2 = "bigger_2.fq"
 
-    snap_reads = dirpath + "/snap_reads_out.sam"
-    snap_read_command = "snap-aligner" + " paired " + args.snap_index + " " + new_fwd + " " + new_rev +\
-                    " -o " + snap_reads + " -I " + " -t " + str(args.threads)
-    start = time.time()
-    #new_command = subprocess.run(snap_read_command, shell=True)
-    #if check_fail("snap-aligner", new_command, []) is True: return False
-    end = time.time()
-    print("read alignment against nt took: " + str(end - start))
+    filter_files(new_fwd, bigger_1, smaller_1)
+    filter_files(new_rev, bigger_2, smaller_2)
+
+    #time minimap2 -a -H -t 32 /data/bio/ncbi/current/nt.mmi /srv/scratch/z5215055/HONS/samples/csf/megahit_out/final_contigs.fa > /srv/scratch/z5215055/HONS/minimap2/output.paf
+    # minimap2 -ax sr ref.fa read1.fq read2.fq > aln.sam  
+
+    nt_combined_file = dirpath + "/nt_combined_file"
+
+    # aligning contigs + longer reads, need to merge big reads first
+    minimap2_path = "minimap2"
+    minimap2_contig_out = dirpath + "/minimap2_contig_out.paf"
+    minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " " + args.minimap2_index + " " + contigs + " > " + minimap2_contig_out
+    new_command = subprocess.run(minimap2_command, shell=True)
+    if check_fail(minimap2_path, new_command, []) is True: return None
+
+    paf2blast6(minimap2_contig_out, dirpath)
+    paf2blast_out = dirpath + "/minimap2_contig_out_frompaf.m8"
+
+    new_command = subprocess.run("cat " + paf2blast_out + " > " + nt_combined_file, shell=True)
+
+    minimap2_long_reads_out = dirpath + "/minimap2_lr_out.sam"
+    minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
+    new_command = subprocess.run(minimap2_command, shell=True)
+    if check_fail(minimap2_path, new_command, []) is True: return None
+
+    paf2blast6(minimap2_long_reads_out, dirpath)
+    paf2blast_out = dirpath + "/minimap2_long_reads_out_frompaf.m8"
+
+    new_command = subprocess.run("cat " + paf2blast_out + " >> " + nt_combined_file, shell=True)
+
+    # now lets blast the small reads, (merge them first)
+
+    merged_short_pe = dirpath + "/merged_short_reads.fq"
+    merge_command = "seqtk mergepe " + smaller_1 + " " + smaller_2 + " > " + merged_short_pe
+    new_command = subprocess.run(merge_command, shell=True)
+    if check_fail("seqtk mergepe", new_command, []) is True: return False  
+
+    blast_path = "blastn -task megablast"
+    blast_short_out = dirpath + "/blast_short_out"
+    blast_command = blast_path + " -query " + merged_short_pe + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
+    new_command = subprocess.run(blast_command, shell=True)
+    if check_fail(blast_path, new_command, []) is True: return False  
+
+    new_command = subprocess.run("cat " + blast_short_out + " >> " + nt_combined_file, shell=True)
+
+    # now repeat process for diamond
+
+    # need to convert file above from fa to fq, simply done using seqtk
+    seqtk_path = "seqtk"
+    new_contigs = contig_path + "/final_contigs.fq"
+    seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
+    #new_command = subprocess.run(seqtk_command, shell=True)
+    #if check_fail(seqtk_path, new_command, []) is True: return None
 
     # now lets align reads
     # need to merge paired end reads first though
@@ -434,24 +446,31 @@ def run_pipeline(args: argparse.Namespace):
     #new_command = subprocess.run(merge_command, shell=True)
     #if check_fail("seqtk mergepe", new_command, []) is True: return False 
 
-    diamond_reads = dirpath + "/diamond_reads_out.sam"
+    diamonc_combined_file = dirpath + "/diamond_combined_file.fq"
+    subprocess.run("cat " + new_contigs + " > " + diamonc_combined_file, shell=True)
+    subprocess.run("cat " + merged_pe + " >> " + diamonc_combined_file, shell=True)
+
+    nr_combined_file = dirpath + "/nr_combined_file"
     start = time.time()
-    #if run_diamond(args.diamond_index, merged_pe, diamond_reads, args.threads, 101) == False: return None
+    if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 101) == False: return None
     end = time.time()
-    print("read alignment against nr took: " + str(end - start))
+    print("contig alignment against nr took: " + str(end - start))
 
-    #snap_reads_out, diamond_reads_out = merge_sams(snap_reads, diamond_reads, dirpath)
+    nt_out, nr_out = merge_contigs(nt_combined_file, nr_combined_file, dirpath)
 
-    #exit()
+    nt_out = dirpath + "/nucl_alignments_contigs.txt"
+    nr_out = dirpath + "/prot_alignments_contigs.txt"
+    nt_dummy = dirpath + "/nt_dummy.txt"
+    nr_dummy = dirpath + "/nr_dummy.txt"
 
-    snap_reads_out = dirpath + "/nucl_alignments_reads.txt"
-    diamond_reads_out = dirpath + "/prot_alignments_reads.txt"
+    subprocess.run("touch " + nt_dummy, shell=True)
+    subprocess.run("touch " + nr_dummy, shell=True)
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
     #if os.path.isfile(contigs_reads_taxids_temp):
     #    os.remove(contigs_reads_taxids_temp)
-    #if join_taxid_contigs(snap_contig_out, snap_reads_out, diamond_contig_out, diamond_reads_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 

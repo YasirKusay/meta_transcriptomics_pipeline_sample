@@ -77,6 +77,10 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                         actual_accession = full_accession[:2]
                         print_accession = "_".join(actual_accession)
 
+                        mapq = (to_print[4])
+                        if (mapq == 255):
+                            mapq = 0
+
                         # diamond file, because it stores E-value 
                         if (15 < len(curr)):
                             if to_print[15].split(":")[0] == "ZE":
@@ -90,13 +94,26 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     best_edit_dist = curr_edit_dist
                     best_mapq = int(curr[4])
                     best_line = line
-        
+
         if (best_line != "NULL"):
             to_print = best_line.split("\t")
             accession = to_print[2]
             full_accession = accession.split("_")
             actual_accession = full_accession[:2]
             print_accession = "_".join(actual_accession)
+
+            mapq = (to_print[4])
+            if (mapq == 255):
+                mapq = 0
+
+            edit_dist_inc = 11
+            while (edit_dist_inc < len(curr)):
+                if curr[edit_dist_inc].split(":")[0] == "NM":
+                    break
+                edit_dist_inc += 1
+            curr_edit_dist = 0
+            if edit_dist_inc < len(curr):
+                curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
 
             # diamond file, because it stores E-value 
             if (15 < len(curr)):

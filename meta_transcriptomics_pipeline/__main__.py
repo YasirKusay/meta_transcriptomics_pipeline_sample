@@ -32,9 +32,15 @@ def parse_args():
     )
 
     parser.add_argument(
-        "snap_index",
+        "blast_index",
         type=str,
-        help="path to the snap index to align reads/contigs"
+        help="path to the blast index to align reads/contigs"
+    )
+
+    parser.add_argument(
+        "minimap2_index",
+        type=str,
+        help="path to the minimap2 index to align reads/contigs"
     )
 
     parser.add_argument(
