@@ -15,6 +15,7 @@ from remove_contaminants_control import remove_contaminants_control
 from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs
 from paf2blast6 import paf2blast6
+from filter_files import filter_files
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
@@ -287,8 +288,8 @@ def run_pipeline(args: argparse.Namespace):
                     # need to consider adapters, should we give the user a chance to add adatpers?
 
     start = time.time()
-    #new_command = subprocess.run(fastp_command, shell=True)
-    #if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
+    new_command = subprocess.run(fastp_command, shell=True)
+    if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
     end = time.time()
     print("fastp took: " + str(end - start))
 
@@ -358,7 +359,7 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
-    #new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
+    new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
 
     # we must retrieve the unaligned reads
     bbwrap_path = "bbwrap.sh"
@@ -379,10 +380,10 @@ def run_pipeline(args: argparse.Namespace):
     new_command = subprocess.run(align_command, shell=True)
     if check_fail(samtools_path, new_command, []) is True: return None 
 
-    smaller_1 = "smaller_1.fq"
-    smaller_2 = "smaller_2.fq"
-    bigger_1 = "bigger_1.fq"
-    bigger_2 = "bigger_2.fq"
+    smaller_1 = dirpath + "/smaller_1.fq"
+    smaller_2 = dirpath + "/smaller_2.fq"
+    bigger_1 = dirpath + "/bigger_1.fq"
+    bigger_2 = dirpath + "/bigger_2.fq"
 
     filter_files(new_fwd, bigger_1, smaller_1)
     filter_files(new_rev, bigger_2, smaller_2)
@@ -390,12 +391,20 @@ def run_pipeline(args: argparse.Namespace):
     #time minimap2 -a -H -t 32 /data/bio/ncbi/current/nt.mmi /srv/scratch/z5215055/HONS/samples/csf/megahit_out/final_contigs.fa > /srv/scratch/z5215055/HONS/minimap2/output.paf
     # minimap2 -ax sr ref.fa read1.fq read2.fq > aln.sam  
 
+    # need to convert file above from fa to fq, simply done using seqtk
+    seqtk_path = "seqtk"
+    new_contigs = contig_path + "/final_contigs.fq"
+    seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
+    new_command = subprocess.run(seqtk_command, shell=True)
+    if check_fail(seqtk_path, new_command, []) is True: return None
+
     nt_combined_file = dirpath + "/nt_combined_file"
 
     # aligning contigs + longer reads, need to merge big reads first
+    start = time.time()
     minimap2_path = "minimap2"
     minimap2_contig_out = dirpath + "/minimap2_contig_out.paf"
-    minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " " + args.minimap2_index + " " + contigs + " > " + minimap2_contig_out
+    minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " " + args.minimap2_index + " " + new_contigs + " > " + minimap2_contig_out
     new_command = subprocess.run(minimap2_command, shell=True)
     if check_fail(minimap2_path, new_command, []) is True: return None
 
@@ -404,13 +413,16 @@ def run_pipeline(args: argparse.Namespace):
 
     new_command = subprocess.run("cat " + paf2blast_out + " > " + nt_combined_file, shell=True)
 
-    minimap2_long_reads_out = dirpath + "/minimap2_lr_out.sam"
+    minimap2_long_reads_out = dirpath + "/minimap2_lr_out.paf"
     minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
     new_command = subprocess.run(minimap2_command, shell=True)
     if check_fail(minimap2_path, new_command, []) is True: return None
 
+    end = time.time()
+    print("minimap2 alignment against nt took: " + str(end - start))
+
     paf2blast6(minimap2_long_reads_out, dirpath)
-    paf2blast_out = dirpath + "/minimap2_long_reads_out_frompaf.m8"
+    paf2blast_out = dirpath + "/minimap2_lr_out_frompaf.m8"
 
     new_command = subprocess.run("cat " + paf2blast_out + " >> " + nt_combined_file, shell=True)
 
@@ -419,24 +431,28 @@ def run_pipeline(args: argparse.Namespace):
     merged_short_pe = dirpath + "/merged_short_reads.fq"
     merge_command = "seqtk mergepe " + smaller_1 + " " + smaller_2 + " > " + merged_short_pe
     new_command = subprocess.run(merge_command, shell=True)
-    if check_fail("seqtk mergepe", new_command, []) is True: return False  
+    if check_fail("seqtk mergepe", new_command, []) is True: return False 
+
+    merged_short_pe_fa = dirpath + "/merged_short_reads.fa"
+    seqtk_command = seqtk_path + " seq -a " merged_short_pe + " > " + merged_short_pe_fa
+    new_command = subprocess.run(seqtk_command, shell=True)
+    if check_fail("seqtk", new_command, []) is True: return False 
+
+    start = time.time()
 
     blast_path = "blastn -task megablast"
     blast_short_out = dirpath + "/blast_short_out"
-    blast_command = blast_path + " -query " + merged_short_pe + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
+    blast_command = blast_path + " -query " + merged_short_pe_fa + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
     new_command = subprocess.run(blast_command, shell=True)
     if check_fail(blast_path, new_command, []) is True: return False  
+
+    end = time.time()
+    print("blast alignment against nt took: " + str(end - start))
+
 
     new_command = subprocess.run("cat " + blast_short_out + " >> " + nt_combined_file, shell=True)
 
     # now repeat process for diamond
-
-    # need to convert file above from fa to fq, simply done using seqtk
-    seqtk_path = "seqtk"
-    new_contigs = contig_path + "/final_contigs.fq"
-    seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    new_command = subprocess.run(seqtk_command, shell=True)
-    if check_fail(seqtk_path, new_command, []) is True: return None
 
     # now lets align reads
     # need to merge paired end reads first though
@@ -474,7 +490,7 @@ def run_pipeline(args: argparse.Namespace):
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
-    exit()
+    #exit()
 
     print("Checkpoint 1")
 

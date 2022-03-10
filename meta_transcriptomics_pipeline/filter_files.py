@@ -23,16 +23,16 @@ def filter_fq(infile, out1, out2):
                 curr_extra = line
                 line_inc = 1
 
-                if (len(line.strip) < 100):
-                    out2.write(curr_name)
-                    out2.write(curr_seq)
-                    out2.write("+\n")
-                    out2.write(curr_extra)
+                if (len(line.strip()) < 100):
+                    f2.write(curr_name)
+                    f2.write(curr_seq)
+                    f2.write("+\n")
+                    f2.write(curr_extra)
                 else:
-                    out1.write(curr_name)
-                    out1.write(curr_seq)
-                    out1.write("+\n")
-                    out1.write(curr_extra)
+                    f1.write(curr_name)
+                    f1.write(curr_seq)
+                    f1.write("+\n")
+                    f1.write(curr_extra)
 
                 continue
 

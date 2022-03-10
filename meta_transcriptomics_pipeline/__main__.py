@@ -111,7 +111,7 @@ def parse_args():
     parser.add_argument(
         "--length_required",
         type=str,
-        default="15",
+        default="50",
         help="DURING QC. Reads shorter than length_required will be discarded, default is 15. (int [=15])"
     )
 
