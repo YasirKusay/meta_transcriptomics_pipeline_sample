@@ -30,13 +30,7 @@ def parse_args():
         type=str,
         help="path to the snap human index"
     )
-
-    parser.add_argument(
-        "blast_index",
-        type=str,
-        help="path to the blast index to align reads/contigs"
-    )
-
+    
     parser.add_argument(
         "minimap2_index",
         type=str,
