@@ -16,6 +16,7 @@ from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs
 from paf2blast6 import paf2blast6
 from filter_files import filter_files
+from match_scores import match_scores
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
@@ -511,6 +512,12 @@ def run_pipeline(args: argparse.Namespace):
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
     subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+
+    taxid_scores = dirpath + "/taxid_scores"
+    combined_nt_nr = dirpath + "/combined_nt_nr"
+    subprocess.run("cat " + nt_out + " > " + combined_nt_nr, shell=True)
+    subprocess.run("cat " + nr_out + " >> " + combined_nt_nr, shell=True)
+    match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores)
     
     print("Checkpoint 2")
 
