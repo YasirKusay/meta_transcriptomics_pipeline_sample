@@ -14,7 +14,6 @@ from merge_contigs import merge_contigs
 from remove_contaminants_control import remove_contaminants_control
 from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs
-from filter_files import filter_files
 from paf2blast6 import paf2blast6
 
 def run_snap_single(index, in_path, out_path, threads):
