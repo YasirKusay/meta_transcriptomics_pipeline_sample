@@ -310,8 +310,8 @@ def run_pipeline(args: argparse.Namespace):
                     " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
 
     start = time.time()
-    #new_command = subprocess.run(sortmerna_command, shell=True)
-    #if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
+    new_command = subprocess.run(sortmerna_command, shell=True)
+    if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
     end = time.time()
     print("sortmerna took: " + str(end - start))
     #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
@@ -324,8 +324,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads)
     start = time.time()
-    #new_command = subprocess.run(snap_human_command, shell=True)
-    #if check_fail(snap_path, new_command, [generated_files]) is True: return None
+    new_command = subprocess.run(snap_human_command, shell=True)
+    if check_fail(snap_path, new_command, [generated_files]) is True: return None
     end = time.time()
     print("human subtraction via snap took: " + str(end - start))
 
@@ -341,8 +341,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare + " " +\
                         human_out
 
-    #new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    #if check_fail(samtools_path, new_command, []) is True: return None
+    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
+    if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -355,8 +355,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     start = time.time()
-    #new_command = subprocess.run(megahit_command, shell=True)
-    #if check_fail(megahit_path, new_command, []) is True: return None
+    new_command = subprocess.run(megahit_command, shell=True)
+    if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
     #new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
@@ -368,8 +368,8 @@ def run_pipeline(args: argparse.Namespace):
                                 " in=" + human_subtract_1 +\
                                 " in2=" + human_subtract_2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    #new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
-    #if check_fail(bbwrap_path, new_command, []) is True: return None 
+    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
+    if check_fail(bbwrap_path, new_command, []) is True: return None 
 
     # now lets retrieve the reads that did not align
     new_fwd = dirpath + "/new_fwd.fq"
@@ -377,8 +377,8 @@ def run_pipeline(args: argparse.Namespace):
 
     align_command = "samtools fastq -f4 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
-    #new_command = subprocess.run(align_command, shell=True)
-    #if check_fail(samtools_path, new_command, []) is True: return None 
+    new_command = subprocess.run(align_command, shell=True)
+    if check_fail(samtools_path, new_command, []) is True: return None 
 
     smaller_1 = "smaller_1.fq"
     smaller_2 = "smaller_2.fq"
@@ -436,15 +436,15 @@ def run_pipeline(args: argparse.Namespace):
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
     seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    #new_command = subprocess.run(seqtk_command, shell=True)
-    #if check_fail(seqtk_path, new_command, []) is True: return None
+    new_command = subprocess.run(seqtk_command, shell=True)
+    if check_fail(seqtk_path, new_command, []) is True: return None
 
     # now lets align reads
     # need to merge paired end reads first though
     merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
-    #new_command = subprocess.run(merge_command, shell=True)
-    #if check_fail("seqtk mergepe", new_command, []) is True: return False 
+    new_command = subprocess.run(merge_command, shell=True)
+    if check_fail("seqtk mergepe", new_command, []) is True: return False 
 
     diamonc_combined_file = dirpath + "/diamond_combined_file.fq"
     subprocess.run("cat " + new_contigs + " > " + diamonc_combined_file, shell=True)
@@ -468,14 +468,14 @@ def run_pipeline(args: argparse.Namespace):
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    #if os.path.isfile(contigs_reads_taxids_temp):
-    #    os.remove(contigs_reads_taxids_temp)
-    #if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    if os.path.isfile(contigs_reads_taxids_temp):
+        os.remove(contigs_reads_taxids_temp)
+    if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
-    #exit()
+    exit()
 
     print("Checkpoint 1")
 
