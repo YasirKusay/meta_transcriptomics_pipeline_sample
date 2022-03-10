@@ -434,7 +434,7 @@ def run_pipeline(args: argparse.Namespace):
     if check_fail("seqtk mergepe", new_command, []) is True: return False 
 
     merged_short_pe_fa = dirpath + "/merged_short_reads.fa"
-    seqtk_command = seqtk_path + " seq -a " merged_short_pe + " > " + merged_short_pe_fa
+    seqtk_command = seqtk_path + " seq -a " + merged_short_pe + " > " + merged_short_pe_fa
     new_command = subprocess.run(seqtk_command, shell=True)
     if check_fail("seqtk", new_command, []) is True: return False 
 
