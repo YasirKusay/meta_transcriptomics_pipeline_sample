@@ -102,5 +102,5 @@ def main(paf_file, dirpath):
     blast.to_csv(f"{dirpath}/{name}_frompaf.m8", sep="\t", index=None, header=False)
 
 
-def paf2blast6(paf_file, dirpath)
+def paf2blast6(paf_file, dirpath):
     main(paf_file, dirpath)
