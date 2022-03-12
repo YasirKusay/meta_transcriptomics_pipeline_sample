@@ -1,7 +1,8 @@
 import subprocess
 import pandas as pd
+from getScientificNames import getScientificNames\
 
-def match_scores(mappings, combined_scores, dirpath, outfile):
+def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     temp_out = dirpath + "/temp_out"
     wf = open(temp_out, "w")
 
@@ -37,22 +38,6 @@ def match_scores(mappings, combined_scores, dirpath, outfile):
 
             elif (other_read > curr_read):
                 continue
-                #while (other_read > curr_read):
-                #    print("skipping" + other_read)
-                #    other_line = mf.readline().split("\t")
-                #    print(other_line)
-                #    if (len(other_line) == 1):
-                #        stop = True
-                #        break
-                #    other_read = other_line[0]
-                #    other_accession = other_line[1]
-                #    other_taxid = other_line[2]
-     
-                #if (stop is True):
-                #    break
-
-                #if (curr_read == curr_accession):
-                #    wf.write(other_taxid.strip() + "\t" + curr[2] + "\t" + curr[3] + "\t" + curr[4].strip() + "\n")
 
     wf.close()
     mf.close()
@@ -63,4 +48,20 @@ def match_scores(mappings, combined_scores, dirpath, outfile):
     df = pd.read_csv(temp_out, sep='\t', names=["Taxid", "E-val", "Bitscore", "Pid"])
     df = df.astype({"Taxid": str, "Pid": float, "E-val": float, "Bitscore": float})
     df = df.groupby("Taxid").mean().reset_index()
-    df.to_csv(outfile, sep="\t", index=False, header=False)
+    temp_out_2 = dirpath + "/temp_out_2"
+    df.to_csv(temp_out_2, sep="\t", index=False, header=False)
+
+    taxids = []
+    with open(temp_out_2, "r") as mf:
+        for line in mf:
+            curr = line.split("\t")
+            taxids.append(curr[0])
+   
+    sci_names = getScientificNames(taxids, taxids_location)
+
+    fout = open(outfile, "w")
+
+    with open(temp_out_2, "r") as mf:
+        for line in mf:
+            curr = line.split("\t")
+            fout.write(sci_names[curr[0]] + "\t" + curr[1] + "\t" + curr[2] + "\t" + curr[3].strip() + "\n")

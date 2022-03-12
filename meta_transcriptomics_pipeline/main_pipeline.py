@@ -519,7 +519,7 @@ def run_pipeline(args: argparse.Namespace):
     subprocess.run("cat " + nr_out + " >> " + combined_nt_nr_unsorted, shell=True)
     combined_nt_nr = dirpath + "/combined_nt_nr"
     subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_unsorted + " > " + combined_nt_nr, shell=True)
-    match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores)
+    match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores, args.taxdump_location)
     
     print("Checkpoint 2")
 
@@ -563,6 +563,12 @@ def run_pipeline(args: argparse.Namespace):
     # now we can calculate read count method
     readCountsOutfile = dirpath + "/readCountsOut.txt"
     countReads(reads_taxids, num_reads, readCountsOutfile, contaminants)
+
+
+    readAbundances = dirpath + "/readAbundances.txt"
+    get_lineage_info(readCountsOutfile, readAbundances, args.taxdump_location)
+    readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
+    subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
