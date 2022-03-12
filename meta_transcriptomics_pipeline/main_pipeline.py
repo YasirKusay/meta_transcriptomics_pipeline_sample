@@ -468,7 +468,7 @@ def run_pipeline(args: argparse.Namespace):
 
     nr_combined_file = dirpath + "/nr_combined_file"
     start = time.time()
-    if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 6) == False: return None
+    #if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 6) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
@@ -484,11 +484,11 @@ def run_pipeline(args: argparse.Namespace):
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    if os.path.isfile(contigs_reads_taxids_temp):
-        os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    #if os.path.isfile(contigs_reads_taxids_temp):
+    #    os.remove(contigs_reads_taxids_temp)
+    #if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
     #exit()
@@ -514,9 +514,11 @@ def run_pipeline(args: argparse.Namespace):
     subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
 
     taxid_scores = dirpath + "/taxid_scores"
+    combined_nt_nr_unsorted = dirpath + "/combined_nt_nr_unsorted"
+    subprocess.run("cat " + nt_out + " > " + combined_nt_nr_unsorted, shell=True)
+    subprocess.run("cat " + nr_out + " >> " + combined_nt_nr_unsorted, shell=True)
     combined_nt_nr = dirpath + "/combined_nt_nr"
-    subprocess.run("cat " + nt_out + " > " + combined_nt_nr, shell=True)
-    subprocess.run("cat " + nr_out + " >> " + combined_nt_nr, shell=True)
+    subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_unsorted + " > " + combined_nt_nr, shell=True)
     match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores)
     
     print("Checkpoint 2")
