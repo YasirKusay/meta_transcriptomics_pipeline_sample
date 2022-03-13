@@ -255,6 +255,36 @@ def get_abundance(joined, total_reads, final_file, contaminants):
             wf.write(str(key) + "\t" + str(final_tpm_sorted[key]) + "\n")
     wf.close()
 
+def process_fast_mode_output(kraken_out, outfile, total_reads):
+    results = {}
+    num_reads = 0
+    with open(kraken_out, "r") as f:   
+        for line in f:
+            curr = line.split()
+            taxid = curr[2]
+            if taxid == 0:
+                taxid == "Unknown"
+            if taxid in results.keys():
+                results[taxid] += 1
+            else:
+                results[taxid] = 1
+
+            num_reads += 1
+
+    for key in results.keys():
+        results[key] = (results[key]/total_reads) * 100
+
+    sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
+    wf = open(outfile, "w")
+
+    print(sorted_results)
+
+    for key in sorted_results.keys():
+        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+
+    wf.close()
+
 def run_pipeline(args: argparse.Namespace):
 
     # setting up a temporary dir for all intermediate files generated
@@ -347,6 +377,23 @@ def run_pipeline(args: argparse.Namespace):
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
+
+    # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
+    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
+    num_reads_str = num_reads_bytes.stdout.decode('utf-8')
+    num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
+    fast_mode_output = dirpath + "/fast_mode_output"
+    kraken_command = "kraken2 --db " + args.kraken_db + " --threads " + str(args.threads) +\
+                        " --output " + fast_mode_output + " --paired " + human_subtract_1 + " " + human_subtract_2
+    new_command = subprocess.run(kraken_command, shell=True)
+    if check_fail("kraken", new_command, []) is True: return None
+    kraken_res_out = dirpath + "/kraken_res_out"
+    process_fast_mode_output(fast_mode_output, kraken_res_out, num_reads)
+    fastAbundances = dirpath + "/fastAbundances.txt"
+    get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
+    fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
+    subprocess.run("ktImportText " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
+    exit()
 
     #################### MEGAHIT ###########################
     megahit_path = "megahit"

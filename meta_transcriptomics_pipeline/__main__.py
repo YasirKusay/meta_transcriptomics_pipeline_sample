@@ -30,6 +30,12 @@ def parse_args():
         type=str,
         help="path to the snap human index"
     )
+
+    parser.add_argument(
+        "kraken_db",
+        type=str,
+        help="kraken_db_location"
+    )
     
     parser.add_argument(
         "minimap2_index",
@@ -65,12 +71,6 @@ def parse_args():
         "taxdump_location",
         type=str,
         help="taxdump_location"
-    )
-
-    parser.add_argument(
-        "--kraken_db",
-        type=str,
-        help="kraken_db_location"
     )
 
     parser.add_argument(
