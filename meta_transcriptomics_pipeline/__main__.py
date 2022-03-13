@@ -120,6 +120,28 @@ def parse_args():
         type=str,
         default="30",
         help="DURING QC. The threshold for low complexity filter (0~100). Default is 30, which means 30% complexity is required. (int [=30])"
+    ) 
+
+    parser.add_argument(
+        "--pid_filter",
+        type=float,
+        default=0,
+        help="pid_filter"
+    )
+
+    parser.add_argument(
+        "--evalue_filter",
+        type=float,
+        default=0,
+        help="evalue_filter"
+    )
+
+
+    parser.add_argument(
+        "--bitscore_filter",
+        type=float,
+        default=0,
+        help="bitscore_filter"
     )
 
     parser.add_argument(

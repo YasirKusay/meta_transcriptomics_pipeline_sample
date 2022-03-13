@@ -17,6 +17,8 @@ from map_reads_to_contigs import map_reads_to_contigs
 from paf2blast6 import paf2blast6
 from filter_files import filter_files
 from match_scores import match_scores
+from filter_results import filter_result, get_filtered_taxids
+
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\
@@ -385,15 +387,15 @@ def run_pipeline(args: argparse.Namespace):
     fast_mode_output = dirpath + "/fast_mode_output"
     kraken_command = "kraken2 --db " + args.kraken_db + " --threads " + str(args.threads) +\
                         " --output " + fast_mode_output + " --paired " + human_subtract_1 + " " + human_subtract_2
-    new_command = subprocess.run(kraken_command, shell=True)
-    if check_fail("kraken", new_command, []) is True: return None
+    #new_command = subprocess.run(kraken_command, shell=True)
+    #if check_fail("kraken", new_command, []) is True: return None
     kraken_res_out = dirpath + "/kraken_res_out"
     process_fast_mode_output(fast_mode_output, kraken_res_out, num_reads)
     fastAbundances = dirpath + "/fastAbundances.txt"
     get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
-    fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
-    subprocess.run("ktImportText " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
-    exit()
+    #fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
+    #subprocess.run("ktImportText " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
+    #exit()
 
     #################### MEGAHIT ###########################
     megahit_path = "megahit"
@@ -542,11 +544,6 @@ def run_pipeline(args: argparse.Namespace):
 
     print("Checkpoint 1")
 
-    # firstly lets count the reads
-    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
-    num_reads_str = num_reads_bytes.stdout.decode('utf-8')
-    num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
-
     # map reads to their contigs
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
     map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
@@ -611,9 +608,12 @@ def run_pipeline(args: argparse.Namespace):
     readCountsOutfile = dirpath + "/readCountsOut.txt"
     countReads(reads_taxids, num_reads, readCountsOutfile, contaminants)
 
+    to_filter_out = filter_result(dirpath + "/temp_out_2", args.pid_filter, args.evalue_filter, args.bitscore_filter)
+    readCountsFiltered = dirpath + "/readCountsFiltered.txt"
+    get_filtered_taxids(to_filter_out, readCountsOutfile, readCountsFiltered)
 
     readAbundances = dirpath + "/readAbundances.txt"
-    get_lineage_info(readCountsOutfile, readAbundances, args.taxdump_location)
+    get_lineage_info(readCountsFiltered, readAbundances, args.taxdump_location)
     readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
     subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
 

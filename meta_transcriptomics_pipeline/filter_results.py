@@ -1,17 +1,17 @@
 def filter_result(infile, pid, e_val, bitscore):
     filter_out = []
     with open(infile, "r") as f:
-    for line in f:
-        curr = line.split()
-        if (int(curr[1]) < pid):
-            filter_out.append(curr[0])
-            continue
-        if (int(curr[2]) < e_val):
-            filter_out.append(curr[0])
-            continue
-        if (int(curr[3].strip()) < e_val):
-            filter_out.append(curr[0])
-            continue 
+        for line in f:
+            curr = line.split()
+            if (float(curr[1]) < pid):
+                filter_out.append(curr[0])
+                continue
+            if (float(curr[2]) < e_val):
+                filter_out.append(curr[0])
+                continue
+            if (float(curr[3].strip()) < e_val):
+                filter_out.append(curr[0])
+                continue 
 
     return filter_out
 
@@ -24,9 +24,9 @@ def get_filtered_taxids(taxids_to_remove, counts_file, outfile):
             percent = curr[1]
             taxid = curr[0]
             if taxid in taxids_to_remove:
-                unknown_amount += int(percent)
+                unknown_amount += float(percent)
             elif taxid == "Unknown":
-                unknown_amount += int(percent)
+                unknown_amount += float(percent)
             else:
                 wf.write(str(taxid) + "\t" + str(percent) + "\n")
  
