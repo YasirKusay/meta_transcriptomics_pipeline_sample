@@ -454,7 +454,7 @@ def run_pipeline(args: argparse.Namespace):
     start = time.time()
     minimap2_path = "minimap2"
     minimap2_contig_out = dirpath + "/minimap2_contig_out.paf"
-    minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " " + args.minimap2_index + " " + new_contigs + " > " + minimap2_contig_out
+    minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " --split-prefix " + dirpath + " " + args.minimap2_index + " " + new_contigs + " > " + minimap2_contig_out
     #new_command = subprocess.run(minimap2_command, shell=True)
     #if check_fail(minimap2_path, new_command, []) is True: return None
 
@@ -464,7 +464,7 @@ def run_pipeline(args: argparse.Namespace):
     #new_command = subprocess.run("cat " + paf2blast_out + " > " + nt_combined_file, shell=True)
 
     minimap2_long_reads_out = dirpath + "/minimap2_lr_out.paf"
-    minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
+    minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " --split-prefix " + dirpath + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
     #new_command = subprocess.run(minimap2_command, shell=True)
     #if check_fail(minimap2_path, new_command, []) is True: return None
 
