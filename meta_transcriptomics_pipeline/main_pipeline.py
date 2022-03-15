@@ -394,7 +394,7 @@ def run_pipeline(args: argparse.Namespace):
     fastAbundances = dirpath + "/fastAbundances.txt"
     get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
     #fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
-    #subprocess.run("ktImportText " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
+    #subprocess.run("ImportText.pl " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
     #exit()
 
     #################### MEGAHIT ###########################
@@ -615,7 +615,8 @@ def run_pipeline(args: argparse.Namespace):
     readAbundances = dirpath + "/readAbundances.txt"
     get_lineage_info(readCountsFiltered, readAbundances, args.taxdump_location)
     readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
-    subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
+    #subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
+    subprocess.run("ImportText.pl " + readAbundances + " -o " + readAbundancesKrona + " -fil " + taxid_scores, shell=True)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
