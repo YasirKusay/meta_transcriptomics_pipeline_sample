@@ -10,6 +10,7 @@ def check_fail(program_name, command, to_remove):
 
     if (exit_now):
         print(program_name + " failed")
+        print(command.stderr)
         for f in to_remove:
             os.remove(f)
         return True

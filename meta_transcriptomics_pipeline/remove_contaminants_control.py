@@ -31,8 +31,9 @@ def run_kraken(combined, kraken_index, threads, path):
 
     return kraken_outs
 
-def run_rcf(taxdump_location, kraken_outs, num_controls, rcf_out, path):
-    rcf_command = "rcf -n " + taxdump_location + " -k " +  " -k ".join(kraken_outs) + " -c " + str(math.trunc(num_controls/2)) + " -o " + path + "/rcf_out_temp" + " -s KRAKEN -y 25 -d > " + rcf_out
+def run_rcf(taxdump_location, kraken_controls, kraken_outs, num_controls, rcf_out, path):
+    rcf_command = "rcf -n " + taxdump_location + " -k " + " -k ".join(kraken_controls) + " -k " +  " -k ".join(kraken_outs) + " -c " + str(len(kraken_controls)) + " -o " + path + "/rcf_out_temp" + " -s KRAKEN -y 25 -d > " + rcf_out
+    print(rcf_command)
     new_command = subprocess.run(rcf_command, shell=True)
     if check_fail("kraken", new_command, []) is True: return None
     return True
@@ -45,14 +46,14 @@ def remove_contaminants_control(controls, sequences, kraken_index, rcf_out, taxd
     combined = controls + sequences
  
     print("Running kraken")
-    kraken_outs = run_kraken(combined, kraken_index, threads, path)
-    if kraken_outs is None:
-        return None
+    #kraken_outs = run_kraken(combined, kraken_index, threads, path)
+    #if kraken_outs is None:
+    #    return None
 
     # now we can run the actual recentrifuge command
     print("Running RCF")
-    #if run_rcf(taxdump_location, kraken_outs, len(controls), rcf_out, path) is None:
-    #    return None
+    if run_rcf(taxdump_location, controls, sequences, len(controls), rcf_out, path) is None:
+        return None
 
     # now need to look through file to return the contaminant samples
     # contaminants are stored at the taxid level

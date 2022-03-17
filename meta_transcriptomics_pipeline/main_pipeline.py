@@ -374,8 +374,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare + " " +\
                         human_out
 
-    #new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    #if check_fail(samtools_path, new_command, []) is True: return None
+    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
+    if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -390,9 +390,9 @@ def run_pipeline(args: argparse.Namespace):
     #new_command = subprocess.run(kraken_command, shell=True)
     #if check_fail("kraken", new_command, []) is True: return None
     kraken_res_out = dirpath + "/kraken_res_out"
-    process_fast_mode_output(fast_mode_output, kraken_res_out, num_reads)
+    #process_fast_mode_output(fast_mode_output, kraken_res_out, num_reads)
     fastAbundances = dirpath + "/fastAbundances.txt"
-    get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
+    #get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
     #fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
     #subprocess.run("ImportText.pl " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
     #exit()
@@ -458,6 +458,11 @@ def run_pipeline(args: argparse.Namespace):
     #new_command = subprocess.run(minimap2_command, shell=True)
     #if check_fail(minimap2_path, new_command, []) is True: return None
 
+
+    end = time.time()
+    print("minimap2 alignment 1 against nt took: " + str(end - start))
+
+    start = time.time()
     paf2blast6(minimap2_contig_out, dirpath)
     paf2blast_out = dirpath + "/minimap2_contig_out_frompaf.m8"
 
@@ -469,7 +474,7 @@ def run_pipeline(args: argparse.Namespace):
     #if check_fail(minimap2_path, new_command, []) is True: return None
 
     end = time.time()
-    print("minimap2 alignment against nt took: " + str(end - start))
+    print("minimap2 alignment 2 against nt took: " + str(end - start))
 
     paf2blast6(minimap2_long_reads_out, dirpath)
     paf2blast_out = dirpath + "/minimap2_lr_out_frompaf.m8"
@@ -528,8 +533,8 @@ def run_pipeline(args: argparse.Namespace):
     nt_dummy = dirpath + "/nt_dummy.txt"
     nr_dummy = dirpath + "/nr_dummy.txt"
 
-    subprocess.run("touch " + nt_dummy, shell=True)
-    subprocess.run("touch " + nr_dummy, shell=True)
+    #subprocess.run("touch " + nt_dummy, shell=True)
+    #subprocess.run("touch " + nr_dummy, shell=True)
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
@@ -596,11 +601,12 @@ def run_pipeline(args: argparse.Namespace):
     contaminants = []
     rcf_out = dirpath + "/rcf_out.txt"
     if contaminant_removal is True:
-        others = args.other_sequences
-        others.append(args.inp1)
-        others.append(args.inp2)
-        contaminants = remove_contaminants_control(args.control_sequences, others, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
+        #others = args.other_sequences
+        #others.append(args.inp1)
+        #others.append(args.inp2)
+        contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
 
+    exit()
 
     print("Finished decontam")
 
