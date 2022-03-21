@@ -31,6 +31,7 @@ def run_snap_single(index, in_path, out_path, threads):
 def run_diamond(index, in_path, out_path, threads, outfmt):
     diamond_command = "diamond" + " blastx --db " + index +\
                         " --query " + in_path + " --sensitive --max-target-seqs 1 --outfmt " + str(outfmt) +\
+                        " --masking 0 -c 1 -s 1 -b 0.75" +\
                         " --threads " + str(threads) +\
                         " --out " + out_path
     new_command = subprocess.run(diamond_command, shell=True)
@@ -357,8 +358,8 @@ def run_pipeline(args: argparse.Namespace):
     snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
                     " -o " + human_out + " -t " + str(args.threads) + " -I "
     start = time.time()
-    new_command = subprocess.run(snap_human_command, shell=True)
-    if check_fail(snap_path, new_command, [generated_files]) is True: return None
+    #new_command = subprocess.run(snap_human_command, shell=True)
+    #if check_fail(snap_path, new_command, [generated_files]) is True: return None
     end = time.time()
     print("human subtraction via snap took: " + str(end - start))
 
@@ -374,8 +375,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -s " + human_spare + " " +\
                         human_out
 
-    new_command = subprocess.run(samtools_human_subtract_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None
+    #new_command = subprocess.run(samtools_human_subtract_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None
     generated_files.append(human_subtract_1 + ".fastq")
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
@@ -405,8 +406,8 @@ def run_pipeline(args: argparse.Namespace):
                         " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     start = time.time()
-    new_command = subprocess.run(megahit_command, shell=True)
-    if check_fail(megahit_path, new_command, []) is True: return None
+    #new_command = subprocess.run(megahit_command, shell=True)
+    #if check_fail(megahit_path, new_command, []) is True: return None
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
     new_command = subprocess.run("mv " + contig_path + "/final.contigs.fa " + contigs, shell=True)
@@ -418,8 +419,8 @@ def run_pipeline(args: argparse.Namespace):
                                 " in=" + human_subtract_1 +\
                                 " in2=" + human_subtract_2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
-    if check_fail(bbwrap_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
+    #if check_fail(bbwrap_path, new_command, []) is True: return None 
 
     # now lets retrieve the reads that did not align
     new_fwd = dirpath + "/new_fwd.fq"
@@ -427,8 +428,8 @@ def run_pipeline(args: argparse.Namespace):
 
     align_command = "samtools fastq -f4 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
-    new_command = subprocess.run(align_command, shell=True)
-    if check_fail(samtools_path, new_command, []) is True: return None 
+    #new_command = subprocess.run(align_command, shell=True)
+    #if check_fail(samtools_path, new_command, []) is True: return None 
 
     smaller_1 = dirpath + "/smaller_1.fq"
     smaller_2 = dirpath + "/smaller_2.fq"
@@ -445,8 +446,8 @@ def run_pipeline(args: argparse.Namespace):
     seqtk_path = "seqtk"
     new_contigs = contig_path + "/final_contigs.fq"
     seqtk_command = seqtk_path + " seq -F '#' " + contigs + " > " + new_contigs
-    new_command = subprocess.run(seqtk_command, shell=True)
-    if check_fail(seqtk_path, new_command, []) is True: return None
+    #new_command = subprocess.run(seqtk_command, shell=True)
+    #if check_fail(seqtk_path, new_command, []) is True: return None
 
     nt_combined_file = dirpath + "/nt_combined_file"
 
@@ -455,8 +456,8 @@ def run_pipeline(args: argparse.Namespace):
     minimap2_path = "minimap2"
     minimap2_contig_out = dirpath + "/minimap2_contig_out.paf"
     minimap2_command = minimap2_path + " -c -t " + str(args.threads) + " --split-prefix " + dirpath + " " + args.minimap2_index + " " + new_contigs + " > " + minimap2_contig_out
-    new_command = subprocess.run(minimap2_command, shell=True)
-    if check_fail(minimap2_path, new_command, []) is True: return None
+    #new_command = subprocess.run(minimap2_command, shell=True)
+    #if check_fail(minimap2_path, new_command, []) is True: return None
 
 
     end = time.time()
@@ -470,8 +471,8 @@ def run_pipeline(args: argparse.Namespace):
 
     minimap2_long_reads_out = dirpath + "/minimap2_lr_out.paf"
     minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " --split-prefix " + dirpath + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
-    new_command = subprocess.run(minimap2_command, shell=True)
-    if check_fail(minimap2_path, new_command, []) is True: return None
+    #new_command = subprocess.run(minimap2_command, shell=True)
+    #if check_fail(minimap2_path, new_command, []) is True: return None
 
     end = time.time()
     print("minimap2 alignment 2 against nt took: " + str(end - start))
@@ -498,8 +499,8 @@ def run_pipeline(args: argparse.Namespace):
     blast_path = "blastn -task megablast"
     blast_short_out = dirpath + "/blast_short_out"
     blast_command = blast_path + " -query " + merged_short_pe_fa + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
-    new_command = subprocess.run(blast_command, shell=True)
-    if check_fail(blast_path, new_command, []) is True: return False  
+    #new_command = subprocess.run(blast_command, shell=True)
+    #if check_fail(blast_path, new_command, []) is True: return False  
 
     end = time.time()
     print("blast alignment against nt took: " + str(end - start))
@@ -522,7 +523,7 @@ def run_pipeline(args: argparse.Namespace):
 
     nr_combined_file = dirpath + "/nr_combined_file"
     start = time.time()
-    if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 6) == False: return None
+    #if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 6) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 

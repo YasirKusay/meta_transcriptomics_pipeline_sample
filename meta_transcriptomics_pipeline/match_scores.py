@@ -1,6 +1,7 @@
 import subprocess
 import pandas as pd
-from getScientificNames import getScientificNames\
+from ete3 import NCBITaxa
+from getScientificNames import getScientificNames
 
 def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     temp_out = dirpath + "/temp_out"
@@ -17,6 +18,8 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     other_accession = other_line[1]
     other_taxid = other_line[2]
 
+    ncbi = NCBITaxa()
+
     with open(combined_scores_sorted, "r") as cs:
         stop = False
         for line in cs:
@@ -25,7 +28,11 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
             curr_accession = curr[1]
 
             if (curr_read == other_read):
-                wf.write(other_taxid.strip() + "\t" + curr[2] + "\t" + curr[3] + "\t" + curr[4].strip() + "\n")
+                lineage = ncbi.get_lineage(other_taxid.strip())
+                lineage2ranks = ncbi.get_rank(lineage)
+                ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
+                r = ranks2lineage.get("species", "Unknown")
+                wf.write(str(r) + "\t" + curr[2] + "\t" + curr[3] + "\t" + curr[4].strip() + "\n")
 
                 other_line = mf.readline().split("\t")
                 if (len(other_line) == 1):

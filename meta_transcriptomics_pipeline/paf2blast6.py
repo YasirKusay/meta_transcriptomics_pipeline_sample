@@ -7,6 +7,8 @@ import shlex
 import sys
 import math
 import re
+import numpy
+
 
 nonmatch_pattern = re.compile(r"NM:i:(\d+);")
 cigar_pattern = re.compile(r"cg:Z:([A-Za-z0-9]+)")
@@ -24,7 +26,7 @@ class QualityCalculations:
 
     def calc_evalue(self, alen, nonmatch):
         score = alen - 2 * nonmatch
-        return self._k * alen * self.genome_size * math.exp(-self._lambda * score)
+        return self._k * alen * self.genome_size * numpy.exp(-self._lambda * score)
 
     def calc_gap_openings(self, cigar):
         go = 0

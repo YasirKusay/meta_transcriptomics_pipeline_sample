@@ -52,8 +52,8 @@ def remove_contaminants_control(controls, sequences, kraken_index, rcf_out, taxd
 
     # now we can run the actual recentrifuge command
     print("Running RCF")
-    #if run_rcf(taxdump_location, controls, sequences, len(controls), rcf_out, path) is None:
-    #    return None
+    if run_rcf(taxdump_location, controls, sequences, len(controls), rcf_out, path) is None:
+        return None
 
     # now need to look through file to return the contaminant samples
     # contaminants are stored at the taxid level
