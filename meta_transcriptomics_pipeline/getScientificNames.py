@@ -18,11 +18,18 @@ def getScientificNames(taxids, folder_location):
             #print(line)
             #print(len(taxids))
             #print(taxids[inc-1])
+            print("PRINTING ITEM")
+            print(curr[0])
+            print(taxids[inc])
             if int(curr[0]) == int(taxids[inc]):
                 if curr[3] == "scientific name\t|\n":
                     sci_names[str(curr[0])] = curr[1]
                     inc += 1
                     found += 1
+                    if inc == len(taxids):
+                        break
+                    if (taxids[inc] == "Unknown"):
+                        inc += 1
                     if inc == len(taxids):
                         break
             elif int(curr[0]) > int(taxids[inc]): # has been a problem before, e.g. #115782 is not in names.dmp for some reason, simply skips that taxid
@@ -38,6 +45,11 @@ def getScientificNames(taxids, folder_location):
                     if inc == len(taxids):
                         cancel = True
                         break
+                    if (taxids[inc] == "Unknown"):
+                        inc += 1
+                    if inc == len(taxids):
+                        cancel = True
+                        break
 
                 if (cancel == True):
                     break
@@ -48,6 +60,10 @@ def getScientificNames(taxids, folder_location):
                     if curr[3] == "scientific name\t|\n":
                         sci_names[str(curr[0])] = curr[1]
                         inc += 1
+                        if inc == len(taxids):
+                            break
+                        if (taxids[inc] == "Unknown"):
+                            inc += 1
                         if inc == len(taxids):
                             break
 

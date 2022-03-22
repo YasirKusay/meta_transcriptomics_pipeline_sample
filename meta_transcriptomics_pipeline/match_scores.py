@@ -28,7 +28,14 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
             curr_accession = curr[1]
 
             if (curr_read == other_read):
-                lineage = ncbi.get_lineage(other_taxid.strip())
+
+                lineage = None
+                try:
+                    lineage = ncbi.get_lineage(other_taxid.strip())
+                except:
+                    print(str(other_taxid.strip()) + " NOT FOUND")
+                    continue
+
                 lineage2ranks = ncbi.get_rank(lineage)
                 ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
                 r = ranks2lineage.get("species", "Unknown")
@@ -62,7 +69,7 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     with open(temp_out_2, "r") as mf:
         for line in mf:
             curr = line.split("\t")
-            taxids.append(curr[0])
+            taxids.append(int(curr[0]))
    
     sci_names = getScientificNames(taxids, taxids_location)
 
