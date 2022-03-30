@@ -69,7 +69,8 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     with open(temp_out_2, "r") as mf:
         for line in mf:
             curr = line.split("\t")
-            taxids.append(int(curr[0]))
+            if (curr[0] != "Unknown"):
+                taxids.append(int(curr[0]))
    
     sci_names = getScientificNames(taxids, taxids_location)
 
