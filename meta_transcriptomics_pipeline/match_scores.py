@@ -52,6 +52,15 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
 
             elif (other_read > curr_read):
                 continue
+            else:
+                other_line = mf.readline().split("\t")
+                if (len(other_line) == 1):
+                    stop = True
+                    break
+
+                other_read = other_line[0]
+                other_accession = other_line[1]
+                other_taxid = other_line[2]
 
     wf.close()
     mf.close()

@@ -493,7 +493,7 @@ def run_pipeline(args: argparse.Namespace):
     #paf2blast6(minimap2_contig_out, dirpath)
     paf2blast_out = dirpath + "/minimap2_contig_out_frompaf.m8"
 
-    new_command = subprocess.run("cat " + paf2blast_out + " > " + nt_combined_file, shell=True)
+    #new_command = subprocess.run("cat " + paf2blast_out + " > " + nt_combined_file, shell=True)
 
     minimap2_long_reads_out = dirpath + "/minimap2_lr_out.paf"
     minimap2_command = minimap2_path + " -c -x sr -t " + str(args.threads) + " --split-prefix " + dirpath + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
@@ -524,7 +524,7 @@ def run_pipeline(args: argparse.Namespace):
 
     blast_path = "blastn -task megablast"
     blast_short_out = dirpath + "/blast_short_out"
-    blast_command = blast_path + " -query " + merged_short_pe_fa + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
+    #blast_command = blast_path + " -query " + merged_short_pe_fa + " -db nt " + " -out " + blast_short_out + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
     #new_command = subprocess.run(blast_command, shell=True)
     #if check_fail(blast_path, new_command, []) is True: return False  
 
@@ -553,32 +553,34 @@ def run_pipeline(args: argparse.Namespace):
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
 
-    #nt_out, nr_out = merge_contigs(nt_combined_file, nr_combined_file, dirpath)
+    #exit()
+
+    nt_out, nr_out = merge_contigs(nt_combined_file, nr_combined_file, dirpath)
 
     nt_out = dirpath + "/nucl_alignments_contigs.txt"
     nr_out = dirpath + "/prot_alignments_contigs.txt"
     nt_dummy = dirpath + "/nt_dummy.txt"
     nr_dummy = dirpath + "/nr_dummy.txt"
 
-    #subprocess.run("touch " + nt_dummy, shell=True)
-    #subprocess.run("touch " + nr_dummy, shell=True)
+    subprocess.run("touch " + nt_dummy, shell=True)
+    subprocess.run("touch " + nr_dummy, shell=True)
     
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
-    #if os.path.isfile(contigs_reads_taxids_temp):
-    #    os.remove(contigs_reads_taxids_temp)
-    #if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    if os.path.isfile(contigs_reads_taxids_temp):
+        os.remove(contigs_reads_taxids_temp)
+    if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    #subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
 
 
     #exit()
 
-    print("Checkpoint 1")
+    #print("Checkpoint 1")
 
     # map reads to their contigs
     mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
-    #map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
+    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
 
     # #exit()
 
@@ -587,27 +589,29 @@ def run_pipeline(args: argparse.Namespace):
 
     reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
     contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    #subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
 
     taxid_scores = dirpath + "/taxid_scores"
     combined_nt_nr_unsorted = dirpath + "/combined_nt_nr_unsorted"
-    #subprocess.run("cat " + nt_out + " > " + combined_nt_nr_unsorted, shell=True)
-    #subprocess.run("cat " + nr_out + " >> " + combined_nt_nr_unsorted, shell=True)
+    subprocess.run("cat " + nt_out + " > " + combined_nt_nr_unsorted, shell=True)
+    subprocess.run("cat " + nr_out + " >> " + combined_nt_nr_unsorted, shell=True)
     combined_nt_nr = dirpath + "/combined_nt_nr"
-    #subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_unsorted + " > " + combined_nt_nr, shell=True)
-    #match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores, args.taxdump_location)
-    
+    subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_unsorted + " > " + combined_nt_nr, shell=True)
+    match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores, args.taxdump_location)
+
+    #exit()   
+ 
     print("Checkpoint 2")
 
     mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
-    #subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
-    #assignments = fetch_contig_taxids(contigs_reads_taxids)
-    #assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
+    subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
+    assignments = fetch_contig_taxids(contigs_reads_taxids)
+    assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
     reads_taxids = dirpath + "/all_reads_taxids.txt"
-    #subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
+    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
-    #subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
+    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
 
 
     # before proceeeding any further, lets remove the contaminants, simply remove the taxids
@@ -628,9 +632,9 @@ def run_pipeline(args: argparse.Namespace):
     contaminants = []
     rcf_out = dirpath + "/rcf_out.txt"
     if contaminant_removal is True:
-        #others = args.other_sequences
-        #others.append(args.inp1)
-        #others.append(args.inp2)
+        others = args.other_sequences
+        others.append(args.inp1)
+        others.append(args.inp2)
         contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
 
     #exit()
@@ -648,10 +652,10 @@ def run_pipeline(args: argparse.Namespace):
     readAbundances = dirpath + "/readAbundances.txt"
     get_lineage_info(readCountsOutfile, readAbundances, args.taxdump_location)
     readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
-    #subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
+    subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
     subprocess.run("ImportText.pl " + readAbundances + " -o " + readAbundancesKrona + " -fil " + taxid_scores, shell=True)
 
-    #exit()
+    # exit()
 
     
 

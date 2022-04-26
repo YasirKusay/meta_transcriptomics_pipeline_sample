@@ -1,6 +1,6 @@
-# file takes the 2 sam files, one from snap and the other for diamond and merges them
+# file takes the 2 sam files and merges them
 # and finds the best hit possible
-# best hits are decided by edit distance (1) and mapq (2)
+# best hits are decided by lowest edit distance (1) and highest mapq (2)
 
 import subprocess
 import os
@@ -35,12 +35,11 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
     # now we can go about selecting the best hit
     with open(snap_diamond_sorted_file, "r") as f:
         prev_query = "NULL"
-        best_edit_dist = -1
+        best_edit_dist = 99999999
         best_mapq = -1
         best_line = "NULL"
         for line in f:
             curr = line.split("\t")
-            print(curr)
             if (curr[2] != "*"):
                 edit_dist_inc = 11
                 while (edit_dist_inc < len(curr)):
@@ -52,7 +51,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                 if edit_dist_inc < len(curr):
                     curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
                 if (prev_query == curr[0]):
-                    if (curr_edit_dist > best_edit_dist): # checking if line has higher edit dist
+                    if (curr_edit_dist < best_edit_dist): # checking if line has lowest (best) edit dist
                         best_line = line
                         best_edit_dist = curr_edit_dist
                         best_mapq = int(curr[4])
@@ -124,9 +123,6 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
             else: 
                 output_snap.write(to_print[0] + "\t" + print_accession + "\n")
 
-    #command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
-    #command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
-    
     output_snap.close()
     output_diamond.close()
 
