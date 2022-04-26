@@ -15,7 +15,7 @@ cigar_pattern = re.compile(r"cg:Z:([A-Za-z0-9]+)")
 
 
 class QualityCalculations:
-    def __init__(self, genome_size=832400799511):
+    def __init__(self, genome_size=532400799511):
         self._k = 0.1
         self._lambda = 1.58
         self.genome_size = genome_size
