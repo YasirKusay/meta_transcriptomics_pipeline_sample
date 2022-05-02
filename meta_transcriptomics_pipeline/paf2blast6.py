@@ -1,4 +1,4 @@
-/*
+'''
 MIT License
 
 Copyright (c) 2018 Chan Zuckerberg Initiative, LLC.
@@ -20,7 +20,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
+'''
 
 # originally from https://github.com/chanzuckerberg/czid-workflows/blob/72fa52585b318f29eea24c91496df6e116262315/short-read-mngs/idseq_utils/idseq_utils/paf2blast6.py
 
