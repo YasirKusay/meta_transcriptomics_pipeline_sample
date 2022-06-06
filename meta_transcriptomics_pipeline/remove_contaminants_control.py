@@ -1,7 +1,5 @@
 import subprocess
 import os
-import math
-import re
 from helpers import check_fail
 
 def run_kraken(combined, kraken_index, threads, path):

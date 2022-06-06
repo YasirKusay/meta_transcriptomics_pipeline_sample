@@ -5,7 +5,7 @@
 import subprocess
 import os
 
-def merge_contigs(snap_sam, diamond_sam, path):
+def merge_blast_outputs(snap_sam, diamond_sam, path):
     if os.path.isfile(path + "/nucl_alignments_contigs.txt"):
         os.remove(path + "/nucl_alignments_contigs.txt")
     if os.path.isfile(path + "/prot_alignments_contigs.txt"):

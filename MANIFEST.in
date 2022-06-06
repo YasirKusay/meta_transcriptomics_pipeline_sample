@@ -1,0 +1,4 @@
+include meta_transcriptomics_pipeline/__init__.pyx
+include meta_transcriptomics_pipeline/__init__.pxd
+include meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx
+include meta_transcriptomics_pipeline

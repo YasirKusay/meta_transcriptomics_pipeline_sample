@@ -1,10 +1,40 @@
 import argparse
-import imp
 import subprocess
-import os
 import operator
 import time
-import re
+from helpers import check_fail
+from filter_files import filter_files
+from get_lineage_info import get_lineage_info
+
+def process_fast_mode_output(kraken_out, outfile, total_reads):
+    results = {}
+    num_reads = 0
+    with open(kraken_out, "r") as f:   
+        for line in f:
+            curr = line.split()
+            taxid = curr[2]
+            if taxid == 0:
+                taxid == "Unknown"
+            if taxid in results.keys():
+                results[taxid] += 1
+            else:
+                results[taxid] = 1
+
+            num_reads += 1
+
+    for key in results.keys():
+        results[key] = (results[key]/total_reads) * 100
+
+    sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
+    wf = open(outfile, "w")
+
+    print(sorted_results)
+
+    for key in sorted_results.keys():
+        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+
+    wf.close()
 
 def preprocessing(args: argparse.Namespace):
     dirpath = args.dirpath
@@ -27,6 +57,7 @@ def preprocessing(args: argparse.Namespace):
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
                     " --length_required " + args.length_required +\
+                    " --low_complexity_filter " +\
                     " --detect_adapter_for_pe" +\
                     " --thread " + str(args.threads)
                     # need to consider adapters, should we give the user a chance to add adatpers?

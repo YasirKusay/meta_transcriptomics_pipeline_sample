@@ -10,7 +10,7 @@ from get_lineage_info import get_lineage_info
 from helpers import check_command_exists, check_fail, generate_temp_file
 from map_reads_to_contigs import map_reads_to_contigs
 from merge_sams import merge_sams
-from merge_contigs import merge_contigs
+from merge_blast_outputs import merge_blast_outputs
 from remove_contaminants_control import remove_contaminants_control
 from join_taxid_contigs import join_taxid_contigs
 from map_reads_to_contigs import map_reads_to_contigs

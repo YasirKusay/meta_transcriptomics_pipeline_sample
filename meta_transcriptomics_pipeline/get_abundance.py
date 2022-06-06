@@ -1,3 +1,6 @@
+import os
+import operator
+
 def get_abundance(joined, total_reads, n50, final_file, contaminants):
     final_res = {}
     taxids = {}
@@ -23,7 +26,7 @@ def get_abundance(joined, total_reads, n50, final_file, contaminants):
                 continue
             name = curr[0]
             length = int(curr[1])
-            if (!name.startswith("k")): # is not a contig
+            if (name.startswith("k") is False): # is not a contig
                 length = n50
             count = int(curr[2])
             taxid = int(curr[3])
