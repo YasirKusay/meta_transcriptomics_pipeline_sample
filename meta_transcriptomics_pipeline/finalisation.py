@@ -212,8 +212,8 @@ def finalisation(args: argparse.Namespace):
     new_fwd = dirpath + "/new_fwd.fq"
     human_subtract_1 = dirpath + "/human_subtract1.fastq"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
-    new_contigs = contig_path + "/final_contigs.fq"
     contig_path = dirpath + "/megahit_out"
+    new_contigs = contig_path + "/final_contigs.fq"
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
