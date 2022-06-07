@@ -334,7 +334,7 @@ def finalisation(args: argparse.Namespace):
     subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
 
     log_path = dirpath + "/megahit_out/log"
-    n50 = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')[-2:-1][0]
+    n50 = float(subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')[-2:-1][0])
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
