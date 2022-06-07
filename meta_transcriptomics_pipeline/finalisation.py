@@ -214,9 +214,18 @@ def finalisation(args: argparse.Namespace):
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
     contig_path = dirpath + "/megahit_out"
     new_contigs = contig_path + "/final_contigs.fq"
+    nt_combined_file = dirpath + "/nt_combined_file"
+    nr_combined_file = dirpath + "/nr_combined_file"
+
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
+
+    paf2blast_out_contigs = dirpath + "/minimap2_contig_out_frompaf.m8"
+    new_command = subprocess.run("cat " + paf2blast_out_contigs + " >> " + nt_combined_file, shell=True)
+    paf2blast_out_lr = dirpath + "/minimap2_lr_out_frompaf.m8"
+    new_command = subprocess.run("cat " + paf2blast_out_lr + " >> " + nt_combined_file, shell=True)
+    nt_out, nr_out = merge_blast_outputs(nt_combined_file, nr_combined_file, dirpath)
 
     subprocess.run("touch " + nt_dummy, shell=True)
     subprocess.run("touch " + nr_dummy, shell=True)

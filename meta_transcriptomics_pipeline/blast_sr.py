@@ -1,6 +1,7 @@
 import argparse
 import subprocess
 import time
+import os
 from meta_transcriptomics_pipeline.helpers import check_fail
 
 def blast_sr(args: argparse.Namespace):
@@ -34,5 +35,7 @@ def blast_sr(args: argparse.Namespace):
     print("blast alignment against nt took: " + str(end - start))
 
     nt_combined_file = dirpath + "/nt_combined_file"
+    if os.path.isfile(nt_combined_file):
+        os.remove(nt_combined_file)
 
     new_command = subprocess.run("cat " + blast_short_out + " >> " + nt_combined_file, shell=True)
