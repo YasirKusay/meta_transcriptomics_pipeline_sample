@@ -18,8 +18,8 @@ def diamond(args: argparse.Namespace):
     new_fwd = dirpath + "/new_fwd.fq"
     new_rev = dirpath + "/new_rev.fq"
 
-    new_contigs = contig_path + "/final_contigs.fq"
     contig_path = dirpath + "/megahit_out"
+    new_contigs = contig_path + "/final_contigs.fq"
 
     # now lets align reads
     # need to merge paired end reads first though
