@@ -70,12 +70,14 @@ def parse_args():
     parser_sequential.add_argument(
         "nucl_accession_taxid_mapping",
         type=str,
+        nargs="+",
         help="nucl_accession_taxid_mapping"
     )
 
     parser_sequential.add_argument(
         "prot_accession_taxid_mapping",
         type=str,
+        nargs="+",
         help="prot_accession_taxid_mapping"
     )
 
@@ -329,12 +331,14 @@ def parse_args():
     parser_finalisation.add_argument(
         "nucl_accession_taxid_mapping",
         type=str,
+        nargs="+",
         help="nucl_accession_taxid_mapping"
     )
 
     parser_finalisation.add_argument(
         "prot_accession_taxid_mapping",
         type=str,
+        nargs="+",
         help="prot_accession_taxid_mapping"
     )
 

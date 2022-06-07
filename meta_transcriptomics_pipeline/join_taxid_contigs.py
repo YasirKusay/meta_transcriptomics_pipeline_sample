@@ -41,7 +41,8 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     # for the above command, some of the nt accessions may have e.g. NR_001_name, hence cut -d'_' -f1,2 takes care of that
     
     relevant_taxids = path + "/relevant_taxids.txt"
-    obtain_relevant_taxids(unique_accessions, mapping_file, relevant_taxids)
+    for file in mapping_file:
+        obtain_relevant_taxids(unique_accessions, file, relevant_taxids)
 
     combined_file_sorted_sorted = path + "/combined_file_sorted_sorted"
     new_command = subprocess.run("LC_COLLATE=C sort -k2 " + combined_file_sorted + " > " + combined_file_sorted_sorted, shell = True)
