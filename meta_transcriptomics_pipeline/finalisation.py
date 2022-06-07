@@ -300,10 +300,6 @@ def finalisation(args: argparse.Namespace):
     readCountsOutfile = dirpath + "/readCountsOut.txt"
     countReads(reads_taxids, num_reads, readCountsOutfile, contaminants)
 
-    to_filter_out = filter_result(dirpath + "/temp_out_2", args.pid_filter, args.evalue_filter, args.bitscore_filter)
-    readCountsFiltered = dirpath + "/readCountsFiltered.txt"
-    get_filtered_taxids(to_filter_out, readCountsOutfile, readCountsFiltered)
-
     # now lets get plot the abundances as krona charts
     # need to find lineages first
     readAbundances = dirpath + "/readAbundances.txt"
