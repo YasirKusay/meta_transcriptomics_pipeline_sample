@@ -39,17 +39,18 @@ def join(contig_file, read_file, mapping_file, join_file, path):
     unique_accessions = path + "/unique_accessions.txt"
     new_command = subprocess.run("cut -f2 " + combined_file_sorted + " | uniq | egrep -v 'SNAP|Illumina|unsorted|LN:' | LC_COLLATE=C sort -k1  > " + unique_accessions, shell=True)
     # for the above command, some of the nt accessions may have e.g. NR_001_name, hence cut -d'_' -f1,2 takes care of that
+
+    combined_file_sorted_sorted = path + "/combined_file_sorted_sorted"
+    new_command = subprocess.run("LC_COLLATE=C sort -k2 " + combined_file_sorted + " > " + combined_file_sorted_sorted, shell = True)
     
     relevant_taxids = path + "/relevant_taxids.txt"
     for file in mapping_file:
         obtain_relevant_taxids(unique_accessions, file, relevant_taxids)
+        relevant_taxids_sorted = path + "/relevant_taxids_sorted"
+        new_command = subprocess.run("LC_COLLATE=C sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
+        join_accessions_taxids(combined_file_sorted_sorted, relevant_taxids_sorted, join_file)
+        os.remove(relevant_taxids)
 
-    combined_file_sorted_sorted = path + "/combined_file_sorted_sorted"
-    new_command = subprocess.run("LC_COLLATE=C sort -k2 " + combined_file_sorted + " > " + combined_file_sorted_sorted, shell = True)
-    relevant_taxids_sorted = path + "/relevant_taxids_sorted"
-    new_command = subprocess.run("LC_COLLATE=C sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
-
-    join_accessions_taxids(combined_file_sorted_sorted, relevant_taxids_sorted, join_file)
     return True
     
 def join_taxid_contigs(output_contig_snap, output_read_snap, output_contig_diamond, output_read_diamond, nucl_map, prot_map, final_out, path):
