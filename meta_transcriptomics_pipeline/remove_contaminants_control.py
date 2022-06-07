@@ -1,6 +1,6 @@
 import subprocess
 import os
-from helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import check_fail
 
 def run_kraken(combined, kraken_index, threads, path):
     kraken_outs = []

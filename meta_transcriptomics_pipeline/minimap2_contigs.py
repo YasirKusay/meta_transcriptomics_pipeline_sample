@@ -2,8 +2,8 @@ import argparse
 import subprocess
 import time
 import os
-from helpers import check_fail
-from paf2blast6 import paf2blast6
+from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
 
 def minimap2_contigs(args: argparse.Namespace):
     start = time.time()

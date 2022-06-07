@@ -1,7 +1,7 @@
 import subprocess
 import pandas as pd
 from ete3 import NCBITaxa
-from getScientificNames import getScientificNames
+from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
 
 def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     temp_out = dirpath + "/temp_out"

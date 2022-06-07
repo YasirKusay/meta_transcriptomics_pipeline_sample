@@ -1,7 +1,7 @@
 import argparse
 import subprocess
 import time
-from helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import check_fail
 
 def blast_sr(args: argparse.Namespace):
     dirpath = args.dirpath

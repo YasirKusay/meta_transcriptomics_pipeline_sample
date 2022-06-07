@@ -4,8 +4,8 @@
 
 import subprocess
 import os
-from helpers import check_fail
-from obtain_relevant_taxids import obtain_relevant_taxids
+from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.obtain_relevant_taxids import obtain_relevant_taxids
 
 def join_accessions_taxids(combined_file_sorted, relevant_taxids, out):
     accessions_mapped = {}

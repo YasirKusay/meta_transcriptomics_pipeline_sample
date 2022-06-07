@@ -5,20 +5,20 @@ import os
 import operator
 import time
 import re
-from get_lineage_info import get_lineage_info
+from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 #from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
-from helpers import check_command_exists, check_fail, generate_temp_file
-from map_reads_to_contigs import map_reads_to_contigs
-from merge_sams import merge_sams
-from merge_blast_outputs import merge_blast_outputs
-from remove_contaminants_control import remove_contaminants_control
-from join_taxid_contigs import join_taxid_contigs
-from map_reads_to_contigs import map_reads_to_contigs
-from paf2blast6 import paf2blast6
-from filter_files import filter_files
-from match_scores import match_scores
-from filter_results import filter_result, get_filtered_taxids
-from get_abundance import get_abundance
+from meta_transcriptomics_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
+from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
+from meta_transcriptomics_pipeline.merge_sams import merge_sams
+from meta_transcriptomics_pipeline.merge_blast_outputs import merge_blast_outputs
+from meta_transcriptomics_pipeline.remove_contaminants_control import remove_contaminants_control
+from meta_transcriptomics_pipeline.join_taxid_contigs import join_taxid_contigs
+from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
+from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
+from meta_transcriptomics_pipeline.filter_files import filter_files
+from meta_transcriptomics_pipeline.match_scores import match_scores
+from meta_transcriptomics_pipeline.filter_results import filter_result, get_filtered_taxids
+from meta_transcriptomics_pipeline.get_abundance import get_abundance
 
 def run_snap_single(index, in_path, out_path, threads):
     snap_contig_command = "snap-aligner" + " single " + index + " " + in_path +\

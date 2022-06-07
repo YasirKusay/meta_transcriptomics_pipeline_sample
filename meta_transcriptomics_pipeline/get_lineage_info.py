@@ -1,5 +1,5 @@
 from ete3 import NCBITaxa
-from getScientificNames import getScientificNames
+from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
 
 def get_taxids(input_file):
     taxids = {}

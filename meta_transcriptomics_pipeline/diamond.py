@@ -1,7 +1,7 @@
 import argparse
 import subprocess
 import time
-from helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import check_fail
 
 def run_diamond(index, in_path, out_path, threads, outfmt):
     diamond_command = "diamond" + " blastx --db " + index +\

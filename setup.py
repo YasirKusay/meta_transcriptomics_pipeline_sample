@@ -4,7 +4,7 @@ import numpy as np
 
 setup(
     name="meta_transcriptomics_pipeline_test",
-    version="0.1.13",
+    version="0.1.14",
     packages=find_packages(include=['meta_transcriptomics_pipeline']),
     author="Yasir Kusay",
     description="To be added!.",
@@ -28,6 +28,11 @@ setup(
 # install_requires specifies the packages thatclassification_library depends on.
 
 # guide: https://levelup.gitconnected.com/how-to-deploy-a-cython-package-to-pypi-8217a6581f09
+
+# python3 setup.py sdist bdist_wheel
+# twine upload --repository testpypi dist/*
+# pip install python3 -m pip install --index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline
+
 
 '''
 setup(

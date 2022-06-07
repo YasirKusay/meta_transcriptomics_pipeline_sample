@@ -2,7 +2,7 @@
 # retrieves the contig that is mapped to their read
 # further retrieves the taxid they are mapped to
 import os
-from merge_sams import merge_sams
+from meta_transcriptomics_pipeline.merge_sams import merge_sams
 
 def map_reads_to_contigs(reads_mapped_to_contigs, outfile, path):
     

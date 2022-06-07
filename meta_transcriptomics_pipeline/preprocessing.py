@@ -2,9 +2,9 @@ import argparse
 import subprocess
 import operator
 import time
-from helpers import check_fail
-from filter_files import filter_files
-from get_lineage_info import get_lineage_info
+from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.filter_files import filter_files
+from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 
 def process_fast_mode_output(kraken_out, outfile, total_reads):
     results = {}
