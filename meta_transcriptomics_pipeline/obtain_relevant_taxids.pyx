@@ -7,9 +7,9 @@ cdef extern from "stdio.h":
 
 def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file):
 
-    cdef int size, curr_iter, len_accession, len1, i
-    cdef char *curr_mapping_file_line
-    cdef char *curr_accession 
+    cdef int curr_iter, len_accession, len1, i
+    cdef char *curr_mapping_file_line = <char *>malloc(100 * sizeof (char))
+    cdef char *curr_accession = <char *>malloc(100 * sizeof (char))
     cdef int cancel
     cdef char *curr_mapping_file_accession = <char *>malloc(100 * sizeof (char))
     cdef FILE *af 
@@ -24,20 +24,13 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
     size = 0
     curr_mapping_file_line = NULL
 
-    af = fopen(accession_file.encode(), "r")
-
     curr_accession = NULL
     small_size = 0
-    while (True):
-        accession_file_bytes = getline(&curr_accession, &small_size, af)
-        if (accession_file_bytes < 0): 
-            break
-        size += 1
-
-    fclose(af)
 
     af = fopen(accession_file.encode(), "r")
     accession_file_bytes = getline(&curr_accession, &small_size, af)
+    if (accession_file_bytes < 0):
+        return
     len_accession = strlen(curr_accession)
     if (curr_accession[len_accession - 1] == "\n"):
         curr_accession[len_accession - 1] = '\0';
@@ -65,10 +58,9 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
                 break
         if (strcmp(curr_mapping_file_accession, curr_accession) == 0):
             fprintf(wf, curr_mapping_file_line)
-            curr_iter += 1
-            if (curr_iter == size):
-                break
             accession_file_bytes = getline(&curr_accession, &small_size, af)
+            if (accession_file_bytes < 0):
+                break
             len_accession = strlen(curr_accession)
             if (curr_accession[len_accession - 1] == "\n"):
                 curr_accession[len_accession - 1] = '\0';
@@ -76,11 +68,10 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
         elif (strcmp(curr_mapping_file_accession, curr_accession) > 0):
             cancel = 0
             while (strcmp(curr_mapping_file_accession, curr_accession) > 0):
-                curr_iter += 1
-                if (curr_iter == size):
+                accession_file_bytes = getline(&curr_accession, &small_size, af)
+                if (accession_file_bytes < 0):
                     cancel = 1
                     break
-                accession_file_bytes = getline(&curr_accession, &small_size, af)
                 len_accession = strlen(curr_accession)
                 if (curr_accession[len_accession - 1] == "\n"):
                     curr_accession[len_accession - 1] = '\0';
@@ -92,10 +83,9 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
 
             if (strcmp(curr_mapping_file_accession, curr_accession) == 0):
                 fprintf(wf, curr_mapping_file_line)
-                curr_iter += 1
-                if (curr_iter == size):
-                    break
                 accession_file_bytes = getline(&curr_accession, &small_size, af)
+                if (accession_file_bytes < 0):
+                    break
                 len_accession = strlen(curr_accession)
                 if (curr_accession[len_accession - 1] == "\n"):
                     curr_accession[len_accession - 1] = '\0';
