@@ -1,7 +1,9 @@
-from meta_transcriptomics_pipeline.get_lineage_info import getReadsLength
+import filecmp
+from meta_transcriptomics_pipeline.main_pipeline import getReadsLength
 
 def test_count_bases():
-    inp = "samples/test_count_bases/input.txt"
-    out = "samples/test_count_bases/actual.txt"
+    inp = "tests/samples/test_count_bases/input.txt"
+    exp = ""
+    out = "tests/samples/test_count_bases/actual.txt"
     getReadsLength(inp, out, None, True)
-    assert(True)
+    assert(filecmp.cmp(out, ))

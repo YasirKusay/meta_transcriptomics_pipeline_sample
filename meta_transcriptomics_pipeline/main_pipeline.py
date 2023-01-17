@@ -1,5 +1,4 @@
 import argparse
-import imp
 import subprocess
 import os
 import operator
