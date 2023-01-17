@@ -21,7 +21,6 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
     for n in range(100):
         curr_mapping_file_accession[n] = '\0'
 
-    size = 0
     curr_mapping_file_line = NULL
 
     curr_accession = NULL
