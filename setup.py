@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup, Extension
 from Cython.Build import cythonize
 import numpy as np
 
@@ -10,9 +10,13 @@ setup(
     description="To be added!.",
     # long_description_content_type='text/markdown',
     # url="https://github.com/lol-cubes/classification-library",
-    ext_modules=cythonize(["meta_transcriptomics_pipeline/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
+    # below, annotate=True is the equivalent of passing -a to the command line
+    #ext_modules=cythonize(["meta_transcriptomics_pipeline/__init__.pyx", "tests/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx", "tests/test_join.pyx"], annotate=True),
+    # ext_modules=cythonize(["meta_transcriptomics_pipeline/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
+    ext_modules=cythonize(["meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
     # ext_modules=cythonize(["__init__.pyx", "obtain_relevant_taxids.pyx"]),
     # s
+    #ext_modules=cythonize(Extension("meta_transcriptomics_pipeline/__init__.pyx", "tests/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx", "tests/test_join.pyx")),
     # zip_safe=False, # from https://cython.readthedocs.io/en/latest/src/quickstart/build.html
     include_dirs=np.get_include(),
     install_requires=[],
