@@ -10,6 +10,11 @@ def test_count_bases():
     prot_out = "tests/samples/merge_contigs/prot_out.txt"
     nucl_exp = "tests/samples/merge_contigs/nucl_exp.txt"
 
+    if os.path.exists(nucl_out):
+        os.remove(nucl_out)
+    if os.path.exists(prot_out):
+        os.remove(prot_out)
+
     print(os.getcwd())
 
     merge_sams(nucl_file, prot_file, os.getcwd(), nucl_out, prot_out)
