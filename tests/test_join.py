@@ -51,4 +51,3 @@ def test_obtain_relevant_taxids(capsys):
     assert(filecmp.cmp(path + "exp1.txt", path + "actual1.txt", shallow=False))
     assert(filecmp.cmp(path + "exp2.txt", path + "actual2.txt", shallow=False))
     #assert(os.path.exists(path + "to_map.txt"))
-    print("TEST FONISHED")

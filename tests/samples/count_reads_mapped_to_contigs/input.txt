@@ -1,0 +1,7 @@
+read1	cont1
+read2	cont2
+read3	cont2
+read4	cont1
+read5	cont1
+read6	cont3
+read7	cont2

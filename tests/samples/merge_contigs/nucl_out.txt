@@ -1,0 +1,5 @@
+samp1	read1
+samp3	read4
+samp5	read5
+samp6	read7
+samp7	read10

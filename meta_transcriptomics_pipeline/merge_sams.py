@@ -47,7 +47,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                         break
                     edit_dist_inc += 1
                 curr_line = line
-                curr_edit_dist = -1
+                curr_edit_dist = 99999999
                 if edit_dist_inc < len(curr):
                     curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
                 if (prev_query == curr[0]):
@@ -59,10 +59,10 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                         if (best_mapq != 255):
                             if (int(curr[4]) > best_mapq):
                                 best_line = line
-                                best_edit_dist = curr_edit_dist
+                                best_edit_dist = curr_edit_dist # shouldnt matter as they are equal anyways
                                 best_mapq = int(curr[4])
                         else: 
-                            if (int(curr[4]) != 255):
+                            if (int(curr[4]) != 255): # remember: 255 means unascertainable, hence curr match is best match
                                 best_line = line
                                 best_edit_dist = curr_edit_dist
                                 best_mapq = int(curr[4])
@@ -72,7 +72,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                     if (best_line != "NULL"):
                         to_print = best_line.split("\t")
                         accession = to_print[2]
-                        full_accession = accession.split("_")
+                        full_accession = accession.split("_") # need to confirm why I did this again
                         actual_accession = full_accession[:2]
                         print_accession = "_".join(actual_accession)
 
@@ -110,7 +110,7 @@ def merge_sams(snap_sam, diamond_sam, path, snap_out = None, diamond_out = None)
                 if curr[edit_dist_inc].split(":")[0] == "NM":
                     break
                 edit_dist_inc += 1
-            curr_edit_dist = 0
+            curr_edit_dist = 999999999
             if edit_dist_inc < len(curr):
                 curr_edit_dist = int(curr[edit_dist_inc].split(":")[2])
 
