@@ -45,7 +45,7 @@ def merge_blast_outputs(snap_sam, diamond_sam, path):
             curr = line.split("\t")
             curr_line = line
             if (prev_query == curr[0]):
-                if (float(curr[10]) > best_e_value): # e value
+                if (float(curr[10]) < best_e_value): # e value
                     best_line = line
                     best_e_value = float(curr[10])
                     best_bitscore = float(curr[11])
@@ -66,9 +66,9 @@ def merge_blast_outputs(snap_sam, diamond_sam, path):
                     # diamond file, because it stores E-value
                     print(to_print[12]) 
                     if to_print[12].strip() == "P":
-                        output_diamond.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11] + "\t" + to_print[2] + "\n")
+                        output_diamond.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11].strip() + "\t" + to_print[2] + "\n")
                     else:
-                        output_snap.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11] + "\t" + to_print[2] + "\n")
+                        output_snap.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11].strip() + "\t" + to_print[2] + "\n")
 
                 prev_query = curr[0]
                 best_e_value = float(curr[10])
@@ -84,9 +84,9 @@ def merge_blast_outputs(snap_sam, diamond_sam, path):
             # diamond file, because it stores E-value
             print(to_print[12]) 
             if to_print[12].strip() == "P":
-                output_diamond.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11] + "\t" + to_print[2] + "\n")
+                output_diamond.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11].strip() + "\t" + to_print[2] + "\n")
             else:
-                output_snap.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11] + "\t" + to_print[2] + "\n")
+                output_snap.write(to_print[0] + "\t" + print_accession + "\t" + to_print[10] + "\t" + to_print[11].strip() + "\t" + to_print[2] + "\n")
                 
     #command = subprocess.run("rm " + snap_diamond_combined_file, shell=True)
     #command = subprocess.run("rm " + snap_diamond_sorted_file, shell=True)
