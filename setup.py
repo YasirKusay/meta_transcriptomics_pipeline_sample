@@ -4,7 +4,7 @@ import numpy as np
 
 setup(
     name="meta_transcriptomics_pipeline",
-    version="0.2.1",
+    version="0.2.2",
     license='MIT',
     packages=find_packages(include=['meta_transcriptomics_pipeline']),
     author="Yasir Kusay",

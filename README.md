@@ -10,11 +10,15 @@ This flowchart shows the steps involved in the preprocessing step.
 This flowchart shows the steps involved in the alignment step.
 ![Alt text](diagrams/alignment.png "Alignment workflow")
 
+An example Krona output can be found in "examples/kronaOut.html"
+
 ## Installation.
 
 The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline`
 
 Please ensure that you setup a fresh environment with python 3.6 and install cython version 0.26 prior to the installation of this pipeline.
+
+To run this program, type `rapid_metatranscriptomics` followed by the subcommand.
 
 ## Setup
 
