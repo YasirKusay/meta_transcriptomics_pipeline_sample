@@ -3,29 +3,31 @@ from Cython.Build import cythonize
 import numpy as np
 
 setup(
-    name="meta_transcriptomics_pipeline_test",
-    version="0.1.14",
+    name="meta_transcriptomics_pipeline",
+    version="0.1.25",
+    license='MIT',
     packages=find_packages(include=['meta_transcriptomics_pipeline']),
     author="Yasir Kusay",
+    author_email='yasirsaad1234@hotmail.com',
     description="To be added!.",
-    # long_description_content_type='text/markdown',
-    # url="https://github.com/lol-cubes/classification-library",
-    # below, annotate=True is the equivalent of passing -a to the command line
-    #ext_modules=cythonize(["meta_transcriptomics_pipeline/__init__.pyx", "tests/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx", "tests/test_join.pyx"], annotate=True),
-    # ext_modules=cythonize(["meta_transcriptomics_pipeline/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
     ext_modules=cythonize(["meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
-    # ext_modules=cythonize(["__init__.pyx", "obtain_relevant_taxids.pyx"]),
-    # s
-    #ext_modules=cythonize(Extension("meta_transcriptomics_pipeline/__init__.pyx", "tests/__init__.pyx", "meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx", "tests/test_join.pyx")),
-    # zip_safe=False, # from https://cython.readthedocs.io/en/latest/src/quickstart/build.html
     include_dirs=np.get_include(),
-    install_requires=[],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     test_suite='tests',
-    #setup_requires=['pytest-runner'],
-    #tests_require=['pytest==4.4.1'],
-    #test_suite='tests',
+    entry_points = {
+    "console_scripts": [
+            "mtp = meta_transcriptomics_pipeline.__main__:main",
+        ]
+    },
+    python_requires='>=3.6.2',
+    install_requires=[
+        'pandas>=1.1.5',
+        'numpy>=1.19.5',
+        'matplotlib>=3.3.4',
+        'ete3>=3.1.2',
+        'cython>=0.26.0'
+    ]
 )
 
 # The important parts with the setup call are the last three arguments. ext_modules specifies C extensions for the package, include_dirs needs to be specified so that the numpy-dependent C extensions can be compiled, and 
@@ -33,22 +35,7 @@ setup(
 
 # guide: https://levelup.gitconnected.com/how-to-deploy-a-cython-package-to-pypi-8217a6581f09
 
+# how to install
 # python3 setup.py sdist bdist_wheel
 # twine upload --repository testpypi dist/*
 # pip install python3 -m pip install --index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline
-
-
-'''
-setup(
-    name='meta_transcriptomics_pipeline',
-    packages=find_packages(include=['meta_transcriptomics_pipeline']),
-    version='0.1.0',
-    description='meta_transcriptomics_pipeline',
-    author='Yasir Kusay',
-    license='MIT',
-    install_requires=[],
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest==4.4.1'],
-    test_suite='tests',
-)
-'''
