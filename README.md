@@ -36,8 +36,8 @@ The pipeline requires other tools that must be installed prior to the utilisatio
 Furthermore, additional files/databases need to be downloaded or setup such as:
 * The SortmeRNA rRNA database file (available from https://github.com/biocore/sortmerna/releases). We used smr_v4.3_default_db.fasta.
 * The SNAP index generated using the complete human genome (the human genome we used is GRCh38_latest_genomic.fna and is available from https://www.ncbi.nlm.nih.gov/genome/guide/human/)
-* The Kraken databases including PLUS and STANDARD, (available from https://benlangmead.github.io/aws-indexes/k2)
-* The minimap2 index generated using the NCBI NT sequences (available from https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/ as nt.gz). **WARNING! PAY CAREFUL ATTENTION TO THE SIZE OF THE NCBI NT SEQUENCES AS IT IS CURRENTLY (AS OF FEBRUARY 2023) NEARLY 1TB AND THE MINIMAP2 INDEX WILL BE AT LEAST 2.5 TIMES THE SIZE OF THAT!**
+* The Kraken databases PLUS and STANDARD, (available from https://benlangmead.github.io/aws-indexes/k2)
+* The minimap2 index generated using the NCBI NT sequences (available from https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/ as nt.gz). **WARNING! PAY CAREFUL ATTENTION TO THE SIZE OF THE NCBI NT SEQUENCES AS THE UNZIPPED SIZE IS (AS OF FEBRUARY 2023) NEARLY 1TB AND THE MINIMAP2 INDEX WILL BE AT LEAST 2.5 TIMES THE SIZE OF THAT!**
 * The NCBI NT Blast index (download the files with nt.[0-9] from https://ftp.ncbi.nlm.nih.gov/blast/db/)
 * The Diamond index built using the NCBI NR sequences (available from https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/ as nr.gz)
 * Files that map sequence accessions to their taxonomic ids (available from https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/). We used dead_nucl.accession2taxid.gz, dead_wgs.accession2taxid.gz , nucl_gb.accession2taxid.gz, nucl_wgs.accession2taxid.EXTRA.gz and nucl_wgs.accession2taxid.gz to map accessions found in the NCBI NT database file and dead_prot.accession2taxid.gz and pdb.accession2taxid.gz to map accessions found in the NCBI NR database file.
