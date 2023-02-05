@@ -2,7 +2,7 @@
 
 A new and innovative meta-transcriptomics pipeline that takes in RNA-seq samples and rapidly performs quality control and quantification using small amounts of RAM and CPU cores. Utilises an innovative way of viewing quantification data using Krona tools to view the species identified within their samples within different taxon levels, which has even been modified to show alignment scores for each species and to filter out species based on their scores (available from: https://github.com/YasirKusay/Krona/tree/filters).
 
-The program was written with 6 different subcommands, allowing the alignment step to take place in parallel rather than sequentially. 
+The program was written with 6 different subcommands (preprocessing, minimap_contig_alignment, minimap_long_read_alignment, blast_short_read_alignment, diamond_alignment and finalisation). The preprocessing step must be ran first, the alignment steps can be ran in parallel and the finalisation step must be run last.
 
 This flowchart shows the steps involved in the preprocessing step.
 ![Alt text](diagrams/preprocessing.png "Preprocessing workflow")
@@ -12,9 +12,9 @@ This flowchart shows the steps involved in the alignment step.
 
 ## Installation.
 
-The pipeline is available on TestPyPi and can be installed via: `pip install python3 -m pip install --index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline`
+The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline`
 
-Please ensure that you setup a fresh environment with python 3.6 prior to the installation.
+Please ensure that you setup a fresh environment with python 3.6 and install cython version 0.26 prior to the installation of this pipeline.
 
 ## Setup
 
@@ -45,3 +45,4 @@ Furthermore, additional files/databases need to be downloaded or setup such as:
 * Any control sequences and other sequences generated from the same lab environment as the input sequence (only if you want do perform decontamination)
 
 **Important: This program needs to use the modified KronaTools software (for the preprocessing and finalisation steps) and must be added to the path prior to the utilisation of the program.**
+**Also, make sure that you keep an eye out on the index sizes as they are massive and can exceed disk space.**

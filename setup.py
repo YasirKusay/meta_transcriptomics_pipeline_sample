@@ -34,8 +34,3 @@ setup(
 # install_requires specifies the packages thatclassification_library depends on.
 
 # guide: https://levelup.gitconnected.com/how-to-deploy-a-cython-package-to-pypi-8217a6581f09
-
-# how to install
-# python3 setup.py sdist bdist_wheel
-# twine upload --repository testpypi dist/*
-# pip install python3 -m pip install --index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline
