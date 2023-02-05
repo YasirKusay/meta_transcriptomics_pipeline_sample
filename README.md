@@ -12,7 +12,7 @@ This flowchart shows the steps involved in the alignment step.
 
 ## Installation.
 
-The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ rapid_metatranscriptomics`
+The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline`
 
 Please ensure that you setup a fresh environment with python 3.6 and install cython version 0.26 prior to the installation of this pipeline.
 

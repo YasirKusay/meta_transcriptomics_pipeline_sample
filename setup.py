@@ -3,8 +3,8 @@ from Cython.Build import cythonize
 import numpy as np
 
 setup(
-    name="rapid_metatranscriptomics",
-    version="0.1.26",
+    name="meta_transcriptomics_pipeline",
+    version="0.2.0",
     license='MIT',
     packages=find_packages(include=['meta_transcriptomics_pipeline']),
     author="Yasir Kusay",
@@ -17,7 +17,7 @@ setup(
     test_suite='tests',
     entry_points = {
     "console_scripts": [
-            "mtp = meta_transcriptomics_pipeline.__main__:main",
+            "rapid_metatranscriptomics = meta_transcriptomics_pipeline.__main__:main",
         ]
     },
     python_requires='>=3.6.2',
