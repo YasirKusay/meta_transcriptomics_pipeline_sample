@@ -93,7 +93,7 @@ def parse_args():
         "--threads",
         type=int,
         default=multiprocessing.cpu_count(),
-        help="the number of cpu threads to use"
+        help="The number of cpu threads to use"
     )
 
     parser_preprocessing.set_defaults(func=preprocessing)
@@ -154,7 +154,7 @@ def parse_args():
     parser_minimap_reads.set_defaults(func=minimap2_reads)
 
     parser_blast_reads = subparsers.add_parser(
-        "blast_short_read_alignment", help="Perform the minimap alignmnet against the blast NCBI NT index using the reads (that are < 100bp) that failed to assemble in the pre-processing step."
+        "blast_short_read_alignment", help="Perform the minimap alignmnet against the blast NCBI NT index using the reads (that are < 100bp) that failed to assemble in the pre-processing step. Unlike the former alignment, this uses the 'sr' (i.e. short read) option."
     )
 
     parser_blast_reads.add_argument(
@@ -174,7 +174,7 @@ def parse_args():
         "--threads",
         type=int,
         default=multiprocessing.cpu_count(),
-        help="the number of cpu threads to use"
+        help="The number of cpu threads to use"
     )
 
     parser_blast_reads.set_defaults(func=blast_sr)
@@ -206,7 +206,7 @@ def parse_args():
 
     parser_finalisation = subparsers.add_parser(
         "finalisation", help="Perform taxnonomic identification, decontamination (optional) and quantification.\n" + \
-        "Final outputs can be found in readAbundancesKrona.html which shows the Krona generated using the read count calculation and tpmAbundancesKrona.html which shows the Krona generated using the TPM calculation."
+        "Final outputs can be found in readAbundancesKrona.html which shows the Krona plot generated using the read count calculation and tpmAbundancesKrona.html which shows the Krona plot generated using the TPM calculation."
     )
 
     parser_finalisation.add_argument(
@@ -219,7 +219,7 @@ def parse_args():
         "nucl_accession_taxid_mapping_files",
         type=str,
         nargs="+",
-        help="Specify file path(s) that map sequence taxids (found in the NCBI NT database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
+        help="Specify file path(s) that map sequence accessions (found in the NCBI NT database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
         "We used dead_nucl.accession2taxid.gz, dead_wgs.accession2taxid.gz , nucl_gb.accession2taxid.gz, nucl_wgs.accession2taxid.EXTRA.gz and nucl_wgs.accession2taxid.gz."
     )
 
@@ -227,20 +227,20 @@ def parse_args():
         "prot_accession_taxid_mapping_files",
         type=str,
         nargs="+",
-        help="Specify file path(s) that map sequence taxids (found in the NCBI NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
+        help="Specify file path(s) that map sequence accessions (found in the NCBI NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
         "We used dead_prot.accession2taxid.gz and pdb.accession2taxid.gz."
     )
 
     parser_finalisation.add_argument(
         "taxdump_location",
         type=str,
-        help="Path to the taxdump folder location that contains information such as the lineages of the species. Available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/"
+        help="Path to the taxdump folder that contains information such as the lineages of the species. Available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/"
     )
 
     parser_finalisation.add_argument(
         "--kraken_db",
         type=str,
-        help="The path to the 'standard' Kraken index file. Used in the decontamination step to align the controls, other sequences and the original sequence to identify contaminants for removal."
+        help="The path to the 'standard' Kraken index file. Used in the decontamination step to align the controls, other sequences and the original sequence to identify contaminant species for removal."
     )
 
     parser_finalisation.add_argument(
@@ -261,7 +261,7 @@ def parse_args():
         "--threads",
         type=int,
         default=multiprocessing.cpu_count(),
-        help="the number of cpu threads to use"
+        help="The number of cpu threads to use"
     )
 
     parser_finalisation.set_defaults(func=finalisation)
