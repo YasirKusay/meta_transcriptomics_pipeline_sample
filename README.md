@@ -1,4 +1,4 @@
-# meta-transcriptomics_pipeline
+# Rapid Metatranscriptomics
 
 A new and innovative meta-transcriptomics pipeline that takes in RNA-seq samples and rapidly performs quality control and quantification using small amounts of RAM and CPU cores. Utilises an innovative way of viewing quantification data using Krona tools to view the species identified within their samples within different taxon levels, which has even been modified to show alignment scores for each species and to filter out species based on their scores (available from: https://github.com/YasirKusay/Krona/tree/filters).
 
@@ -12,7 +12,7 @@ This flowchart shows the steps involved in the alignment step.
 
 ## Installation.
 
-The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ meta_transcriptomics_pipeline`
+The pipeline is available on TestPyPi and can be installed via: `pip install --extra-index-url https://test.pypi.org/simple/ rapid_metatranscriptomics`
 
 Please ensure that you setup a fresh environment with python 3.6 and install cython version 0.26 prior to the installation of this pipeline.
 
