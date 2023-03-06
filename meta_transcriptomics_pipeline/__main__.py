@@ -1,6 +1,5 @@
 import argparse
 import multiprocessing
-from meta_transcriptomics_pipeline.main_pipeline import run_pipeline
 from meta_transcriptomics_pipeline.blast_sr import blast_sr
 from meta_transcriptomics_pipeline.diamond import diamond
 from meta_transcriptomics_pipeline.finalisation import finalisation
