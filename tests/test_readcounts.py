@@ -1,7 +1,7 @@
 import filecmp
 import os
 
-from meta_transcriptomics_pipeline.main_pipeline import countReads
+from meta_transcriptomics_pipeline.finalisation import countReads
 
 # to counteract the float point error, just consider 1 decimal place for first test and 2 decimal places for the second test
 def fix_decimals(infile, outfile, decimal_points):

@@ -4,16 +4,15 @@ import time
 import os
 import re 
 import operator 
-from get_lineage_info import get_lineage_info
-#from main_pipeline.helpers import check_command_exists, check_fail, generate_temp_file
-from map_reads_to_contigs import map_reads_to_contigs
-from merge_blast_outputs import merge_blast_outputs
-from remove_contaminants_control import remove_contaminants_control
-from join_taxid_contigs import join_taxid_contigs
-from map_reads_to_contigs import map_reads_to_contigs
-from match_scores import match_scores
-from filter_results import filter_result, get_filtered_taxids
-from get_abundance import get_abundance
+from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
+from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
+from meta_transcriptomics_pipeline.merge_blast_outputs import merge_blast_outputs
+from meta_transcriptomics_pipeline.remove_contaminants_control import remove_contaminants_control
+from meta_transcriptomics_pipeline.join_taxid_contigs import join_taxid_contigs
+from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
+from meta_transcriptomics_pipeline.match_scores import match_scores
+from meta_transcriptomics_pipeline.filter_results import filter_result, get_filtered_taxids
+from meta_transcriptomics_pipeline.get_abundance import get_abundance
 
 def fetch_contig_read_taxids(infile):
     assignments = {}
@@ -207,8 +206,6 @@ def finalisation(args: argparse.Namespace):
     dirpath = args.dirpath
     nt_out = dirpath + "/nucl_alignments_contigs.txt"
     nr_out = dirpath + "/prot_alignments_contigs.txt"
-    nt_dummy = dirpath + "/nt_dummy.txt"
-    nr_dummy = dirpath + "/nr_dummy.txt"
     new_fwd = dirpath + "/new_fwd.fq"
     human_subtract_1 = dirpath + "/human_subtract1.fastq"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
@@ -227,15 +224,12 @@ def finalisation(args: argparse.Namespace):
     new_command = subprocess.run("cat " + paf2blast_out_lr + " >> " + nt_combined_file, shell=True)
     nt_out, nr_out = merge_blast_outputs(nt_combined_file, nr_combined_file, dirpath)
 
-    subprocess.run("touch " + nt_dummy, shell=True)
-    subprocess.run("touch " + nr_dummy, shell=True)
-    
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     start = time.time()
     contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
     if os.path.isfile(contigs_reads_taxids_temp):
         os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(nt_out, nt_dummy, nr_out, nr_dummy, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
+    if join_taxid_contigs(nt_out, nr_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
     contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
     end = time.time()

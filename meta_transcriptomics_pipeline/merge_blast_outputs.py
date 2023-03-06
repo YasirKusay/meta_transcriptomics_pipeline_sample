@@ -77,7 +77,7 @@ def merge_blast_outputs(snap_sam, diamond_sam, path):
 
         if (best_line != "NULL"):
             to_print = best_line.split("\t")
-            accession = to_print[1]
+            accession = to_print[1].split(".")[0] # we do not care for anything after the '.', makes searching for matching taxids in the later steps much easier
             full_accession = accession.split("_")
             actual_accession = full_accession[:2]
             print_accession = "_".join(actual_accession)

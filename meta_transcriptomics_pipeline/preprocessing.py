@@ -110,7 +110,11 @@ def preprocessing(args: argparse.Namespace):
 
     # retrieving only human reads
     samtools_path = "samtools"
-    samtools_human_subtract_command = samtools_path + " fastq  -f 4 -@ " + str(args.threads) +\
+
+    # using flag 12.
+    # this flag means that we want reads where both its first and second pair failed to map
+    # therefore, this treats reads pairs where only 1 read maps as human reads
+    samtools_human_subtract_command = samtools_path + " fastq  -f 12 -@ " + str(args.threads) +\
                         " -1 " + human_subtract_1 +\
                         " -2 " + human_subtract_2 +\
                         " -s " + human_spare + " " +\
@@ -123,7 +127,7 @@ def preprocessing(args: argparse.Namespace):
     generated_files.append(human_spare + ".fastq")
 
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
-    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
+    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], stdout=subprocess.PIPE)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
     fast_mode_output = dirpath + "/fast_mode_output"
@@ -167,7 +171,8 @@ def preprocessing(args: argparse.Namespace):
     new_fwd = dirpath + "/new_fwd.fq"
     new_rev = dirpath + "/new_rev.fq"
 
-    align_command = "samtools fastq -f4 -1 " + new_fwd +\
+    # same principle here as the human mapping step
+    align_command = "samtools fastq -f 12 -1 " + new_fwd +\
                     " -2 " + new_rev + " " + reads_mapped_to_contigs_file
     new_command = subprocess.run(align_command, shell=True)
     if check_fail(samtools_path, new_command, []) is True: return None 

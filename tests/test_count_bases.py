@@ -1,6 +1,6 @@
 import filecmp
 import os
-from meta_transcriptomics_pipeline.main_pipeline import getReadsLength
+from meta_transcriptomics_pipeline.finalisation import getReadsLength
 
 def test_count_bases():
     inp = "tests/samples/test_count_bases/input.txt"

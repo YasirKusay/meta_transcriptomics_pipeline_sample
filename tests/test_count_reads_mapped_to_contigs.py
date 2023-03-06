@@ -1,4 +1,4 @@
-from meta_transcriptomics_pipeline.main_pipeline import getContigReadCount
+from meta_transcriptomics_pipeline.finalisation import getContigReadCount
 
 def test_count_reads_mapped_to_contigs():
     pth = "tests/samples/count_reads_mapped_to_contigs/input.txt"
