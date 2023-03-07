@@ -2,6 +2,7 @@ import argparse
 import subprocess
 import operator
 import time
+import os
 from meta_transcriptomics_pipeline.helpers import check_fail
 from meta_transcriptomics_pipeline.filter_files import filter_files
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
@@ -68,10 +69,29 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("fastp took: " + str(end - start))
 
+    star_prefix = dirpath + "/star_"
+
+    #################################### STAR HUMAN ###########################
+
+    star_command = "STAR --genomeDir " + args.star_human_index + " --runThreadN " + str(args.threads) +\
+                    " --readFilesIn " + qc1 + " " + qc2 + " --outFileNamePrefix " + star_prefix + \
+                    " --outFilterMultimapNmax 99999 --outFilterScoreMinOverLread 0.5 --outFilterMatchNminOverLread 0.5" +\
+                    " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx " +\
+                    " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
+    
+    new_command = subprocess.run(star_command, shell=True)
+    if check_fail("STAR", new_command, []) is True: return None
+
+    os.rename(star_prefix + "Unmapped.out.mate1", star_prefix + "Unmapped_1.fastq")
+    os.rename(star_prefix + "Unmapped.out.mate2", star_prefix + "Unmapped_2.fastq")
+
+    star1 = star_prefix + "Unmapped_1.fastq"
+    star2 = star_prefix + "Unmapped_2.fastq"
+
     #################################### SNAP HUMAN ###########################
     human_out = dirpath + "/snap_human_out.sam"
     snap_path = 'snap-aligner'
-    snap_human_command = snap_path + " paired " + args.snap_human_index + " " + qc1 + " " + qc2 +\
+    snap_human_command = snap_path + " paired " + args.snap_human_index + " " + star1 + " " + star2 +\
                     " -o " + human_out + " -t " + str(args.threads) + " -I "
     start = time.time()
     new_command = subprocess.run(snap_human_command, shell=True)

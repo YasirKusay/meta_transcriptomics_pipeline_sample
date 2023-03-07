@@ -42,6 +42,12 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
+        "star_human_index",
+        type=str,
+        help="Path to the pre-built STAR human index folder. The complete human genome needs to be indexed (we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/) via STAR.\n"
+    )
+
+    parser_preprocessing.add_argument(
         "snap_human_index",
         type=str,
         help="Path to the pre-built SNAP human index folder. The complete human genome needs to be indexed (we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/) via SNAP index.\n" +\
