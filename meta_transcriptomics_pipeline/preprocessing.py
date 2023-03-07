@@ -43,17 +43,17 @@ def preprocessing(args: argparse.Namespace):
 
     generated_files = []
 
-    out1 = dirpath + "/qc_1.fastq"
-    out2 = dirpath + "/qc_2.fastq"
-    generated_files.append(out1)
-    generated_files.append(out2)
+    qc1 = dirpath + "/qc_1.fastq"
+    qc2 = dirpath + "/qc_2.fastq"
+    generated_files.append(qc1)
+    generated_files.append(qc2)
 
     fastp_path = "fastp"
     fastp_command = fastp_path +\
                     " --in1 " + args.inp1 +\
                     " --in2 " + args.inp2 +\
-                    " --out1 " + out1 +\
-                    " --out2 " + out2 +\
+                    " --out1 " + qc1 +\
+                    " --out2 " + qc2 +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
                     " --length_required " + args.length_required +\
@@ -64,39 +64,14 @@ def preprocessing(args: argparse.Namespace):
 
     start = time.time()
     new_command = subprocess.run(fastp_command, shell=True)
-    if check_fail(fastp_path, new_command, [out1, out2]) is True: return None
+    if check_fail(fastp_path, new_command, [qc1, qc2]) is True: return None
     end = time.time()
     print("fastp took: " + str(end - start))
 
-    #################################### SORTMERNA ############################
-    aligned = dirpath + "/aligned"
-    other = dirpath + "/other"
-    
-    sortmerna_path = 'sortmerna'
-    sortmerna_command = sortmerna_path +\
-                    " --ref " + args.sortmerna_index +\
-                    " --aligned " + aligned +\
-                    " --other " + other +\
-                    " --fastx " +\
-                    " --reads " + out1 + " --reads " + out2 +\
-                    " --threads " + str(args.threads) +\
-		            " --out2 TRUE " +\
-		            " --paired_out TRUE" +\
-                    " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
-
-    start = time.time()
-    new_command = subprocess.run(sortmerna_command, shell=True)
-    if check_fail(sortmerna_path, new_command, [out1, out2, aligned + "_fwd.fastq", aligned + "_rev.fastq",  other + "_fwd.fastq", other + "_rev.fastq"]) is True: return None
-    end = time.time()
-    print("sortmerna took: " + str(end - start))
-    #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
-    generated_files.append(other + "_fwd.fastq")
-    generated_files.append(other + "_rev.fastq")
-
-    ############################# SNAP HUMAN #############################
+    #################################### SNAP HUMAN ###########################
     human_out = dirpath + "/snap_human_out.sam"
     snap_path = 'snap-aligner'
-    snap_human_command = snap_path + " paired " + args.snap_human_index + " " + other + "_fwd.fastq " + other + "_rev.fastq " +\
+    snap_human_command = snap_path + " paired " + args.snap_human_index + " " + qc1 + " " + qc2 +\
                     " -o " + human_out + " -t " + str(args.threads) + " -I "
     start = time.time()
     new_command = subprocess.run(snap_human_command, shell=True)
@@ -126,13 +101,40 @@ def preprocessing(args: argparse.Namespace):
     generated_files.append(human_subtract_2 + ".fastq")
     generated_files.append(human_spare + ".fastq")
 
+    #################################### SORTMERNA ############################
+    aligned = dirpath + "/aligned"
+    fullyQc = dirpath + "/fullyQc"
+    fullyQc1 = dirpath + "/fullyQc_fwd.fastq"
+    fullyQc2 = dirpath + "/fullyQc_rev.fastq"
+    
+    sortmerna_path = 'sortmerna'
+    sortmerna_command = sortmerna_path +\
+                    " --ref " + args.sortmerna_index +\
+                    " --aligned " + aligned +\
+                    " --other " + fullyQc +\
+                    " --fastx " +\
+                    " --reads " + human_subtract_1 + " --reads " + human_subtract_2 +\
+                    " --threads " + str(args.threads) +\
+		            " --out2 TRUE " +\
+		            " --paired_out TRUE" +\
+                    " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
+
+    start = time.time()
+    new_command = subprocess.run(sortmerna_command, shell=True)
+    if check_fail(sortmerna_path, new_command, []) is True: return None
+    end = time.time()
+    print("sortmerna took: " + str(end - start))
+    #os.remove(aligned + "_fwd.fastq", aligned + ".log", aligned + "_rev.fastq")
+    generated_files.append(fullyQc + "_fwd.fastq")
+    generated_files.append(fullyQc + "_rev.fastq")
+
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
-    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], stdout=subprocess.PIPE)
+    num_reads_bytes = subprocess.run(['grep', '-c', '.*', fullyQc1], stdout=subprocess.PIPE)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
     fast_mode_output = dirpath + "/fast_mode_output"
     kraken_command = "kraken2 --db " + args.kraken_db + " --threads " + str(args.threads) +\
-                        " --output " + fast_mode_output + " --paired " + human_subtract_1 + " " + human_subtract_2
+                        " --output " + fast_mode_output + " --paired " + fullyQc1 + " " + fullyQc2
     
     new_command = subprocess.run(kraken_command, shell=True)    
     if check_fail("kraken", new_command, []) is True: return None
@@ -146,8 +148,8 @@ def preprocessing(args: argparse.Namespace):
     #################### MEGAHIT ###########################
     megahit_path = "megahit"
     contig_path = dirpath + "/megahit_out"
-    megahit_command = megahit_path + " -1 " + human_subtract_1 +\
-                        " -2 " + human_subtract_2 +\
+    megahit_command = megahit_path + " -1 " + fullyQc1 +\
+                        " -2 " + fullyQc2 +\
                         " -o " + contig_path + " -t " + str(args.threads) # is an output directory 
     contigs = contig_path + "/final_contigs.fa"
     start = time.time()
@@ -161,8 +163,8 @@ def preprocessing(args: argparse.Namespace):
     bbwrap_path = "bbwrap.sh"
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
     align_reads_to_contigs_cmd = bbwrap_path + " ref=" + contigs +\
-                                " in=" + human_subtract_1 +\
-                                " in2=" + human_subtract_2 +\
+                                " in=" + fullyQc1 +\
+                                " in2=" + fullyQc2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
     new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
     if check_fail(bbwrap_path, new_command, []) is True: return None 
