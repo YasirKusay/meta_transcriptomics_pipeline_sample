@@ -71,16 +71,16 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("fastp took: " + str(end - start))
 
-    #################################### CZID DEDUP ###########################
+    #################################### CLUMPIFY DEDUP #######################
 
     dedup1 = dirpath + "/dedup_1.fastq"
     dedup2 = dirpath + "/dedup_2.fastq"
 
-    czid_dedup_command = "czid-dedup --inputs " + qc1 + " " + qc2 +\
-                            " --deduped-outputs " + dedup1 + " " + dedup2
+    clumpify_command = "clumpify.sh  in1=" + qc1 + " in2=" + qc2 +\
+                            " out1=" + dedup1 + " out2=" + dedup2 + " dedupe=t"
     
-    new_command = subprocess.run(czid_dedup_command, shell=True)
-    if check_fail("czid-dedup", new_command, []) is True: return None
+    new_command = subprocess.run(clumpify_command, shell=True)
+    if check_fail("clumpify.sh", new_command, []) is True: return None
 
     #################################### STAR HUMAN ###########################
 
