@@ -55,6 +55,7 @@ def preprocessing(args: argparse.Namespace):
                     " --in2 " + args.inp2 +\
                     " --out1 " + qc1 +\
                     " --out2 " + qc2 +\
+                    " -b 100 -B 100 " +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
                     " --length_required " + args.length_required +\
@@ -62,6 +63,7 @@ def preprocessing(args: argparse.Namespace):
                     " --detect_adapter_for_pe" +\
                     " --thread " + str(args.threads)
                     # need to consider adapters, should we give the user a chance to add adatpers?
+                    # -b -B, means we want our reads/pairs to be at most 100 bases
 
     start = time.time()
     new_command = subprocess.run(fastp_command, shell=True)
@@ -69,12 +71,23 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("fastp took: " + str(end - start))
 
-    star_prefix = dirpath + "/star_"
+    #################################### CZID DEDUP ###########################
+
+    dedup1 = dirpath + "/dedup_1.fastq"
+    dedup2 = dirpath + "/dedup_2.fastq"
+
+    czid_dedup_command = "czid-dedup --inputs " + qc1 + " " + qc2 +\
+                            " --deduped-outputs " + dedup1 + " " + dedup2
+    
+    new_command = subprocess.run(czid_dedup_command, shell=True)
+    if check_fail("czid-dedup", new_command, []) is True: return None
 
     #################################### STAR HUMAN ###########################
 
+    star_prefix = dirpath + "/star_"
+
     star_command = "STAR --genomeDir " + args.star_human_index + " --runThreadN " + str(args.threads) +\
-                    " --readFilesIn " + qc1 + " " + qc2 + " --outFileNamePrefix " + star_prefix + \
+                    " --readFilesIn " + dedup1 + " " + dedup2 + " --outFileNamePrefix " + star_prefix +\
                     " --outFilterMultimapNmax 99999 --outFilterScoreMinOverLread 0.5 --outFilterMatchNminOverLread 0.5" +\
                     " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
