@@ -76,17 +76,17 @@ def preprocessing(args: argparse.Namespace):
     star_command = "STAR --genomeDir " + args.star_human_index + " --runThreadN " + str(args.threads) +\
                     " --readFilesIn " + qc1 + " " + qc2 + " --outFileNamePrefix " + star_prefix + \
                     " --outFilterMultimapNmax 99999 --outFilterScoreMinOverLread 0.5 --outFilterMatchNminOverLread 0.5" +\
-                    " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx " +\
+                    " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
     
     new_command = subprocess.run(star_command, shell=True)
     if check_fail("STAR", new_command, []) is True: return None
 
-    os.rename(star_prefix + "Unmapped.out.mate1", star_prefix + "Unmapped_1.fastq")
-    os.rename(star_prefix + "Unmapped.out.mate2", star_prefix + "Unmapped_2.fastq")
-
     star1 = star_prefix + "Unmapped_1.fastq"
     star2 = star_prefix + "Unmapped_2.fastq"
+
+    os.rename(star_prefix + "Unmapped.out.mate1", star1)
+    os.rename(star_prefix + "Unmapped.out.mate2", star2)
 
     #################################### SNAP HUMAN ###########################
     human_out = dirpath + "/snap_human_out.sam"
@@ -117,9 +117,9 @@ def preprocessing(args: argparse.Namespace):
 
     new_command = subprocess.run(samtools_human_subtract_command, shell=True)
     if check_fail(samtools_path, new_command, []) is True: return None
-    generated_files.append(human_subtract_1 + ".fastq")
-    generated_files.append(human_subtract_2 + ".fastq")
-    generated_files.append(human_spare + ".fastq")
+    generated_files.append(human_subtract_1)
+    generated_files.append(human_subtract_2)
+    generated_files.append(human_spare)
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -136,8 +136,7 @@ def preprocessing(args: argparse.Namespace):
                     " --reads " + human_subtract_1 + " --reads " + human_subtract_2 +\
                     " --threads " + str(args.threads) +\
 		            " --out2 TRUE " +\
-		            " --paired_out TRUE" +\
-                    " --best 1 " # 1 = all high candidate reference sequences will be searched for alignments
+		            " --paired_in TRUE"
 
     start = time.time()
     new_command = subprocess.run(sortmerna_command, shell=True)
