@@ -15,25 +15,10 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 def diamond(args: argparse.Namespace):
     dirpath = args.dirpath
 
-    new_fwd = dirpath + "/new_fwd.fq"
-    new_rev = dirpath + "/new_rev.fq"
-
-    contig_path = dirpath + "/megahit_out"
-    new_contigs = contig_path + "/final_contigs.fq"
-
-    # now lets align reads
-    # need to merge paired end reads first though
-    merged_pe = dirpath + "/merged_reads.fq"
-    merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
-    new_command = subprocess.run(merge_command, shell=True)
-    if check_fail("seqtk mergepe", new_command, []) is True: return False 
-
-    diamonc_combined_file = dirpath + "/diamond_combined_file.fq"
-    subprocess.run("cat " + new_contigs + " > " + diamonc_combined_file, shell=True)
-    subprocess.run("cat " + merged_pe + " >> " + diamonc_combined_file, shell=True)
-
     nr_combined_file = dirpath + "/nr_combined_file"
+    combined_file = dirpath + "/combined_file.fq"
+
     start = time.time()
-    if run_diamond(args.diamond_index, diamonc_combined_file, nr_combined_file, args.threads, 6) == False: return None
+    if run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads, 6) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))

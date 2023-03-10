@@ -102,7 +102,7 @@ def preprocessing(args: argparse.Namespace):
     os.rename(star_prefix + "Unmapped.out.mate2", star2)
 
     #################################### SNAP HUMAN ###########################
-    human_out = dirpath + "/snap_human_out.sam"
+    human_out = dirpath + "/snap_human_out.bam"
     snap_path = 'snap-aligner'
     snap_human_command = snap_path + " paired " + args.snap_human_index + " " + star1 + " " + star2 +\
                     " -o " + human_out + " -t " + str(args.threads) + " -I "
@@ -137,12 +137,12 @@ def preprocessing(args: argparse.Namespace):
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
     fullyQc = dirpath + "/fullyQc"
-    fullyQc1 = dirpath + "/fullyQc_fwd.fastq"
-    fullyQc2 = dirpath + "/fullyQc_rev.fastq"
+    fullyQc1 = dirpath + "/fullyQc_fwd.fq"
+    fullyQc2 = dirpath + "/fullyQc_rev.fq"
     
     sortmerna_path = 'sortmerna'
     sortmerna_command = sortmerna_path +\
-                    " --ref " + args.sortmerna_index +\
+                    " --ref " + args.sortmerna_rrna_database +\
                     " --aligned " + aligned +\
                     " --other " + fullyQc +\
                     " --fastx " +\
@@ -229,3 +229,20 @@ def preprocessing(args: argparse.Namespace):
     if check_fail(seqtk_path, new_command, []) is True: return None
 
     nt_combined_file = dirpath + "/nt_combined_file"
+
+    # now lets align reads
+    # need to merge paired end reads first though
+    merged_pe = dirpath + "/merged_reads.fq"
+    merge_command = "seqtk mergepe " + new_fwd + " " + new_rev + " > " + merged_pe
+    new_command = subprocess.run(merge_command, shell=True)
+    if check_fail("seqtk mergepe", new_command, []) is True: return False 
+
+    combined_file = dirpath + "/combined_file.fq"
+    subprocess.run("cat " + new_contigs + " > " + combined_file, shell=True)
+    subprocess.run("cat " + merged_pe + " >> " + combined_file, shell=True)
+
+    # need to convert above to fasta
+    combined_file_fa = dirpath + "/combined_file.fa"
+    seqtk_command = seqtk_path + " seq -a " + combined_file + " > " + combined_file_fa
+    new_command = subprocess.run(seqtk_command, shell=True)
+    if check_fail("seqtk", new_command, []) is True: return False 
