@@ -221,7 +221,14 @@ def parse_args():
     )
 
     parser_finalisation.add_argument(
-        "nucl_accession_taxid_mapping_files",
+        "taxdump_location",
+        type=str,
+        help="Path to the taxdump folder that contains information such as the lineages of the species. Available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/"
+    )
+
+    parser_finalisation.add_argument(
+        "--nucl_accession_taxid_mapping_files",
+        required=True,
         type=str,
         nargs="+",
         help="Specify file path(s) that map sequence accessions (found in the NCBI NT database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
@@ -229,17 +236,12 @@ def parse_args():
     )
 
     parser_finalisation.add_argument(
-        "prot_accession_taxid_mapping_files",
+        "--prot_accession_taxid_mapping_files",
+        required=True,
         type=str,
         nargs="+",
         help="Specify file path(s) that map sequence accessions (found in the NCBI NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
         "We used dead_prot.accession2taxid.gz and pdb.accession2taxid.gz."
-    )
-
-    parser_finalisation.add_argument(
-        "taxdump_location",
-        type=str,
-        help="Path to the taxdump folder that contains information such as the lineages of the species. Available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/"
     )
 
     parser_finalisation.add_argument(

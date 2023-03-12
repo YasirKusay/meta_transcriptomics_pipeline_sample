@@ -5,8 +5,8 @@ from meta_transcriptomics_pipeline.helpers import check_fail
 
 def run_diamond(index, in_path, out_path, threads, outfmt):
     diamond_command = "diamond" + " blastx --db " + index +\
-                        " --query " + in_path + " --sensitive --max-target-seqs 1 --outfmt " + str(outfmt) +\
-                        " --masking 0 -c 1 -s 1 -b 0.75" +\
+                        " --query " + in_path + " --mid-sensitive --max-target-seqs 1 --outfmt " + str(outfmt) +\
+                        " --masking 0 -c 1 -b 6" +\
                         " --threads " + str(threads) +\
                         " --out " + out_path
     new_command = subprocess.run(diamond_command, shell=True)

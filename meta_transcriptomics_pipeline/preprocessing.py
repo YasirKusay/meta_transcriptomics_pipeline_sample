@@ -71,23 +71,12 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("fastp took: " + str(end - start))
 
-    #################################### CLUMPIFY DEDUP #######################
-
-    dedup1 = dirpath + "/dedup_1.fastq"
-    dedup2 = dirpath + "/dedup_2.fastq"
-
-    clumpify_command = "clumpify.sh  in1=" + qc1 + " in2=" + qc2 +\
-                            " out1=" + dedup1 + " out2=" + dedup2 + " dedupe=t"
-    
-    new_command = subprocess.run(clumpify_command, shell=True)
-    if check_fail("clumpify.sh", new_command, []) is True: return None
-
     #################################### STAR HUMAN ###########################
 
     star_prefix = dirpath + "/star_"
 
     star_command = "STAR --genomeDir " + args.star_human_index + " --runThreadN " + str(args.threads) +\
-                    " --readFilesIn " + dedup1 + " " + dedup2 + " --outFileNamePrefix " + star_prefix +\
+                    " --readFilesIn " + qc1 + " " + qc2 + " --outFileNamePrefix " + star_prefix +\
                     " --outFilterMultimapNmax 99999 --outFilterScoreMinOverLread 0.5 --outFilterMatchNminOverLread 0.5" +\
                     " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
@@ -136,15 +125,15 @@ def preprocessing(args: argparse.Namespace):
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
-    fullyQc = dirpath + "/fullyQc"
-    fullyQc1 = dirpath + "/fullyQc_fwd.fq"
-    fullyQc2 = dirpath + "/fullyQc_rev.fq"
+    noRna = dirpath + "/noRna"
+    noRna1 = dirpath + "/noRna_fwd.fq"
+    noRna2 = dirpath + "/noRna_rev.fq"
     
     sortmerna_path = 'sortmerna'
     sortmerna_command = sortmerna_path +\
                     " --ref " + args.sortmerna_rrna_database +\
                     " --aligned " + aligned +\
-                    " --other " + fullyQc +\
+                    " --other " + noRna +\
                     " --fastx " +\
                     " --reads " + human_subtract_1 + " --reads " + human_subtract_2 +\
                     " --threads " + str(args.threads) +\
@@ -160,7 +149,20 @@ def preprocessing(args: argparse.Namespace):
     generated_files.append(fullyQc + "_fwd.fastq")
     generated_files.append(fullyQc + "_rev.fastq")
 
+    #################################### CLUMPIFY DEDUP #######################
+
+    fullyQc = dirpath + "/fullyQc"
+    fullyQc1 = dirpath + "/fullyQc_fwd.fq"
+    fullyQc2 = dirpath + "/fullyQc_rev.fq"
+
+    clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
+                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t"
+    
+    new_command = subprocess.run(clumpify_command, shell=True)
+    if check_fail("clumpify.sh", new_command, []) is True: return None
+
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
+    '''
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', fullyQc1], stdout=subprocess.PIPE)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
@@ -176,7 +178,8 @@ def preprocessing(args: argparse.Namespace):
     get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
     fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
     subprocess.run("ImportText.pl " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
-
+    '''
+    
     #################### MEGAHIT ###########################
     megahit_path = "megahit"
     contig_path = dirpath + "/megahit_out"

@@ -54,7 +54,8 @@ def join(accession_file, mapping_file, join_file, path):
         relevant_taxids_sorted = path + "relevant_taxids_sorted"
         new_command = subprocess.run("LC_COLLATE=C sort -k1 " + relevant_taxids + " > " + relevant_taxids_sorted, shell = True)
         join_accessions_taxids(combined_file_sorted_sorted, relevant_taxids_sorted, join_file)
-        os.remove(relevant_taxids)
+        if os.path.exists(relevant_taxids):
+            os.remove(relevant_taxids)
 
     return True
     
