@@ -7,6 +7,12 @@ def getScientificNames(taxids, taxdump_location):
     inc = 0
 
     # it appears that there are values being skipped, or eof gets reached earlier
+    # for the file, each line is split by a "|"" where the first column is the taxid
+    # the second column is a scientific name
+    # the third column I am not sure about (sometimes it is empty)
+    # the fourth column contains the information we are after
+    # annoyingly, names.dmp has a lot of white space between the columns
+
     with open(ranked_lineage, "r") as f:
         for line in f:
             curr = line.split("|")
