@@ -42,15 +42,15 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
-        "star_human_index",
+        "star_host_index",
         type=str,
-        help="Path to the pre-built STAR human index folder. The complete human genome needs to be indexed (we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/) via STAR.\n"
+        help="Path to the pre-built STAR host index. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via STAR.\n"
     )
 
     parser_preprocessing.add_argument(
-        "snap_human_index",
+        "snap_host_index",
         type=str,
-        help="Path to the pre-built SNAP human index folder. The complete human genome needs to be indexed (we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/) via SNAP index.\n" +\
+        help="Path to the pre-built SNAP host index folder. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via SNAP.\n" +\
         "SNAP generates a folder containing the index and the path to this folder needs to be specified."
     )
 
@@ -227,21 +227,12 @@ def parse_args():
     )
 
     parser_finalisation.add_argument(
-        "--nucl_accession_taxid_mapping_files",
-        required=True,
+        "nucl_prot_accession_taxid_mapping_files_loc",
         type=str,
         nargs="+",
-        help="Specify file path(s) that map sequence accessions (found in the NCBI NT database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
-        "We used dead_nucl.accession2taxid.gz, dead_wgs.accession2taxid.gz , nucl_gb.accession2taxid.gz, nucl_wgs.accession2taxid.EXTRA.gz and nucl_wgs.accession2taxid.gz."
-    )
-
-    parser_finalisation.add_argument(
-        "--prot_accession_taxid_mapping_files",
-        required=True,
-        type=str,
-        nargs="+",
-        help="Specify file path(s) that map sequence accessions (found in the NCBI NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
-        "We used dead_prot.accession2taxid.gz and pdb.accession2taxid.gz."
+        help="Specify location that map sequence accessions (found in the NCBI NT/NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
+        "We used dead_nucl.accession2taxid.gz, dead_wgs.accession2taxid.gz , nucl_gb.accession2taxid.gz, nucl_wgs.accession2taxid.EXTRA.gz and nucl_wgs.accession2taxid.gz for nucleotide mappings and " + \
+        " dead_prot.accession2taxid.gz and pdb.accession2taxid.gz for protein mappings. The file can automatically detect what kind of mapping file it is (either nucleotide accessions/protein accessions)."
     )
 
     parser_finalisation.add_argument(
