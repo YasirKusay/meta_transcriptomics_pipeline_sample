@@ -18,31 +18,35 @@ def get_lineage_info(taxids, taxdump_location):
         except:
             print(str(curr_taxid) + " NOT FOUND")
             continue
-        lineage2ranks = ncbi.get_rank(curr_lineage_full) # gets ranks of the lineages in curr_lineage_full as a dict where rank is the key
+        lineage2ranks = ncbi.get_rank(curr_lineage_full) # gets ranks of the lineages in curr_lineage_full as a dict where taxid is the key
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items()) # same as above, flips keys however
         curr_lineage = []
 
+        # taxids in ranks2lineage are ints, we should convert to strings
+
         if curr_taxid != "Unknown":
-            all_taxids.append(int(curr_taxid))
+            all_taxids.append(str(curr_taxid))
         for rank in ranks:
-            r = ranks2lineage.get(rank, 'Unknown') # returns value of rank if it exists, 'Unknow' otherwise
-            if r != "Unknown":
-                all_taxids.append(int(r))
-            curr_lineage.append(r)
+            rank_taxid = ranks2lineage.get(rank, 'Unknown') # returns value of rank if it exists as a key in the dict, 'Unknown' otherwise
+            if rank_taxid != "Unknown":
+                all_taxids.append(str(rank_taxid))
+            curr_lineage.append(str(rank_taxid))
         
         # previously, curr_lineage used to start with the abundance (read/tmp),
         # now it starts with the taxid of the highest level thing of the species
         all_species_lineages.append(curr_lineage) 
-    
+
+
+    # all_taxids will NEVER contain 'Unknown'
     sci_names = getScientificNames(all_taxids, taxdump_location) 
 
     all_lineages_resolved = {}
 
     for curr_lineage in all_species_lineages:
-        curr_species_taxid = curr_lineage[-1]
+        curr_species_taxid = curr_lineage[-1] # curr_species_taxid is a string
         all_lineages_resolved[curr_species_taxid] = []
 
         for item in curr_lineage:
-            all_lineages_resolved[curr_species_taxid].append(str(sci_names[str(item)]))
+            all_lineages_resolved[curr_species_taxid].append(sci_names[item])
 
     return all_lineages_resolved

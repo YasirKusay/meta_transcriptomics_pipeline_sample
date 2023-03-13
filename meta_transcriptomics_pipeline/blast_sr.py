@@ -15,7 +15,7 @@ def blast_sr(args: argparse.Namespace):
     combined_file_fa = dirpath + "/preprocessing/combined_reads_contigs_file.fa"
     
     start = time.time()
-    blast_command = blast_path + " -query " + combined_file_fa + " -db " + args.blast_ncbi_nt_database + " -out " + nt_alignments_file + " -outfmt 6 -max_target_seqs 20 -num_threads " + str(args.threads)
+    blast_command = blast_path + " -query " + combined_file_fa + " -db " + args.blast_ncbi_nt_database + " -out " + nt_alignments_file + " -outfmt 6 -max_target_seqs 10 -num_threads " + str(args.threads)
     new_command = subprocess.run(blast_command, shell=True)
     if check_fail(blast_path, new_command) is True: return False  
 
