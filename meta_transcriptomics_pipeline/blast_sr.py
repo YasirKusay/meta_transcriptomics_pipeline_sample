@@ -6,6 +6,9 @@ from meta_transcriptomics_pipeline.helpers import check_fail
 
 def blast_sr(args: argparse.Namespace):
     dirpath = args.dirpath
+    if dirpath[-1] == "/":
+        dirpath = dirpath[0:-1]
+
     blast_path = "blastn -task megablast"
 
     nt_alignments_file = dirpath + "/alignments/nt_alignments_file.tsv"

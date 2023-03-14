@@ -214,8 +214,8 @@ def preprocessing(args: argparse.Namespace):
     unassembled_reads_longer_1 = dirpath + "/unassembled_reads_longer_fwd.fq"
     unassembled_reads_longer_2 = dirpath + "/unassembled_reads_longer_rev.fq"
 
-    filter_files(unassembled_reads_fwd, unassembled_reads_longer_1, unassembled_reads_shorter_1)
-    filter_files(unassembled_reads_rev, unassembled_reads_longer_2, unassembled_reads_shorter_2)
+    separate_reads_by_size(unassembled_reads_fwd, unassembled_reads_longer_1, unassembled_reads_shorter_1)
+    separate_reads_by_size(unassembled_reads_rev, unassembled_reads_longer_2, unassembled_reads_shorter_2)
 
     # need to convert file above from fa to fq, simply done using seqtk
     contigs_fq = megahit_out_path + "/final_contigs.fq"

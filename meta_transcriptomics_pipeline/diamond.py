@@ -15,6 +15,9 @@ def run_diamond(index, in_path, out_path, threads, outfmt):
 def diamond(args: argparse.Namespace):
     dirpath = args.dirpath
 
+    if dirpath[-1] == "/":
+        dirpath = dirpath[0:-1]
+
     nr_combined_file = dirpath + "/alignments/nr_alignments_file.tsv"
     combined_file = dirpath + "/preprocessing/combined_reads_contigs_file.fq"
 

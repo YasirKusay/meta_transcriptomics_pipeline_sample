@@ -1,7 +1,7 @@
 import os
 import operator
 
-def get_abundance(joined, total_reads, n50, final_file, contaminants):
+def get_abundance(joined, total_reads, n50, output_file, contaminants):
     final_res = {}
     taxids = {}
     lengths = {}
@@ -67,9 +67,9 @@ def get_abundance(joined, total_reads, n50, final_file, contaminants):
         else:
             final_tpm[taxids[key]] = tpm[key]
 
-    if os.path.isfile(final_file):
-        os.remove(final_file)
-    wf = open(final_file, "w")
+    if os.path.isfile(output_file):
+        os.remove(output_file)
+    wf = open(output_file, "w")
     final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
     for key in final_tpm_sorted:
         if (key not in contaminants):

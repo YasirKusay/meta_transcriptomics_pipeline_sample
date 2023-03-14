@@ -229,7 +229,6 @@ def parse_args():
     parser_finalisation.add_argument(
         "nucl_prot_accession_taxid_mapping_files_loc",
         type=str,
-        nargs="+",
         help="Specify location that map sequence accessions (found in the NCBI NT/NR database) to their respective taxids. Files available from: https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/. \n" + \
         "We used dead_nucl.accession2taxid.gz, dead_wgs.accession2taxid.gz , nucl_gb.accession2taxid.gz, nucl_wgs.accession2taxid.EXTRA.gz and nucl_wgs.accession2taxid.gz for nucleotide mappings and " + \
         " dead_prot.accession2taxid.gz and pdb.accession2taxid.gz for protein mappings. The file can automatically detect what kind of mapping file it is (either nucleotide accessions/protein accessions)."

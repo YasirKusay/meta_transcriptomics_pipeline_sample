@@ -5,14 +5,22 @@ import os
 import re 
 import operator 
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
-from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
-from meta_transcriptomics_pipeline.merge_blast_outputs import merge_blast_outputs
+from meta_transcriptomics_pipeline.get_best_sam_hits import get_best_sam_hits
+from meta_transcriptomics_pipeline.get_best_blast_hits import get_best_blast_hits
 from meta_transcriptomics_pipeline.remove_contaminants_control import remove_contaminants_control
-from meta_transcriptomics_pipeline.join_taxid_contigs import join_taxid_contigs
-from meta_transcriptomics_pipeline.map_reads_to_contigs import map_reads_to_contigs
+from meta_transcriptomics_pipeline.join_seq_to_taxid import join_seq_to_taxid
 from meta_transcriptomics_pipeline.match_scores import match_scores
-from meta_transcriptomics_pipeline.filter_results import filter_result, get_filtered_taxids
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
+
+def fetch_taxids(infile):
+    taxids = []
+    with open(infile, "r") as f:
+        for line in f:
+            curr = line.split("\t")
+            if curr[2].strip() not in taxids:
+                taxids.append(curr[2].strip())
+
+    return taxids
 
 def fetch_contig_read_taxids(infile):
     assignments = {}
@@ -24,8 +32,6 @@ def fetch_contig_read_taxids(infile):
     return assignments
 
 def compile_tpm_input_info(assignments, infile, outfile):
-    if os.path.isfile(outfile):
-        os.remove(outfile)
     wf = open(outfile, "w")
     with open(infile, "r") as r:
         for line in r:
@@ -45,15 +51,12 @@ def fetch_contig_taxids(infile):
     with open(infile, "r") as r:
         for line in r:
             curr = line.split()
-            if (len(re.findall("^k[0-9]*", curr[0])) > 0):
+            if (len(re.findall("^k[0-9]*", curr[0])) > 0): # syntax for megahit contig names
                 assignments[curr[0]] = curr[2]
-           
-    print("LEN " + str(len(assignments))) 
+
     return assignments
 
-def assign_taxids_to_reads(assignments, infile, outfile):
-    if os.path.isfile(outfile):
-        os.remove(outfile)
+def assign_taxids_to_assembled_reads(assignments, infile, outfile):
     wf = open(outfile, "w")
     with open(infile, "r") as r:
         for line in r:
@@ -99,7 +102,6 @@ def getContigReadCount(infile):
 def countReads(infile, total_reads, outfile, contaminants):
     results = {}
     num_reads = 0
-    print("total_reads: " + str(total_reads))
     with open(infile, "r") as f:
         for line in f:
             curr = line.split()
@@ -113,8 +115,6 @@ def countReads(infile, total_reads, outfile, contaminants):
 
     for key in results.keys():
         results[key] = (results[key]/total_reads) * 100
-
-    print(str(num_reads))
  
     unassigned_reads = total_reads - num_reads
     print("unassigned_reads: " + str(unassigned_reads))
@@ -124,17 +124,13 @@ def countReads(infile, total_reads, outfile, contaminants):
     
     sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
 
-    if os.path.isfile(outfile):
-        os.remove(outfile)
     wf = open(outfile, "w")
 
-    print(sorted_results)
-
-    for key in sorted_results.keys():
-        if (contaminants is not None and key not in contaminants):
-            wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+    for taxid in sorted_results.keys():
+        if (contaminants is not None and taxid not in contaminants):
+            wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
         elif (contaminants is None):
-            wf.write(key + "\t" + str(sorted_results[key]) + "\n")
+            wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
 
     wf.close()
 
@@ -204,65 +200,95 @@ def process_fast_mode_output(kraken_out, outfile, total_reads):
 
 def finalisation(args: argparse.Namespace):
     dirpath = args.dirpath
-    nt_out = dirpath + "/nucl_alignments_contigs.txt"
-    nr_out = dirpath + "/prot_alignments_contigs.txt"
-    new_fwd = dirpath + "/new_fwd.fq"
-    human_subtract_1 = dirpath + "/human_subtract1.fastq"
-    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
-    contig_path = dirpath + "/megahit_out"
-    new_contigs = contig_path + "/final_contigs.fq"
-    nt_combined_file = dirpath + "/nt_combined_file"
-    nr_combined_file = dirpath + "/nr_combined_file"
 
-    num_reads_bytes = subprocess.run(['grep', '-c', '.*', human_subtract_1], capture_output=True)
+    if dirpath[-1] == "/":
+        dirpath = dirpath[0:-1]
+
+    analysis_path = dirpath + "/analysis"
+
+    if os.path.exists(analysis_path) is False:
+        os.mkdir(analysis_path)
+
+    final_plots_path = dirpath + "/final_plots"
+
+    if os.path.exists(final_plots_path) is False:
+        os.mkdir(final_plots_path)
+
+    fullyQc1 = dirpath + "/preprocessing/fullyQc_fwd.fq"
+
+    num_reads_bytes = subprocess.run(['grep', '-c', '.*', fullyQc1], capture_output=True)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
 
-    paf2blast_out_contigs = dirpath + "/minimap2_contig_out_frompaf.m8"
-    new_command = subprocess.run("cat " + paf2blast_out_contigs + " >> " + nt_combined_file, shell=True)
-    paf2blast_out_lr = dirpath + "/minimap2_lr_out_frompaf.m8"
-    new_command = subprocess.run("cat " + paf2blast_out_lr + " >> " + nt_combined_file, shell=True)
-    nt_out, nr_out = merge_blast_outputs(nt_combined_file, nr_combined_file, dirpath)
+    reads_mapped_to_contigs_file = dirpath + "/preprocessing/reads_mapped_to_contigs.sam"
+    nt_alignments_file = dirpath + "/alignments/nt_alignments_file.tsv"
+    nr_alignments_file = dirpath + "/alignments/nr_alignments_file.tsv"
+    contigs_fq = dirpath + "/megahit_out/final_contigs.fq"
+
+    # paf2blast_out_contigs = dirpath + "/minimap2_contig_out_frompaf.m8"
+    # new_command = subprocess.run("cat " + paf2blast_out_contigs + " >> " + nt_alignments_file, shell=True)
+    # paf2blast_out_lr = dirpath + "/minimap2_lr_out_frompaf.m8"
+    # new_command = subprocess.run("cat " + paf2blast_out_lr + " >> " + nr_alignments_file, shell=True)
+
+    best_nt_scores = analysis_path + "/best_nt_scores.tsv"
+    best_nr_scores = analysis_path + "/best_nr_scores.tsv"
+    get_best_blast_hits(nt_alignments_file, nr_alignments_file, analysis_path, best_nt_scores, best_nr_scores)
+
+    nucl_accession_taxid_mapping_files = []
+    prot_accession_taxid_mapping_files = []
+
+    for currFile in os.listdir(args.nucl_prot_accession_taxid_mapping_files_loc):
+        if args.nucl_prot_accession_taxid_mapping_files_loc[-1] != "/":
+            toAppend = args.nucl_prot_accession_taxid_mapping_files_loc + "/" + currFile
+        else:
+            toAppend = args.nucl_prot_accession_taxid_mapping_files_loc + currFile
+        if os.path.isfile(toAppend):
+            if "wgs" in currFile or "nucl" in currFile:
+                nucl_accession_taxid_mapping_files.append(toAppend)
+            elif "prot" in currFile:
+                prot_accession_taxid_mapping_files.append(toAppend)
 
     # create 1 big file, for the reads and contigs mapped to their taxid, based on their accession_num
     start = time.time()
-    contigs_reads_taxids_temp = dirpath + "/nucl_prot_taxids_temp.txt"
+    contigs_reads_taxids_temp = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
     if os.path.isfile(contigs_reads_taxids_temp):
         os.remove(contigs_reads_taxids_temp)
-    if join_taxid_contigs(nt_out, nr_out, args.nucl_accession_taxid_mapping, args.prot_accession_taxid_mapping, contigs_reads_taxids_temp, dirpath) is False: return None
-    contigs_reads_taxids_unsorted = dirpath + "/nucl_prot_taxids_unsorted.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " > " + contigs_reads_taxids_unsorted, shell=True) # change space to tabs
+    if join_seq_to_taxid(best_nt_scores, best_nr_scores, nucl_accession_taxid_mapping_files, prot_accession_taxid_mapping_files, contigs_reads_taxids_temp, analysis_path) is False: return None
+
+    contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids.txt"
+    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids, shell=True) # change space to tabs
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
 
     # map reads to their contigs
-    mapped_reads_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.txt"
-    map_reads_to_contigs(reads_mapped_to_contigs_file, mapped_reads_unsorted, dirpath)
+    reads_belonging_to_contigs_unsorted = analysis_path + "/reads_belonging_to_contigs_unsorted.txt"
+    get_best_sam_hits(reads_mapped_to_contigs_file, reads_belonging_to_contigs_unsorted, analysis_path)
 
     # now lets map the contig taxids to their reads
     # firstly retrieve all the dna/protein aligned reads
 
-    reads_taxids_temp = dirpath + "/all_reads_taxids_temp.txt"
-    contigs_reads_taxids = dirpath + "/nucl_prot_taxids.txt"
-    subprocess.run("LC_COLLATE=C sort -k 1 " + contigs_reads_taxids_unsorted + " > " + contigs_reads_taxids, shell=True)
+    species_avg_alignment_scores = analysis_path + "/species_avg_alignment_scores.txt"
+    combined_nt_nr_scores_unsorted = analysis_path + "/combined_nt_nr_scores_unsorted.txt"
+    subprocess.run("cat " + best_nt_scores + " > " + combined_nt_nr_scores_unsorted, shell=True)
+    subprocess.run("cat " + best_nr_scores + " >> " + combined_nt_nr_scores_unsorted, shell=True)
 
-    taxid_scores = dirpath + "/taxid_scores"
-    combined_nt_nr_unsorted = dirpath + "/combined_nt_nr_unsorted"
-    subprocess.run("cat " + nt_out + " > " + combined_nt_nr_unsorted, shell=True)
-    subprocess.run("cat " + nr_out + " >> " + combined_nt_nr_unsorted, shell=True)
-    combined_nt_nr = dirpath + "/combined_nt_nr"
-    subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_unsorted + " > " + combined_nt_nr, shell=True)
-    match_scores(contigs_reads_taxids, combined_nt_nr, dirpath, taxid_scores, args.taxdump_location)
+    combined_nt_nr_scores = analysis_path + "/combined_nt_nr_scores.txt"
+    subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_scores_unsorted + " > " + combined_nt_nr_scores, shell=True)
+    match_scores(contigs_reads_taxids, combined_nt_nr_scores, analysis_path, species_avg_alignment_scores, args.taxdump_location)
+    os.remove(combined_nt_nr_scores_unsorted)
 
-    mapped_reads = dirpath + "/reads_mapped_to_contigs.txt"
-    subprocess.run("LC_COLLATE=C sort -k 2 " + mapped_reads_unsorted + " > " + mapped_reads, shell=True)
-    assignments = fetch_contig_taxids(contigs_reads_taxids)
-    assign_taxids_to_reads(assignments, mapped_reads, reads_taxids_temp)
-    reads_taxids = dirpath + "/all_reads_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + reads_taxids_temp + " > " + reads_taxids, shell=True) # change space to tabs
+    reads_belonging_to_contigs = analysis_path + "/reads_belonging_to_contigs.txt"
+    subprocess.run("LC_COLLATE=C sort -k 2 " + reads_belonging_to_contigs_unsorted + " > " + reads_belonging_to_contigs, shell=True)
+
+    # stores reads that assembled, and its contigs taxid
+    assembled_reads_taxids_temp = analysis_path + "/assembled_reads_taxids_temp.txt"
+    contig_taxid_assignments = fetch_contig_taxids(contigs_reads_taxids)
+    assign_taxids_to_assembled_reads(contig_taxid_assignments, reads_belonging_to_contigs, assembled_reads_taxids_temp)
+    all_reads_taxids = analysis_path + "/all_reads_taxids.txt"
+    subprocess.run("sed 's/ /\t/g' " + assembled_reads_taxids_temp + " > " + all_reads_taxids, shell=True) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
-    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + reads_taxids, shell=True)
+    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + all_reads_taxids, shell=True)
 
     # before proceeeding any further, lets remove the contaminants, simply remove the taxids
     contaminant_removal = True
@@ -291,50 +317,70 @@ def finalisation(args: argparse.Namespace):
     print("Finished decontamination")
 
     # now we can calculate read count method
-    readCountsOutfile = dirpath + "/readCountsOut.txt"
-    countReads(reads_taxids, num_reads, readCountsOutfile, contaminants)
+    readCountsOutfile = analysis_path + "/readCountsOut.txt"
+    countReads(all_reads_taxids, num_reads, readCountsOutfile, contaminants)
 
     # now lets get plot the abundances as krona charts
     # need to find lineages first
-    readAbundances = dirpath + "/readAbundances.txt"
-    get_lineage_info(readCountsOutfile, readAbundances, args.taxdump_location)
-    readAbundancesKrona = dirpath + "/readAbundancesKrona.html"
-    #subprocess.run("ktImportText " + readAbundances + " -o " + readAbundancesKrona, shell=True)
-    subprocess.run("ImportText.pl " + readAbundances + " -o " + readAbundancesKrona + " -fil " + taxid_scores, shell=True)
+    all_taxids = fetch_taxids(contigs_reads_taxids)
+    taxid_lineages_resolved = get_lineage_info(all_taxids, args.taxdump_location)
+
+    abundancesReadMethod = analysis_path + "/abundancesReadMethod.txt"
+    wf = open(abundancesReadMethod, "w")
+    with open(readCountsOutfile, "r") as f:
+        for line in f:
+            curr = line.split("\t")
+            taxid = curr[0]
+            score = curr[1].strip()
+            if str(taxid) in taxid_lineages_resolved.keys():
+                wf.write(score + "\t".join(taxid_lineages_resolved[str(taxid)]))
+
+    abundancesKronaReadMethod = final_plots_path + "/abundancesKronaReadMethod.html"
+    subprocess.run("ImportText.pl " + abundancesReadMethod + " -o " + abundancesKronaReadMethod + " -fil " + combined_nt_nr_scores, shell=True)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
     # then get the number of reads aligned to them
 
     # firstly lets get the number of reads assigned to each contig
-    contig_counts = getContigReadCount(mapped_reads)
+    contig_counts = getContigReadCount(reads_belonging_to_contigs)
 
-    contig_unaligned_read_counts_temp = dirpath + "/contig_unaligned_read_counts_temp.txt"
+    contig_unaligned_read_counts_temp = analysis_path + "/contig_unaligned_read_counts_temp.txt"
     if os.path.isfile(contig_unaligned_read_counts_temp):
         os.remove(contig_unaligned_read_counts_temp)
-    getReadsLength(new_contigs, contig_unaligned_read_counts_temp, contig_counts, False)
+    getReadsLength(contigs_fq, contig_unaligned_read_counts_temp, contig_counts, False)
 
 
     # then repeat process of unaligned reads
-    getReadsLength(new_fwd, contig_unaligned_read_counts_temp, None, True)
+    unassembled_reads_fwd = dirpath + "/preprocessing/unassembled_reads_fwd.fq"
+    getReadsLength(unassembled_reads_fwd, contig_unaligned_read_counts_temp, None, True)
 
     # lets join contig_unaligned_read_counts with their taxid
-    contig_unaligned_read_counts_temp2 = dirpath + "/contig_unaligned_read_counts_temp2.txt"
-    assignments = fetch_contig_read_taxids(contigs_reads_taxids)
+    contig_unaligned_read_counts_temp2 = analysis_path + "/contig_unaligned_read_counts_temp2.txt"
+    contig_reads_taxid_assignments = fetch_contig_read_taxids(contigs_reads_taxids)
      
 
-    contig_unaligned_read_counts = dirpath + "/contig_unaligned_read_counts.txt"
-    compile_tpm_input_info(assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
-    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts, shell=True) # change space to tabs
+    contig_unaligned_read_counts_len_taxid = analysis_path + "/contig_unaligned_read_counts_len_taxid.txt"
+    compile_tpm_input_info(contig_reads_taxid_assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
+    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts_len_taxid, shell=True) # change space to tabs
 
     log_path = dirpath + "/megahit_out/log"
+    # retreiving n50 score
     n50 = float(subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')[-2:-1][0])
 
     # now we can finally calculate TPM/FPKM
-    tpm_abundance_file = dirpath + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts, num_reads, n50, tpm_abundance_file, contaminants)
+    tpm_abundance_file = unassembled_reads_fwd + "/tpm_fpkm.txt"
+    get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file, contaminants)
 
-    tpmAbundances = dirpath + "/tpmAbundances.txt"
-    get_lineage_info(tpm_abundance_file, tpmAbundances, args.taxdump_location)
-    tpmAbundancesKrona = dirpath + "/tpmAbundancesKrona.html"
-    subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + taxid_scores, shell=True)
+    tpmAbundances = unassembled_reads_fwd + "/tpmAbundances.txt"
+    wf = open(tpmAbundances, "w")
+    with open(tpm_abundance_file, "r") as f:
+        for line in f:
+            curr = line.split("\t")
+            taxid = curr[0]
+            score = curr[1].strip()
+            if str(taxid) in taxid_lineages_resolved.keys():
+                wf.write(score + "\t".join(taxid_lineages_resolved[str(taxid)]))
+
+    tpmAbundancesKrona = final_plots_path + "/tpmAbundancesKrona.html"
+    subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + combined_nt_nr_scores, shell=True)
