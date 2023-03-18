@@ -39,7 +39,7 @@ def compile_tpm_input_info(assignments, infile, outfile):
             if (curr[0] in assignments.keys()):
                 name = curr[0]
                 length = curr[1]
-                count = curr[2]
+                count = curr[2].strip()
                 taxid = assignments[curr[0]]
                 wf.write(name + "\t" + str(length) + "\t" + str(count) + "\t" + str(taxid) + "\n")
 
@@ -52,7 +52,7 @@ def fetch_contig_taxids(infile):
         for line in r:
             curr = line.split()
             if (len(re.findall("^k[0-9]*", curr[0])) > 0): # syntax for megahit contig names
-                assignments[curr[0]] = curr[2]
+                assignments[curr[0]] = curr[2].strip()
 
     return assignments
 
@@ -65,24 +65,9 @@ def assign_taxids_to_assembled_reads(assignments, infile, outfile):
             name = curr[0]
             contig = curr[1]
             if (contig in assignments.keys()):
-                wf.write(name + "\t" + str(assignments[contig]) + "\n")
+                wf.write(name + "\t" + str(assignments[contig].strip()) + "\n")
 
-    wf.close()
-
-def assign_taxids_to_contigs_reads(assignments, infile, outfile):
-    if os.path.isfile(outfile):
-        os.remove(outfile)
-    wf = open(outfile, "w")
-    with open(infile, "r") as r:
-        for line in r:
-            #print(line)
-            curr = line.split()
-            name = curr[0]
-            contig = curr[1]
-            if (contig in assignments.keys()):
-                wf.write(name + "\t" + str(assignments[contig]) + "\n")
-
-    wf.close()              
+    wf.close()            
 
 # returns the number of reads assigned to each contig
 def getContigReadCount(infile):
@@ -105,7 +90,7 @@ def countReads(infile, total_reads, outfile, contaminants):
     with open(infile, "r") as f:
         for line in f:
             curr = line.split()
-            taxid = curr[1]
+            taxid = curr[1].strip()
             if taxid in results.keys():
                 results[taxid] += 1
             else:
@@ -119,8 +104,9 @@ def countReads(infile, total_reads, outfile, contaminants):
     unassigned_reads = total_reads - num_reads
     print("unassigned_reads: " + str(unassigned_reads))
 
-    if (unassigned_reads != 0):
-        results["Unknown"] = (unassigned_reads/total_reads) * 100
+    # lets exclude unknown from final output
+    # if (unassigned_reads != 0):
+    #    results["Unknown"] = (unassigned_reads/total_reads) * 100
     
     sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
 
@@ -146,7 +132,7 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
         for line in f:
             if (divisible_int%4 == 1):
                 curr = line.split()
-                curr_name = curr[0][1:].rstrip("\n")
+                curr_name = curr[0][1:].rstrip("\n") # getting rid of statistics if its a contig
             elif (divisible_int%4 == 2):
                 curr_seq = line.rstrip("\n")
                 curr_length = len(curr_seq)
@@ -165,36 +151,6 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
                 continue
 
             divisible_int += 1
-
-    wf.close()
-
-def process_fast_mode_output(kraken_out, outfile, total_reads):
-    results = {}
-    num_reads = 0
-    with open(kraken_out, "r") as f:   
-        for line in f:
-            curr = line.split()
-            taxid = curr[2]
-            if taxid == 0:
-                taxid == "Unknown"
-            if taxid in results.keys():
-                results[taxid] += 1
-            else:
-                results[taxid] = 1
-
-            num_reads += 1
-
-    for key in results.keys():
-        results[key] = (results[key]/total_reads) * 100
-
-    sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
-    wf = open(outfile, "w")
-
-    print(sorted_results)
-
-    for key in sorted_results.keys():
-        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
-        wf.write(key + "\t" + str(sorted_results[key]) + "\n")
 
     wf.close()
 
@@ -238,6 +194,7 @@ def finalisation(args: argparse.Namespace):
     prot_accession_taxid_mapping_files = []
 
     for currFile in os.listdir(args.nucl_prot_accession_taxid_mapping_files_loc):
+        toAppend = ""
         if args.nucl_prot_accession_taxid_mapping_files_loc[-1] != "/":
             toAppend = args.nucl_prot_accession_taxid_mapping_files_loc + "/" + currFile
         else:
@@ -285,7 +242,7 @@ def finalisation(args: argparse.Namespace):
     contig_taxid_assignments = fetch_contig_taxids(contigs_reads_taxids)
     assign_taxids_to_assembled_reads(contig_taxid_assignments, reads_belonging_to_contigs, assembled_reads_taxids_temp)
     all_reads_taxids = analysis_path + "/all_reads_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + assembled_reads_taxids_temp + " > " + all_reads_taxids, shell=True) # change space to tabs
+    subprocess.run("cat " + assembled_reads_taxids_temp + " > " + all_reads_taxids, shell=True) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
     subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + all_reads_taxids, shell=True)
@@ -358,13 +315,11 @@ def finalisation(args: argparse.Namespace):
     getReadsLength(unassembled_reads_fwd, contig_unaligned_read_counts_temp, None, True)
 
     # lets join contig_unaligned_read_counts with their taxid
-    contig_unaligned_read_counts_temp2 = analysis_path + "/contig_unaligned_read_counts_temp2.txt"
     contig_reads_taxid_assignments = fetch_contig_read_taxids(contigs_reads_taxids)
      
 
     contig_unaligned_read_counts_len_taxid = analysis_path + "/contig_unaligned_read_counts_len_taxid.txt"
-    compile_tpm_input_info(contig_reads_taxid_assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_temp2)
-    subprocess.run("sed 's/ /\t/g' " + contig_unaligned_read_counts_temp2 + " > " + contig_unaligned_read_counts_len_taxid, shell=True) # change space to tabs
+    compile_tpm_input_info(contig_reads_taxid_assignments, contig_unaligned_read_counts_temp, contig_unaligned_read_counts_len_taxid)
 
     log_path = dirpath + "/megahit_out/log"
     # retreiving n50 score
