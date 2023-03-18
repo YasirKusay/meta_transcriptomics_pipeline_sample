@@ -52,7 +52,7 @@ def join(hits_file, mapping_file, append_file, path):
 
     return True
     
-def join_taxid_contigs(nt_hits_file, nr_hits_file, nt_accession_to_taxid_mapping_files, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path):
+def join_seq_to_taxid(nt_hits_file, nr_hits_file, nt_accession_to_taxid_mapping_files, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path):
     if join(nt_hits_file, nt_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path) is False or join(nr_hits_file, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path) is False: 
         return False
 

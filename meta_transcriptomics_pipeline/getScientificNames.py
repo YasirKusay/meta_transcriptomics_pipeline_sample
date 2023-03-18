@@ -10,7 +10,7 @@ def getScientificNames(taxids, taxdump_location):
     # since taxids in file are strings, it will make comparisons much clearer
     tmpList = [int(taxid) for taxid in taxids]
     tmpList.sort()
-    taxids = [str(taxid) for taxid in taxids]
+    taxids = [str(taxid) for taxid in tmpList]
 
     # list increment of taxids list
     inc = 0

@@ -4,7 +4,7 @@ import operator
 import time
 import os
 from meta_transcriptomics_pipeline.helpers import check_fail
-from meta_transcriptomics_pipeline.separate_reads import separate_reads_by_size
+from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 
 def process_fast_mode_output(kraken_out, outfile, total_reads):
@@ -248,5 +248,5 @@ def preprocessing(args: argparse.Namespace):
     
     alignments_path = alignments_path + "/alignments"
 
-    if os.path.exists(alignments_path):
+    if os.path.exists(alignments_path) is False:
         os.mkdir(alignments_path)

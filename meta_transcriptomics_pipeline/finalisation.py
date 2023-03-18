@@ -216,8 +216,8 @@ def finalisation(args: argparse.Namespace):
 
     fullyQc1 = dirpath + "/preprocessing/fullyQc_fwd.fq"
 
-    num_reads_bytes = subprocess.run(['grep', '-c', '.*', fullyQc1], capture_output=True)
-    num_reads_str = num_reads_bytes.stdout.decode('utf-8')
+    num_reads_bytes = subprocess.check_output(['grep', '-c', '.*', fullyQc1])
+    num_reads_str = num_reads_bytes.decode('utf-8')
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
 
     reads_mapped_to_contigs_file = dirpath + "/preprocessing/reads_mapped_to_contigs.sam"
@@ -333,10 +333,12 @@ def finalisation(args: argparse.Namespace):
             taxid = curr[0]
             score = curr[1].strip()
             if str(taxid) in taxid_lineages_resolved.keys():
-                wf.write(score + "\t".join(taxid_lineages_resolved[str(taxid)]))
+                wf.write(score + "\t" + "\t".join(taxid_lineages_resolved[str(taxid)]) + "\n")
+
+    wf.close()
 
     abundancesKronaReadMethod = final_plots_path + "/abundancesKronaReadMethod.html"
-    subprocess.run("ImportText.pl " + abundancesReadMethod + " -o " + abundancesKronaReadMethod + " -fil " + combined_nt_nr_scores, shell=True)
+    subprocess.run("ImportText.pl " + abundancesReadMethod + " -o " + abundancesKronaReadMethod + " -fil " + species_avg_alignment_scores, shell=True)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -369,10 +371,10 @@ def finalisation(args: argparse.Namespace):
     n50 = float(subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')[-2:-1][0])
 
     # now we can finally calculate TPM/FPKM
-    tpm_abundance_file = unassembled_reads_fwd + "/tpm_fpkm.txt"
+    tpm_abundance_file = analysis_path + "/tpm_fpkm.txt"
     get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file, contaminants)
 
-    tpmAbundances = unassembled_reads_fwd + "/tpmAbundances.txt"
+    tpmAbundances = analysis_path + "/tpmAbundances.txt"
     wf = open(tpmAbundances, "w")
     with open(tpm_abundance_file, "r") as f:
         for line in f:
@@ -380,7 +382,9 @@ def finalisation(args: argparse.Namespace):
             taxid = curr[0]
             score = curr[1].strip()
             if str(taxid) in taxid_lineages_resolved.keys():
-                wf.write(score + "\t".join(taxid_lineages_resolved[str(taxid)]))
+                wf.write(score + "\t" + "\t".join(taxid_lineages_resolved[str(taxid)]) + "\n")
+    
+    wf.close()
 
     tpmAbundancesKrona = final_plots_path + "/tpmAbundancesKrona.html"
-    subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + combined_nt_nr_scores, shell=True)
+    subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + species_avg_alignment_scores, shell=True)
