@@ -84,7 +84,7 @@ def getContigReadCount(infile):
 
     return counts
 
-def countReads(infile, total_reads, outfile, contaminants):
+def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
     results = {}
     num_reads = 0
     with open(infile, "r") as f:
@@ -113,9 +113,9 @@ def countReads(infile, total_reads, outfile, contaminants):
     wf = open(outfile, "w")
 
     for taxid in sorted_results.keys():
-        if (contaminants is not None and taxid not in contaminants):
+        if (contaminants is not None and taxid not in contaminants and taxid not in bad_taxids):
             wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
-        elif (contaminants is None):
+        elif (contaminants is None and taxid not in bad_taxids):
             wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
 
     wf.close()
@@ -275,12 +275,15 @@ def finalisation(args: argparse.Namespace):
 
     # now we can calculate read count method
     readCountsOutfile = analysis_path + "/readCountsOut.txt"
-    countReads(all_reads_taxids, num_reads, readCountsOutfile, contaminants)
 
     # now lets get plot the abundances as krona charts
     # need to find lineages first
     all_taxids = fetch_taxids(contigs_reads_taxids)
-    taxid_lineages_resolved = get_lineage_info(all_taxids, args.taxdump_location)
+    taxid_lineages_resolved, bad_taxids = get_lineage_info(all_taxids, args.taxdump_location)
+
+    # bad_taxids are taxids whose ranks are not species (its higher than a species)
+
+    countReads(all_reads_taxids, num_reads, readCountsOutfile, contaminants, bad_taxids)
 
     abundancesReadMethod = analysis_path + "/abundancesReadMethod.txt"
     wf = open(abundancesReadMethod, "w")
@@ -327,7 +330,7 @@ def finalisation(args: argparse.Namespace):
 
     # now we can finally calculate TPM/FPKM
     tpm_abundance_file = analysis_path + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file, contaminants)
+    get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file, contaminants, bad_taxids)
 
     tpmAbundances = analysis_path + "/tpmAbundances.txt"
     wf = open(tpmAbundances, "w")

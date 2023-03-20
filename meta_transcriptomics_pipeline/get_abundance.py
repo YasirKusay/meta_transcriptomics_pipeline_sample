@@ -1,7 +1,7 @@
 import os
 import operator
 
-def get_abundance(joined, total_reads, n50, output_file, contaminants):
+def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxids):
     final_res = {}
     taxids = {}
     lengths = {}
@@ -12,7 +12,7 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants):
     with open(joined, "r") as f:
         for line in f:
             curr = line.split()
-            if (curr[3] in contaminants):
+            if (curr[3].strip() in contaminants or curr[3].strip() in bad_taxids):
                 total_reads = total_reads - int(curr[2])
 
     denom = total_reads
@@ -22,7 +22,7 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants):
             curr = line.split()
             if (int(curr[1]) < 50):
                 continue
-            if (curr[3] in contaminants): # skipping contaminants
+            if (curr[3].strip() in contaminants or curr[3].strip() in bad_taxids): # skipping contaminants
                 continue
             name = curr[0]
             length = int(curr[1])
@@ -72,6 +72,6 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants):
     wf = open(output_file, "w")
     final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
     for key in final_tpm_sorted:
-        if (key not in contaminants):
+        if (key not in contaminants or key not in bad_taxids):
             wf.write(str(key) + "\t" + str(final_tpm_sorted[key]) + "\n")
     wf.close()

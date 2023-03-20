@@ -7,6 +7,7 @@ def get_lineage_info(taxids, taxdump_location):
     ncbi = NCBITaxa()
     all_species_lineages = []
     all_taxids = []
+    bad_taxids = []
 
     for curr_taxid in taxids:
         # TODO, NEED A WAY TO DEAL WITH "UNKNOWN"
@@ -30,12 +31,21 @@ def get_lineage_info(taxids, taxdump_location):
             rank_taxid = ranks2lineage.get(rank, 'Unknown') # returns value of rank if it exists as a key in the dict, 'Unknown' otherwise
             if rank_taxid != "Unknown":
                 all_taxids.append(str(rank_taxid))
-            curr_lineage.append(str(rank_taxid))
-        
+            if rank_taxid == "Unknown" and rank == "species":
+                bad_taxids.append(curr_taxid)
+
+            # sometimes our taxid's rank is not a species (similar to the scenario above),
+            # however, it does not necessarily mean that its rank is a species
+            # it can be a subspecies of the species (i.e. lower rank)
+            # in this case, prioritise the taxids rank over the actual 'species' rank
+            if rank != "species":
+                curr_lineage.append(str(rank_taxid))
+            else:
+                curr_lineage.append(str(curr_taxid)) 
+
         # previously, curr_lineage used to start with the abundance (read/tmp),
         # now it starts with the taxid of the highest level thing of the species
         all_species_lineages.append(curr_lineage) 
-
 
     # all_taxids will NEVER contain 'Unknown'
     sci_names = getScientificNames(all_taxids, taxdump_location) 
@@ -49,4 +59,4 @@ def get_lineage_info(taxids, taxdump_location):
         for item in curr_lineage:
             all_lineages_resolved[curr_species_taxid].append(sci_names[item])
 
-    return all_lineages_resolved
+    return all_lineages_resolved, bad_taxids

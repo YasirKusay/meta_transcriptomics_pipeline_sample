@@ -1,6 +1,5 @@
 import subprocess
 import pandas as pd
-from ete3 import NCBITaxa
 from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
 
 def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
@@ -12,80 +11,49 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     combined_scores_sorted = dirpath + "/combined_scores_sorted"
     new_command = subprocess.run("LC_COLLATE=C sort -k1 " + combined_scores + " > " + combined_scores_sorted, shell=True)
 
-    mf = open(mappings_sorted, "r")
-    other_line = mf.readline().split("\t")
-    other_read = other_line[0]
-    other_accession = other_line[1]
-    other_taxid = other_line[2]
+    all_taxids = []
+    with open(mappings_sorted, "r") as f:
+        for line in f:
+            curr = line.split("\t")
+            all_taxids.append(curr[2].strip())
+    
+    sci_names = getScientificNames(all_taxids, taxids_location)
 
-    ncbi = NCBITaxa()
+    # this file contains read name \t accession of seq that it mapped onto \t taxid
+    mf = open(mappings_sorted, "r")
+    curr_mf_line = mf.readline().split("\t")
+    curr_mf_read = curr_mf_line[0]
+    curr_mf_taxid = curr_mf_line[2].strip()
 
     with open(combined_scores_sorted, "r") as cs:
-        stop = False
         for line in cs:
-            curr = line.split("\t")
-            curr_read = curr[0]
-            curr_accession = curr[1]
+            curr_cs_line = line.split("\t")
+            curr_cs_read = curr_cs_line[0]
 
-            if (curr_read == other_read):
+            if curr_cs_read == curr_mf_read and sci_names[curr_mf_taxid] != "Unknown":
+                wf.write(sci_names[curr_mf_taxid] + "\t" + curr_cs_line[2] + "\t" + curr_cs_line[3] + "\t" + curr_cs_line[4].strip() + "\n")
 
-                lineage = None
-                try:
-                    lineage = ncbi.get_lineage(other_taxid.strip())
-                except:
-                    print(str(other_taxid.strip()) + " NOT FOUND")
-                    continue
-
-                lineage2ranks = ncbi.get_rank(lineage)
-                ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
-                r = ranks2lineage.get("species", "Unknown")
-                wf.write(str(r) + "\t" + curr[2] + "\t" + curr[3] + "\t" + curr[4].strip() + "\n")
-
-                other_line = mf.readline().split("\t")
-                if (len(other_line) == 1):
-                    stop = True
+                curr_mf_line = mf.readline().split("\t")
+                if (len(curr_mf_line) == 1):
                     break
 
-                other_read = other_line[0]
-                other_accession = other_line[1]
-                other_taxid = other_line[2]
+                curr_mf_read = curr_mf_line[0]
+                curr_mf_taxid = curr_mf_line[2].strip()
 
-            elif (other_read > curr_read):
+            elif (curr_mf_read > curr_cs_read):
                 continue
             else:
-                other_line = mf.readline().split("\t")
-                if (len(other_line) == 1):
-                    stop = True
+                curr_mf_line = mf.readline().split("\t")
+                if (len(curr_mf_line) == 1):
                     break
 
-                other_read = other_line[0]
-                other_accession = other_line[1]
-                other_taxid = other_line[2]
+                curr_mf_read = curr_mf_line[0]
+                curr_mf_taxid = curr_mf_line[2].strip()
 
     wf.close()
     mf.close()
 
-    temp_out_sorted = dirpath + "/temp_out_sorted"
-    new_command = subprocess.run("LC_COLLATE=C sort -k1 " + temp_out + " > " + temp_out_sorted, shell=True)
-
-    df = pd.read_csv(temp_out, sep='\t', names=["Taxid", "E-val", "Bitscore", "Pid"])
-    df = df.astype({"Taxid": str, "Pid": float, "E-val": float, "Bitscore": float})
+    df = pd.read_csv(temp_out, sep='\t', names=["Taxid", "E-val", "Bitscore", "Percent-id"])
+    df = df.astype({"Taxid": str, "E-val": float, "Bitscore": float, "Percent-id": float})
     df = df.groupby("Taxid").mean().reset_index()
-    temp_out_2 = dirpath + "/temp_out_2"
-    df.to_csv(temp_out_2, sep="\t", index=False, header=False)
-
-    taxids = []
-    with open(temp_out_2, "r") as mf:
-        for line in mf:
-            curr = line.split("\t")
-            if (curr[0] != "Unknown"):
-                taxids.append(int(curr[0]))
-   
-    sci_names = getScientificNames(taxids, taxids_location)
-
-    fout = open(outfile, "w")
-
-    with open(temp_out_2, "r") as mf:
-        for line in mf:
-            curr = line.split("\t")
-            fout.write(sci_names[curr[0]] + "\t" + curr[1] + "\t" + curr[2] + "\t" + curr[3].strip() + "\n")
+    df.to_csv(outfile, sep="\t", index=False, header=False)
