@@ -29,8 +29,8 @@ def test_readcounts():
     if os.path.exists("tests/samples/count_reads/actual2.txt"):
         os.remove("tests/samples/count_reads/actual2.txt")
 
-    countReads("tests/samples/count_reads/input.txt", 200, "tests/samples/count_reads/prelim.txt", None)
-    countReads("tests/samples/count_reads/input.txt", 400, "tests/samples/count_reads/prelim2.txt", None)
+    countReads("tests/samples/count_reads/input.txt", 200, "tests/samples/count_reads/prelim.txt", None, [])
+    countReads("tests/samples/count_reads/input.txt", 400, "tests/samples/count_reads/prelim2.txt", None, [])
 
     fix_decimals("tests/samples/count_reads/prelim.txt", "tests/samples/count_reads/actual.txt", 1)
     fix_decimals("tests/samples/count_reads/prelim2.txt", "tests/samples/count_reads/actual2.txt", 2)

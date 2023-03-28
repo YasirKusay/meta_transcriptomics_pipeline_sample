@@ -1,4 +1,3 @@
-Unknown	50.0
 spec1	27.25
 spec3	6.0
 spec4	3.5
