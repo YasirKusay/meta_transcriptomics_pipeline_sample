@@ -19,10 +19,10 @@ def test_get_scientific_names():
 
     lst = ["1", "2"]
     random.shuffle(lst)
-    exp2 = {"1": "Species A", "2": "Species B", "Unknown": "Unknown"}
-    assert(exp2 == getScientificNames(lst, names))
+    exp3 = {"1": "Species A", "2": "Species B", "Unknown": "Unknown"}
+    assert(exp3 == getScientificNames(lst, names))
 
     lst = ["1", "2", "8"]
     random.shuffle(lst)
-    exp2 = {"1": "Species A", "2": "Species B", "8": "8", "Unknown": "Unknown"}
-    assert(exp2 == getScientificNames(lst, names))
+    exp4 = {"1": "Species A", "2": "Species B", "8": "8", "Unknown": "Unknown"}
+    assert(exp4 == getScientificNames(lst, names))

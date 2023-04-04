@@ -4,13 +4,13 @@ import numpy as np
 
 setup(
     name="meta_transcriptomics_pipeline",
-    version="0.2.2",
+    version="0.6.2",
     license='MIT',
     packages=find_packages(include=['meta_transcriptomics_pipeline']),
     author="Yasir Kusay",
     author_email='yasirsaad1234@hotmail.com',
     description="To be added!.",
-    ext_modules=cythonize(["meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx"]),
+    ext_modules=cythonize(["meta_transcriptomics_pipeline/obtain_relevant_taxids.pyx", "meta_transcriptomics_pipeline/count_num_lines.pyx"]),
     include_dirs=np.get_include(),
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
