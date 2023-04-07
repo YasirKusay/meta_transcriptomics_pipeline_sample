@@ -6,6 +6,7 @@ import os
 from meta_transcriptomics_pipeline.helpers import check_fail
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
+from meta_transcriptomics_pipeline.count_num_seqs import countNumSeqs
 
 def process_fast_mode_output(kraken_out, outfile, total_reads):
     results = {}
@@ -45,6 +46,14 @@ def preprocessing(args: argparse.Namespace):
 
     if os.path.exists(dirpath + "/preprocessing") is False:
         os.mkdir(dirpath + "/preprocessing")
+
+    # making analysis path to store the readCounts after each step, along with
+    # any other relevant info
+
+    stepsSummary = dirpath + "/analysis/stepsSummary.txt"
+
+    if os.path.exists(dirpath + "/analysis") is False:
+        os.mkdir(dirpath + "/analysis")
 
     dirpath = dirpath + "/preprocessing"
 
@@ -250,3 +259,68 @@ def preprocessing(args: argparse.Namespace):
 
     if os.path.exists(alignments_path) is False:
         os.mkdir(alignments_path)
+
+    # need to now go through each important output file to get relevant statistics for the output html
+
+    summaryPath = dirpath + "/summary"
+    if os.path.exists(summaryPath) is False:
+        os.mkdir(summaryPath)
+
+    summaryFile = summaryPath + "/summary.txt"
+    summaryFileWriter = open(summaryFile, "w")
+
+    numReadsAtStart = 0
+    if (os.path.splitext(args.inp1) == ".fa" or os.path.splitext(args.inp1) == ".fna" or os.path.splitext(args.inp1) == ".fasta"):
+        numReadsAtStart =  countNumSeqs(args.inp1, True)
+    else:
+        numReadsAtStart =  countNumSeqs(args.inp1, False)
+
+    summaryFileWriter("Start\t" + str(numReadsAtStart) + "\n")
+    
+    numReadsAfterFastq = countNumSeqs(qc1, False)
+    summaryFileWriter("Fastq\t" + str(numReadsAfterFastq) + "\n")
+    
+    numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
+    summaryFileWriter("Star\t" + str(numReadsAfterStar) + "\n")
+    
+    numReadsAfterSnap = countNumSeqs(host_subtract_1, False)
+    summaryFileWriter("Snap\t" + str(numReadsAfterSnap) + "\n")
+    
+    numReadsAfterSortmerna = countNumSeqs(noRna1, False)
+    summaryFileWriter("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+    
+    numReadsAfterClumpify = countNumSeqs(fullyQc1, False)
+    summaryFileWriter("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
+
+    log_path = megahit_out_path + "/log"
+    assemblyStats = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')
+
+    numContigs = assemblyStats[2]
+    summaryFileWriter("numContigs\t" + str(numContigs) + "\n")
+
+    totalBases = assemblyStats[5]
+    summaryFileWriter("totalContigsBases\t" + str(totalBases) + "\n")
+
+    shortestContig = assemblyStats[8]
+    summaryFileWriter("shortestContig\t" + str(shortestContig) + "\n")
+    
+    longestContig = assemblyStats[11]
+    summaryFileWriter("longestContig\t" + str(longestContig) + "\n")
+
+    avgContigLength = assemblyStats[14]
+    summaryFileWriter("avgContigLength\t" + str(avgContigLength) + "\n")
+
+    n50 = assemblyStats[17]
+    summaryFileWriter("n50\t" + str(n50) + "\n")
+
+    # will retreive numAssembledContigs at the finalisation step
+    numReadsUnassembled = countNumSeqs(unassembled_reads_fwd, False)
+    summaryFileWriter("numReadsUnassembled\t" + str(numReadsUnassembled) + "\n")
+
+    numLongReadsUnassembled = countNumSeqs(unassembled_reads_longer_1, False)
+    summaryFileWriter("numLongReadsUnassembled\t" + str(numLongReadsUnassembled) + "\n")
+
+    numShortReadsUnassembled = countNumSeqs(unassembled_reads_shorter_1, False)
+    summaryFileWriter("numShortReadsUnassembled\t" + str(numShortReadsUnassembled) + "\n")
+
+    summaryFileWriter.close()

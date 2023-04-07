@@ -31,7 +31,7 @@ def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
             curr_cs_read = curr_cs_line[0]
 
             if curr_cs_read == curr_mf_read and sci_names[curr_mf_taxid] != "Unknown":
-                wf.write(sci_names[curr_mf_taxid] + "\t" + curr_cs_line[2] + "\t" + curr_cs_line[3] + "\t" + curr_cs_line[4].strip() + "\n")
+                wf.write(sci_names[curr_mf_taxid] + "\t" + curr_cs_line[2] + "\t" + curr_cs_line[3] + "\t" + curr_cs_line[4] + "\t" + curr_cs_line[4].strip() + "\n")
 
                 curr_mf_line = mf.readline().split("\t")
                 if (len(curr_mf_line) == 1):

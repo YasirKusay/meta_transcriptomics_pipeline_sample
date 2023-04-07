@@ -65,11 +65,12 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                     percent_id = to_print[2]
                     e_value = to_print[10]
                     bitscore = to_print[11].strip()
+                    qlen = to_print[12].strip()
 
-                    if to_print[12].strip() == "P": # diamond file
-                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\n")
+                    if to_print[13].strip() == "P": # diamond file
+                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
                     else:
-                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\n")
+                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
 
                 prev_query = curr[0]
                 best_e_value = float(curr[10])
@@ -83,11 +84,12 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             percent_id = to_print[2]
             e_value = to_print[10]
             bitscore = to_print[11].strip()
+            qlen = to_print[12].strip()
 
-            if to_print[12].strip() == "P": # diamond file
-                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\n")
+            if to_print[13].strip() == "P": # diamond file
+                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
             else:
-                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\n")
+                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
     
     best_nt_output.close()
     best_nr_output.close()

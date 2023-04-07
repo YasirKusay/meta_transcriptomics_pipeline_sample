@@ -3,9 +3,9 @@ import subprocess
 import time
 from meta_transcriptomics_pipeline.helpers import check_fail
 
-def run_diamond(index, in_path, out_path, threads, outfmt):
+def run_diamond(index, in_path, out_path, threads):
     diamond_command = "diamond" + " blastx --db " + index +\
-                        " --query " + in_path + " --mid-sensitive --max-target-seqs 1 --outfmt " + str(outfmt) +\
+                        " --query " + in_path + " --mid-sensitive --max-target-seqs 1 --outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen\"" +\
                         " --masking 0 -c 1 -b 6" +\
                         " --threads " + str(threads) +\
                         " --out " + out_path
@@ -22,6 +22,6 @@ def diamond(args: argparse.Namespace):
     combined_file = dirpath + "/preprocessing/combined_reads_contigs_file.fq"
 
     start = time.time()
-    if run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads, 6) == False: return None
+    if run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads) == False: return None
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))

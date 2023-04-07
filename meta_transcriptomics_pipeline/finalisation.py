@@ -11,6 +11,9 @@ from meta_transcriptomics_pipeline.remove_contaminants_control import remove_con
 from meta_transcriptomics_pipeline.join_seq_to_taxid import join_seq_to_taxid
 from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
+from meta_transcriptomics_pipeline.get_abundance import get_abundance
+from meta_transcriptomics_pipeline.get_abundance import get_abundance
+from meta_transcriptomics_pipeline.count_num_seqs import countNumLines
 
 def fetch_taxids(infile):
     taxids = []
@@ -214,6 +217,7 @@ def finalisation(args: argparse.Namespace):
 
     contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids, shell=True) # change space to tabs
+    os.remove(contigs_reads_taxids_temp)
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
 
@@ -236,6 +240,7 @@ def finalisation(args: argparse.Namespace):
 
     reads_belonging_to_contigs = analysis_path + "/reads_belonging_to_contigs.txt"
     subprocess.run("LC_COLLATE=C sort -k 2 " + reads_belonging_to_contigs_unsorted + " > " + reads_belonging_to_contigs, shell=True)
+    os.remove(reads_belonging_to_contigs_unsorted)
 
     # stores reads that assembled, and its contigs taxid
     assembled_reads_taxids_temp = analysis_path + "/assembled_reads_taxids_temp.txt"
@@ -249,29 +254,36 @@ def finalisation(args: argparse.Namespace):
 
     # before proceeeding any further, lets remove the contaminants, simply remove the taxids
     contaminant_removal = True
+    decontam_dirpath = ""
 
-    if args.kraken_db is None:
+    if args.decontamination_input_files is None:
         print("Path to kraken index is not provided, skipping contamination removal")
         contaminant_removal = False
+    else:
+        if os.path.isdir(args.decontamination_input_files) is False:
+            print("Directory that stores contaminant sequences does not exist, skipping contamination removal")
+            contaminant_removal = False
+        else:  
+            decontam_dirpath = args.decontamination_input_files
 
-    if args.control_sequences is None or args.other_sequences is None or len(args.control_sequences + args.other_sequences) == 0 and contaminant_removal == True:
-        print("No control/additional sample files have been provided, skipping contamination removal")
-        contaminant_removal = False
+            if decontam_dirpath[-1] == "/":
+                decontam_dirpath = decontam_dirpath[0:-1]
 
-    print("Starting decontamination")
+            if (os.path.isdir(decontam_dirpath + "/others") is False and os.path.isdir(decontam_dirpath + "/controls") is False) or (os.path.listdir(decontam_dirpath + "/others") == 0 and os.path.listdir(decontam_dirpath + "/controls") == 0):
+                print("No kraken outputs detected in " + decontam_dirpath + ". Please read manual regarding --decontamination_input_files. Skipping contamination removal step")
+                contaminant_removal = False
 
     contaminants = []
-    rcf_out = dirpath + "/rcf_out.txt"
+    rcf_out = analysis_path + "/rcf_out.txt"
     if contaminant_removal is True:
+        print("Starting decontamination")
         others = args.other_sequences
         others.append(args.inp1)
         others.append(args.inp2)
         start = time.time()
-        contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, args.kraken_db, rcf_out, args.taxdump_location, args.threads, dirpath)
+        contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, rcf_out, args.taxdump_location, analysis_path)
         end = time.time()
-        print("contaminant identification (kraken + recentrifuge) took: " + str(end - start))
-
-    print("Finished decontamination")
+        print("Contaminant identification took: " + str(end - start))
 
     # now we can calculate read count method
     readCountsOutfile = analysis_path + "/readCountsOut.txt"
@@ -346,3 +358,57 @@ def finalisation(args: argparse.Namespace):
 
     tpmAbundancesKrona = final_plots_path + "/tpmAbundancesKrona.html"
     subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + species_avg_alignment_scores, shell=True)
+
+    # need to now go through each important output file to get relevant statistics for the output html
+
+    summaryFile = dirpath + "/summary/summary.txt"
+    summaryFileWriter = open(summaryFile, "a")
+
+    # get number of assembled reads, put it into the megahit box
+    numAssembledReads = countNumLines(reads_belonging_to_contigs)
+    summaryFileWriter("numAssembledReads\t" + str(numAssembledReads) + "\n")
+
+    # put it in the alignments box
+    numUniqueNTHits = subprocess.check_output('sort -k 1 ' + nt_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numUniqueNTHits\t" + str(numUniqueNTHits) + "\n")
+
+    numUniqueNRHits = subprocess.check_output('sort -k 1 ' + nr_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numUniqueNRHits\t" + str(numUniqueNRHits) + "\n")
+
+    # put it in the identify best hits box
+    numBestNTHits = countNumLines(best_nt_scores)
+    summaryFileWriter("numBestNTHits\t" + str(numBestNTHits) + "\n")
+
+    numBestNRHits = countNumLines(best_nr_scores)
+    summaryFileWriter("numBestNRHits\t" + str(numBestNRHits) + "\n")
+
+    totalUniqueAccessions = int(subprocess.check_output('cat ' + best_nt_scores + ' ' + best_nr_scores + ' | sort -k 2 | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True))
+    summaryFileWriter("totalUniqueAccessions\t" + str(totalUniqueAccessions) + "\n")
+
+    # put it in the obtain taxonomies box
+    numMappedAccessions = subprocess.check_output('sort -k 2 '+ contigs_reads_taxids + ' | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numMappedAccessions\t" + str(numMappedAccessions) + "\n")
+
+    numUniqueTaxids = subprocess.check_output('sort -k 3 '+ contigs_reads_taxids + ' | cut -f 3 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numUniqueTaxids\t" + str(numUniqueTaxids) + "\n")
+
+    numContigsWithTaxids = subprocess.check_output("egrep '^k[0-9] " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numContigsWithTaxids\t" + str(numContigsWithTaxids) + "\n")
+
+    numUnassembledReadsWithTaxids = subprocess.check_output("egrep -v '^k[0-9] " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True)
+    summaryFileWriter("numUnassembledReadsWithTaxids\t" + str(numUnassembledReadsWithTaxids) + "\n")
+
+    numAssembledReadsWithTaxids = countNumLines(assembled_reads_taxids_temp)
+    summaryFileWriter("numAssembledReadsWithTaxids\t" + str(numAssembledReadsWithTaxids) + "\n")
+
+    # nothing worthwhile to put in get median scores
+
+    # put in get lineages for each taxid
+    summaryFileWriter("numTaxidsWithRankSpecies\t" + str(len(taxid_lineages_resolved)) + "\n")
+    summaryFileWriter("numTaxidsWithoutRankSpecies\t" + str(len(bad_taxids)) + "\n")
+
+    # get numAssembledReadsWith a taxid
+    # get number of contigs without a taxid
+    # maybe have an option to expand this?
+
+    summaryFileWriter.close()
