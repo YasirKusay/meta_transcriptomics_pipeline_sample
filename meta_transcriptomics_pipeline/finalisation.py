@@ -13,7 +13,7 @@ from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
-from meta_transcriptomics_pipeline.count_num_seqs import countNumLines
+from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 
 def fetch_taxids(infile):
     taxids = []
@@ -366,49 +366,54 @@ def finalisation(args: argparse.Namespace):
 
     # get number of assembled reads, put it into the megahit box
     numAssembledReads = countNumLines(reads_belonging_to_contigs)
-    summaryFileWriter("numAssembledReads\t" + str(numAssembledReads) + "\n")
+    summaryFileWriter.write("numAssembledReads\t" + str(numAssembledReads) + "\n")
 
     # put it in the alignments box
-    numUniqueNTHits = subprocess.check_output('sort -k 1 ' + nt_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numUniqueNTHits\t" + str(numUniqueNTHits) + "\n")
+    numUniqueNTHits = subprocess.check_output('sort -k 1 ' + nt_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numUniqueNTHits\t" + str(numUniqueNTHits) + "\n")
 
-    numUniqueNRHits = subprocess.check_output('sort -k 1 ' + nr_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numUniqueNRHits\t" + str(numUniqueNRHits) + "\n")
+    numUniqueNRHits = subprocess.check_output('sort -k 1 ' + nr_alignments_file + ' | cut -f 1 | uniq | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numUniqueNRHits\t" + str(numUniqueNRHits) + "\n")
 
     # put it in the identify best hits box
     numBestNTHits = countNumLines(best_nt_scores)
-    summaryFileWriter("numBestNTHits\t" + str(numBestNTHits) + "\n")
+    summaryFileWriter.write("numBestNTHits\t" + str(numBestNTHits) + "\n")
 
     numBestNRHits = countNumLines(best_nr_scores)
-    summaryFileWriter("numBestNRHits\t" + str(numBestNRHits) + "\n")
+    summaryFileWriter.write("numBestNRHits\t" + str(numBestNRHits) + "\n")
 
-    totalUniqueAccessions = int(subprocess.check_output('cat ' + best_nt_scores + ' ' + best_nr_scores + ' | sort -k 2 | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True))
-    summaryFileWriter("totalUniqueAccessions\t" + str(totalUniqueAccessions) + "\n")
+    # count reads and contigs in best files
+    numMappedUnassembledReads = int(subprocess.check_output('cat ' + best_nt_scores + ' ' + best_nr_scores + ' | egrep -v "^k[0-9]" | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8'))
+    summaryFileWriter.write("numMappedUnassembledReads\t" + str(numMappedUnassembledReads) + "\n")
+
+    numMappedContigs = int(subprocess.check_output('cat ' + best_nt_scores + ' ' + best_nr_scores + ' | egrep "^k[0-9]" | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8'))
+    summaryFileWriter.write("numMappedContigs\t" + str(numMappedContigs) + "\n")
+
+    totalUniqueAccessions = int(subprocess.check_output('cat ' + best_nt_scores + ' ' + best_nr_scores + ' | sort -k 2 | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8'))
+    summaryFileWriter.write("totalUniqueAccessions\t" + str(totalUniqueAccessions) + "\n")
 
     # put it in the obtain taxonomies box
-    numMappedAccessions = subprocess.check_output('sort -k 2 '+ contigs_reads_taxids + ' | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numMappedAccessions\t" + str(numMappedAccessions) + "\n")
+    numMappedAccessions = subprocess.check_output('sort -k 2 '+ contigs_reads_taxids + ' | cut -f 2 | uniq | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numMappedAccessions\t" + str(numMappedAccessions) + "\n")
 
-    numUniqueTaxids = subprocess.check_output('sort -k 3 '+ contigs_reads_taxids + ' | cut -f 3 | uniq | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numUniqueTaxids\t" + str(numUniqueTaxids) + "\n")
+    numUniqueTaxids = subprocess.check_output('sort -k 3 '+ contigs_reads_taxids + ' | cut -f 3 | uniq | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numUniqueTaxids\t" + str(numUniqueTaxids) + "\n")
 
-    numContigsWithTaxids = subprocess.check_output("egrep '^k[0-9] " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numContigsWithTaxids\t" + str(numContigsWithTaxids) + "\n")
+    numContigsWithTaxids = subprocess.check_output("egrep '^k[0-9]' " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numContigsWithTaxids\t" + str(numContigsWithTaxids) + "\n")
 
-    numUnassembledReadsWithTaxids = subprocess.check_output("egrep -v '^k[0-9] " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True)
-    summaryFileWriter("numUnassembledReadsWithTaxids\t" + str(numUnassembledReadsWithTaxids) + "\n")
+    numUnassembledReadsWithTaxids = subprocess.check_output("egrep -v '^k[0-9]' " + contigs_reads_taxids + ' | wc -l | cut -d \' \' -f 1', shell=True).decode('utf-8')
+    summaryFileWriter.write("numUnassembledReadsWithTaxids\t" + str(numUnassembledReadsWithTaxids) + "\n")
 
     numAssembledReadsWithTaxids = countNumLines(assembled_reads_taxids_temp)
-    summaryFileWriter("numAssembledReadsWithTaxids\t" + str(numAssembledReadsWithTaxids) + "\n")
+    summaryFileWriter.write("numAssembledReadsWithTaxids\t" + str(numAssembledReadsWithTaxids) + "\n")
 
     # nothing worthwhile to put in get median scores
 
     # put in get lineages for each taxid
-    summaryFileWriter("numTaxidsWithRankSpecies\t" + str(len(taxid_lineages_resolved)) + "\n")
-    summaryFileWriter("numTaxidsWithoutRankSpecies\t" + str(len(bad_taxids)) + "\n")
-
-    # get numAssembledReadsWith a taxid
-    # get number of contigs without a taxid
-    # maybe have an option to expand this?
+    summaryFileWriter.write("numTaxidsWithRankSpecies\t" + str(len(taxid_lineages_resolved)) + "\n")
+    summaryFileWriter.write("numTaxidsWithoutRankSpecies\t" + str(len(bad_taxids)) + "\n")
 
     summaryFileWriter.close()
+
+    # will now get intepreted

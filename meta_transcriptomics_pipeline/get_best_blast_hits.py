@@ -61,7 +61,11 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                 if (best_line != "NULL"):
                     to_print = best_line.split("\t")
                     read = to_print[0]
-                    accession = to_print[1].split(".")[0] # we only care about the accession, not the version
+                    accession = ""
+                    if ("|" in to_print[1]):
+                        accession = to_print[1].split("|")[-2].split(".")[0]
+                    else:
+                        accession = to_print[1].split(".")[0]
                     percent_id = to_print[2]
                     e_value = to_print[10]
                     bitscore = to_print[11].strip()
@@ -80,7 +84,11 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
         if (best_line != "NULL"):
             to_print = best_line.split("\t")
             read = to_print[0]
-            accession = to_print[1].split(".")[0]
+            accession = ""
+            if ("|" in to_print[1]):
+                accession = to_print[1].split("|")[-2].split(".")[0]
+            else:
+                accession = to_print[1].split(".")[0]
             percent_id = to_print[2]
             e_value = to_print[10]
             bitscore = to_print[11].strip()
