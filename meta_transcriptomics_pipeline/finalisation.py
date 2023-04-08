@@ -14,6 +14,7 @@ from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.count_num_lines import countNumLines
+from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
 
 def fetch_taxids(infile):
     taxids = []
@@ -415,5 +416,7 @@ def finalisation(args: argparse.Namespace):
     summaryFileWriter.write("numTaxidsWithoutRankSpecies\t" + str(len(bad_taxids)) + "\n")
 
     summaryFileWriter.close()
+
+    generate_pipeline_summary(summaryFile, final_plots_path + "/pipeline_summary.html")
 
     # will now get intepreted
