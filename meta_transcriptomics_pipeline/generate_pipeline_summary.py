@@ -521,7 +521,7 @@ htmlCode = """
     <div class="info" id="get_taxid_lineages_info">
         <h1 style="text-align: center;">Get TaxID Lineages</h1>
         <p>
-            <b>Description:</b> Obtain the lineages of the unique taxids from contigs_reads_accessions_taxids.txt and convert the taxids to their scientific names.
+            <b>Description:</b> Obtain the lineages of the unique taxids from contigs_reads_accessions_taxids.txt and convert the taxids to their scientific names. <br>
             <b>Number of Taxid Lineages Successfully Identified:</b> <br>
             <b>Number of Taxid Lineages Not Identified:</b> <br>
         <p>
@@ -563,68 +563,70 @@ def generate_pipeline_summary(summaryFile, outputFile):
     with open(summaryFile, "r") as f:
         for record in f:
             curr = record.split("\t")
+            if len(curr) < 2:
+                continue
             curr[1] = curr[1].strip()
             if curr[0] == "Start":
-                htmlCode.replace("Num Reads at Start:</b> ", "Num Reads at Start:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads at Start:</b> ", "Num Reads at Start:</b> " + str(curr[1]))
             if curr[0] == "Fastq":
-                htmlCode.replace("Num Reads After Fastq:</b> ", "Num Reads After Fastq:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads After Fastq:</b> ", "Num Reads After Fastq:</b> " + str(curr[1]))
             if curr[0] == "Snap":
-                htmlCode.replace("Num Reads Remaining After Human Depletion:</b> ", "Num Reads Remaining After Human Depletion:</b> " + str(curr[1]))
-                htmlCode.replace("Num Reads Remaining After SNAP Command:</b> ", "Num Reads Remaining After SNAP Command:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads Remaining After Human Depletion:</b> ", "Num Reads Remaining After Human Depletion:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads Remaining After SNAP Command:</b> ", "Num Reads Remaining After SNAP Command:</b> " + str(curr[1]))
             if curr[0] == "Star":
-                htmlCode.replace("Num Reads Remaining After STAR Command:</b> ", "Num Reads Remaining After STAR Command:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads Remaining After STAR Command:</b> ", "Num Reads Remaining After STAR Command:</b> " + str(curr[1]))
             if curr[0] == "Sortmerna":
-                htmlCode.replace("Num Reads After rRNA Depletion:</b> ", "Num Reads After rRNA Depletion:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads After rRNA Depletion:</b> ", "Num Reads After rRNA Depletion:</b> " + str(curr[1]))
             if curr[0] == "Clumpify":
-                htmlCode.replace("Num Reads After Deduplication:</b> ", "Num Reads After Deduplication:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads After Deduplication:</b> ", "Num Reads After Deduplication:</b> " + str(curr[1]))
             if curr[0] == "numContigs":
-                htmlCode.replace("Num Contigs Assembled:</b> ", "Num Contigs Assembled:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Contigs Assembled:</b> ", "Num Contigs Assembled:</b> " + str(curr[1]))
             if curr[0] == "numAssembledReads":
-                htmlCode.replace("Num Reads Assembled into Contigs:</b> ", "Num Reads Assembled into Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads Assembled into Contigs:</b> ", "Num Reads Assembled into Contig:</b> " + str(curr[1]))
             if curr[0] == "numReadsUnassembled":
-                htmlCode.replace("Num Reads Unassembled:</b> ", "Num Reads Unassembled:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads Unassembled:</b> ", "Num Reads Unassembled:</b> " + str(curr[1]))
             if curr[0] == "totalContigsBases":
-                htmlCode.replace("Total Contig Bases:</b> ", "Total Contig Bases:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Total Contig Bases:</b> ", "Total Contig Bases:</b> " + str(curr[1]))
             if curr[0] == "shortestContig":
-                htmlCode.replace("Shortest Contig:</b> ", "Shortest Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Shortest Contig:</b> ", "Shortest Contig:</b> " + str(curr[1]))
             if curr[0] == "longestContig":
-                htmlCode.replace("Longest Contig:</b> ", "Longest Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Longest Contig:</b> ", "Longest Contig:</b> " + str(curr[1]))
             if curr[0] == "avgContigLength":
-                htmlCode.replace("Average Contig Length:</b> ", "Average Contig Length:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Average Contig Length:</b> ", "Average Contig Length:</b> " + str(curr[1]))
             if curr[0] == "n50":
-                htmlCode.replace("N50 Score:</b> ", "N50 Score:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("N50 Score:</b> ", "N50 Score:</b> " + str(curr[1]))
             if curr[0] == "numShortReadsUnassembled":
-                htmlCode.replace("Number of Unassembled Short Reads:</b> ", "Number of Unassembled Short Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Short Reads:</b> ", "Number of Unassembled Short Reads:</b> " + str(curr[1]))
             if curr[0] == "numLongReadsUnassembled":
-                htmlCode.replace("Number of Unassembled Long Reads:</b> ", "Number of Unassembled Long Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Long Reads:</b> ", "Number of Unassembled Long Reads:</b> " + str(curr[1]))
             if curr[0] == "numUniqueNTHits":
-                htmlCode.replace("Num Unique BLAST Hits:</b> ", "Num Unique BLAST Hits:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Unique BLAST Hits:</b> ", "Num Unique BLAST Hits:</b> " + str(curr[1]))
             if curr[0] == "numUniqueNRHits":
-                htmlCode.replace("Num Unique Diamond Hits:</b> ", "Num Unique Diamond Hits:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Unique Diamond Hits:</b> ", "Num Unique Diamond Hits:</b> " + str(curr[1]))
             if curr[0] == "numBestNTHits":
-                htmlCode.replace("Number of Best Hits from the NT Alignment:</b> ", "Number of Best Hits from the NT Alignment:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Best Hits from the NT Alignment:</b> ", "Number of Best Hits from the NT Alignment:</b> " + str(curr[1]))
             if curr[0] == "numBestNRHits":
-                htmlCode.replace("Number of Best Hits from the NR Alignment:</b> ", "Number of Best Hits from the NR Alignment:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Best Hits from the NR Alignment:</b> ", "Number of Best Hits from the NR Alignment:</b> " + str(curr[1]))
             if curr[0] == "numMappedUnassembledReads":
-                htmlCode.replace("Number of Unassembled Reads Successfully Aligned:</b> ", "Number of Unassembled Reads Successfully Aligned:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Reads Successfully Aligned:</b> ", "Number of Unassembled Reads Successfully Aligned:</b> " + str(curr[1]))
             if curr[0] == "numMappedContigs":
-                htmlCode.replace("Number of Unassembled Contigs Successfully Aligned:</b> ", "Number of Unassembled Contigs Successfully Aligned:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Contigs Successfully Aligned:</b> ", "Number of Unassembled Contigs Successfully Aligned:</b> " + str(curr[1]))
             if curr[0] == "totalUniqueAccessions":
-                htmlCode.replace("Number of Unique Accessions</b> ", "Number of Unique Accessions</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unique Accessions</b> ", "Number of Unique Accessions</b> " + str(curr[1]))
             if curr[0] == "numMappedAccessions":
-                htmlCode.replace("Number of Mapped Accessions:</b> ", "Number of Mapped Accessions:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Mapped Accessions:</b> ", "Number of Mapped Accessions:</b> " + str(curr[1]))
             if curr[0] == "numUniqueTaxids":
-                htmlCode.replace("Number of Unique Taxids:</b> ", "Number of Unique Taxids:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unique Taxids:</b> ", "Number of Unique Taxids:</b> " + str(curr[1]))
             if curr[0] == "numContigsWithTaxids":
-                htmlCode.replace("Number of Contigs with a Taxid:</b> ", "Number of Contigs with a Taxid:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Contigs with a Taxid:</b> ", "Number of Contigs with a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numUnassembledReadsWithTaxids":
-                htmlCode.replace("Number of Unassembled Reads with a Taxid</b> ", "Number of Unassembled Reads with a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Reads with a Taxid</b> ", "Number of Unassembled Reads with a Taxid</b> " + str(curr[1]))
             if curr[0] == "numAssembledReadsWithTaxids":
-                htmlCode.replace("Number of Assembled Reads with a Taxid</b> ", "Number of Assembled Reads with a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Assembled Reads with a Taxid</b> ", "Number of Assembled Reads with a Taxid</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithRankSpecies":
-                htmlCode.replace("Number of Taxid Lineages Successfully Identified:</b> ", "Number of Taxid Lineages Successfully Identified:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Taxid Lineages Successfully Identified:</b> ", "Number of Taxid Lineages Successfully Identified:</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithoutRankSpecies":
-                htmlCode.replace("Number of Taxid Lineages Not Identified:</b> ", "Number of Taxid Lineages Not Identified:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Taxid Lineages Not Identified:</b> ", "Number of Taxid Lineages Not Identified:</b> " + str(curr[1]))
 
     wf = open(outputFile, "w")
     wf.write(htmlCode)
