@@ -412,7 +412,7 @@ def finalisation(args: argparse.Namespace):
     # nothing worthwhile to put in get median scores
 
     # put in get lineages for each taxid
-    summaryFileWriter.write("numTaxidsWithRankSpecies\t" + str(len(taxid_lineages_resolved - bad_taxids)) + "\n")
+    summaryFileWriter.write("numTaxidsWithRankSpecies\t" + str(len(taxid_lineages_resolved) - len(bad_taxids)) + "\n")
     summaryFileWriter.write("numTaxidsWithoutRankSpecies\t" + str(len(bad_taxids)) + "\n")
 
     summaryFileWriter.close()
