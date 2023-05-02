@@ -23,6 +23,24 @@ def get_lineage_info(taxids, taxdump_location):
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items()) # same as above, flips keys however
         curr_lineage = []
 
+        # need to identify if the taxid of a hit is not ranked 'species'
+        # this is very important to filter out as it could mess up
+        # the krona chart filtering step
+        # ie, if there is something that is higher than the species rank and is selected to 
+        # be filtered out, it could remove anything under it, even if they pass the filtering 
+        # step, this was the case for one of our samples
+        # if the below is true, then our taxid is not a species
+
+        if 'species' not in ranks2lineage.keys():
+            bad_taxids.append(curr_taxid)
+            continue
+        if 'species' in list(ncbi.get_rank(ncbi.get_descendant_taxa(curr_taxid)).values()):
+            bad_taxids.append(curr_taxid)
+            continue
+
+
+        # to identify if a species is ranked 
+
         # taxids in ranks2lineage are ints, we should convert to strings
 
         if curr_taxid != "Unknown":
@@ -32,6 +50,15 @@ def get_lineage_info(taxids, taxdump_location):
             if rank_taxid != "Unknown":
                 all_taxids.append(str(rank_taxid))
             if rank_taxid == "Unknown" and rank == "species":
+                bad_taxids.append(curr_taxid)
+
+            # taxid of a hit is not a "species taxid"
+            # this is very important to filter out as it could mess up
+            # the krona chart filtering step
+            # ie, if there is something that is higher than the species rank and is selected to 
+            # be filtered out, it could remove anything under it, even if they pass the filtering 
+            # step, this was the case for one of our samples
+            if rank_taxid == curr_taxid and rank != "species":
                 bad_taxids.append(curr_taxid)
 
             # sometimes our taxid's rank is not a species (similar to the scenario above),
