@@ -34,10 +34,6 @@ def get_lineage_info(taxids, taxdump_location):
         if 'species' not in ranks2lineage.keys():
             bad_taxids.append(curr_taxid)
             continue
-        if 'species' in list(ncbi.get_rank(ncbi.get_descendant_taxa(curr_taxid)).values()):
-            bad_taxids.append(curr_taxid)
-            continue
-
 
         # to identify if a species is ranked 
 
