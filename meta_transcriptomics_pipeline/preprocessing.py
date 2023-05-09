@@ -3,6 +3,7 @@ import subprocess
 import operator
 import time
 import os
+import shutil
 from meta_transcriptomics_pipeline.helpers import check_fail
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
@@ -133,6 +134,15 @@ def preprocessing(args: argparse.Namespace):
     noRna1 = dirpath + "/noRrna_fwd.fq"
     noRna2 = dirpath + "/noRrna_rev.fq"
 
+    # sortmerna index files are generated in the home directory by default, 
+    # need to delete this as sortmerna will fail if this directory exists
+    if os.path.exists(os.path.expanduser('~') + "/sortmerna"):
+        shutil.rmtree(os.path.expanduser('~') + "/sortmerna")
+
+    # avoid overlaps
+    if os.path.isdir(dirpath + "/sortmerna"):
+        shutil.rmtree(dirpath + "/sortmerna")
+
     sortmerna_command = "sortmerna" +\
                     " --ref " + args.sortmerna_rrna_database +\
                     " --aligned " + aligned +\
@@ -141,7 +151,8 @@ def preprocessing(args: argparse.Namespace):
                     " --reads " + host_subtract_1 + " --reads " + host_subtract_2 +\
                     " --threads " + str(args.threads) +\
 		            " --out2 TRUE " +\
-		            " --paired_in TRUE"
+		            " --paired_in TRUE" +\
+                    " --workdir " + dirpath + "/sortmerna" # default path is home, if more than one workdir folder exists, the program will fail
 
     start = time.time()
     new_command = subprocess.run(sortmerna_command, shell=True)
@@ -229,6 +240,12 @@ def preprocessing(args: argparse.Namespace):
     seqtk_command = "seqtk" + " seq -F '#' " + contigs + " > " + contigs_fq
     new_command = subprocess.run(seqtk_command, shell=True)
     if check_fail("seqtk", new_command) is True: return None
+
+    # merge short reads, needed for blast alignment
+    combined_file_sr_fa = dirpath + "/combined_sr_file.fa"
+    merge_command = "seqtk mergepe " + unassembled_reads_shorter_1 + " " + unassembled_reads_shorter_2 + " > " + combined_file_sr_fa
+    new_command = subprocess.run(merge_command, shell=True)
+    if check_fail("seqtk mergepe", new_command) is True: return False 
 
     # need to merge paired end reads
     merged_pe = dirpath + "/merged_reads.fq"
@@ -322,3 +339,19 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.write("numShortReadsUnassembled\t" + str(numShortReadsUnassembled) + "\n")
 
     summaryFileWriter.close()
+
+
+    # zipping any unecessary files with pigz (supports multithreaded zipping)
+    # no need to check for errors
+    for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
+                  snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab"]:
+        zip_command = "pigz " + toZip + " -p " + str(args.threads)
+        new_command = subprocess.run(zip_command, shell=True)
+
+    os.remove(aligned + "_fwd.fq")
+    os.remove(aligned + "_rev.fq")
+    os.remove(aligned + ".log")
+    os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
+    os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
+    os.remove(dirpath + "/star_host_Log.out")
+    os.remove(dirpath + "/star_host_Log.progress.out")

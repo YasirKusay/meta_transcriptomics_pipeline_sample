@@ -120,8 +120,10 @@ def main(paf_file, dirpath):
             "tend",
             "evalue",
             "bitscore",
+            "qlen"
         ],
     ]
+
     blast["qstart"] = blast["qstart"] + 1
     blast["tstart"] = blast["tstart"] + 1
 

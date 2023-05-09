@@ -102,8 +102,9 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
 
             num_reads += 1
 
-    for key in results.keys():
-        results[key] = (results[key]/total_reads) * 100
+    # its arguably better to see the read counts itself rather than the read percentage
+    # for key in results.keys():
+    #     results[key] = (results[key]/total_reads) * 100
  
     unassigned_reads = total_reads - num_reads
     print("unassigned_reads: " + str(unassigned_reads))
@@ -181,7 +182,17 @@ def finalisation(args: argparse.Namespace):
     num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
 
     reads_mapped_to_contigs_file = dirpath + "/preprocessing/reads_mapped_to_contigs.sam"
+
+    minimap2_contig_out = dirpath + "/alignments/minimap2_contig_out_frompaf.m8"
+    minimap2_lr_out = dirpath + "/alignments/minimap2_lr_out_frompaf.m8"
+    blast_sr_out = dirpath + "/alignments/nt_alignments_sr_blast.tsv"
     nt_alignments_file = dirpath + "/alignments/nt_alignments_file.tsv"
+    subprocess.run("cat " + minimap2_contig_out + " > " + nt_alignments_file, shell=True)
+    subprocess.run("cat " + minimap2_lr_out + " >> " + nt_alignments_file, shell=True)
+    subprocess.run("cat " + blast_sr_out + " >> " + nt_alignments_file, shell=True)
+
+    # may need to fetch the length of the query
+
     nr_alignments_file = dirpath + "/alignments/nr_alignments_file.tsv"
     contigs_fq = dirpath + "/megahit_out/final_contigs.fq"
 

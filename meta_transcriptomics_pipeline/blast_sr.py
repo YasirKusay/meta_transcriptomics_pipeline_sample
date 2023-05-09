@@ -11,11 +11,11 @@ def blast_sr(args: argparse.Namespace):
 
     blast_path = "blastn -task megablast"
 
-    nt_alignments_file = dirpath + "/alignments/nt_alignments_file.tsv"
+    nt_alignments_file = dirpath + "/alignments/nt_alignments_sr_blast.tsv"
     if os.path.isfile(nt_alignments_file):
         os.remove(nt_alignments_file)
 
-    combined_file_fa = dirpath + "/preprocessing/combined_reads_contigs_file.fa"
+    combined_file_fa = dirpath + "/preprocessing/combined_sr_file.fa"
     
     start = time.time()
     blast_command = blast_path + " -query " + combined_file_fa + " -db " + args.blast_ncbi_nt_database + " -out " + nt_alignments_file + " -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen\" -max_target_seqs 10 -num_threads " + str(args.threads)
