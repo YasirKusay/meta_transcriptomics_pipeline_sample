@@ -37,6 +37,8 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     sort_command = "LC_COLLATE=C sort -k1 " + nt_nr_alignments_combined_file + " > " + nt_nr_alignments_combined_file_sorted
     command = subprocess.run(sort_command, shell=True) 
 
+    os.remove(nt_nr_alignments_combined_file)
+
     # now we can go about selecting the best hit
     with open(nt_nr_alignments_combined_file_sorted, "r") as f:
         prev_query = "NULL"

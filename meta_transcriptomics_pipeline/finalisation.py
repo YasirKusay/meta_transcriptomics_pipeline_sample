@@ -11,8 +11,6 @@ from meta_transcriptomics_pipeline.remove_contaminants_control import remove_con
 from meta_transcriptomics_pipeline.join_seq_to_taxid import join_seq_to_taxid
 from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
-from meta_transcriptomics_pipeline.get_abundance import get_abundance
-from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
 
@@ -225,7 +223,7 @@ def finalisation(args: argparse.Namespace):
     contigs_reads_taxids_temp = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
     if os.path.isfile(contigs_reads_taxids_temp):
         os.remove(contigs_reads_taxids_temp)
-    if join_seq_to_taxid(best_nt_scores, best_nr_scores, nucl_accession_taxid_mapping_files, prot_accession_taxid_mapping_files, contigs_reads_taxids_temp, analysis_path) is False: return None
+    join_seq_to_taxid(best_nt_scores, best_nr_scores, nucl_accession_taxid_mapping_files, prot_accession_taxid_mapping_files, contigs_reads_taxids_temp, analysis_path)
 
     contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids.txt"
     subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids, shell=True) # change space to tabs

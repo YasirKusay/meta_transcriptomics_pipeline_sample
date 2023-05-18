@@ -2,7 +2,6 @@ import os
 import operator
 
 def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxids):
-    final_res = {}
     taxids = {}
     lengths = {}
     counts = {}

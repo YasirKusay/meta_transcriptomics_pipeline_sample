@@ -39,7 +39,9 @@ cigar_pattern = re.compile(r"cg:Z:([A-Za-z0-9]+)")
 
 
 class QualityCalculations:
-    def __init__(self, genome_size=532400799511):
+    # THE GENOME SIZE IS HARDCODED AND WILL NEED TO BE UPDATED EVERY SINGLE TIME WE USE A NEW INDEX
+    # THIS IS THE CURRENT INDEX SIZE AS OF MAY 2023
+    def __init__(self, genome_size=1138726549535): 
         self._k = 0.1
         self._lambda = 1.58
         self.genome_size = genome_size

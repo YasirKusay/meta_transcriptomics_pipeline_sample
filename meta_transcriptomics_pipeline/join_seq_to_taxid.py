@@ -49,11 +49,7 @@ def join(hits_file, mapping_file, append_file, path):
         join_accessions_taxids(hits_file_sorted, retreived_mappings_sorted, append_file)
         if os.path.exists(retreived_mappings):
             os.remove(retreived_mappings)
-
-    return True
     
 def join_seq_to_taxid(nt_hits_file, nr_hits_file, nt_accession_to_taxid_mapping_files, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path):
-    if join(nt_hits_file, nt_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path) is False or join(nr_hits_file, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path) is False: 
-        return False
-
-    return True
+    join(nt_hits_file, nt_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path)
+    join(nr_hits_file, nr_accession_to_taxid_mapping_files, contigs_reads_accessions_taxids_outfile, path)

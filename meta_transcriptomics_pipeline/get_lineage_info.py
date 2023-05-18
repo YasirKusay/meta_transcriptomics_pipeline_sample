@@ -10,7 +10,7 @@ def get_lineage_info(taxids, taxdump_location):
     bad_taxids = []
 
     for curr_taxid in taxids:
-        # TODO, NEED A WAY TO DEAL WITH "UNKNOWN"
+        # TO DO, NEED A WAY TO DEAL WITH "UNKNOWN"
         curr_lineage_full = []
         if curr_taxid == "Unknown":
             continue

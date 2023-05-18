@@ -3,17 +3,11 @@ import os
 import tempfile
 
 def check_fail(program_name, command):
-    exit_now = False
     if (command.returncode != 0):
-        exit_now = True
         print("########### COMMMAND FAILED ###########")
-
-    if (exit_now):
         print(program_name + " failed")
         print(command.stderr)
-        return True
-
-    return False
+        exit(command.returncode)
 
 def check_command_exists(program_name):
     path_command = subprocess.run('which ' + program_name,

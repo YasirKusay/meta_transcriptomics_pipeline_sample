@@ -235,23 +235,12 @@ def parse_args():
     )
 
     parser_finalisation.add_argument(
-        "--kraken_db",
+        "--decontamination_input_files",
         type=str,
-        help="The path to the 'standard' Kraken index file. Used in the decontamination step to align the controls, other sequences and the original sequence to identify contaminant species for removal."
-    )
-
-    parser_finalisation.add_argument(
-        "--control_sequences",
-        type=str,
-        nargs="+",
-        help="Control sequences generated from the same lab environment as the sample ran through this pipeline. Used in the decontamination step."
-    )
-
-    parser_finalisation.add_argument(
-        "--other_sequences",
-        type=str,
-        nargs="+",
-        help="Other sequences generated from the same lab environment as the sample ran through this pipeline. Used in the decontamination step."
+        help="The path to the place that stores kraken outputs of sequences from a similar environment as the input sequence. These files will be used in the decontamination step.\n" + \
+            "This location has 2 folders: 'controls' where you will store the kraken output for the control sequences and 'others' where you will store the kraken output for the other sequences.\n" + \
+            "If controls is empty or does not exist, we will be using the 'SQUEEGEE' program to identify contaminants (does not require controls), otherwise we will use the 'RECENTRIFUGE' program to identify contaminants."
+            "It is preferred that you align your sequences using the kraken2 'standard' infex file"
     )
 
     parser_finalisation.add_argument(

@@ -398,7 +398,7 @@ htmlCode = """
             <b>Description:</b> Assemble our reads using megahit and identify unassembled/assembled reads.
         </p>
         <b>Num Contigs Assembled:</b> <br>
-        Num Reads Assembled into Contigs:</b> <br>
+        <b>Num Reads Assembled into Contigs:</b> <br>
         <b>Num Reads Unassembled:</b> <br>
         <b>Total Contig Bases:</b> <br>
         <b>Shortest Contig:</b> <br>
@@ -483,7 +483,7 @@ htmlCode = """
         <b>Number of Best Hits from the NT Alignment:</b> <br>
         <b>Number of Best Hits from the NR Alignment:</b> <br>
         <b>Number of Unassembled Reads Successfully Aligned:</b> <br>
-        <b>Number of Unassembled Contigs Successfully Aligned:</b> <br>
+        <b>Number of Contigs Successfully Aligned:</b> <br>
         <b>Number of Unique Accessions</b> <br>
         <b>Inputs:</b> nt_alignments_file.tsv, nr_alignments_file.tsv  <br>
         <b>Outputs:</b> best_nt_scores.tsv, best_nr_scores.tsv <br>
@@ -610,7 +610,7 @@ def generate_pipeline_summary(summaryFile, outputFile):
             if curr[0] == "numMappedUnassembledReads":
                 htmlCode = htmlCode.replace("Number of Unassembled Reads Successfully Aligned:</b> ", "Number of Unassembled Reads Successfully Aligned:</b> " + str(curr[1]))
             if curr[0] == "numMappedContigs":
-                htmlCode = htmlCode.replace("Number of Unassembled Contigs Successfully Aligned:</b> ", "Number of Unassembled Contigs Successfully Aligned:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Contigs Successfully Aligned:</b> ", "Number of Contigs Successfully Aligned:</b> " + str(curr[1]))
             if curr[0] == "totalUniqueAccessions":
                 htmlCode = htmlCode.replace("Number of Unique Accessions</b> ", "Number of Unique Accessions</b> " + str(curr[1]))
             if curr[0] == "numMappedAccessions":

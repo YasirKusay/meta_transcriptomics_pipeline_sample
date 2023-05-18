@@ -10,7 +10,7 @@ def run_diamond(index, in_path, out_path, threads):
                         " --threads " + str(threads) +\
                         " --out " + out_path
     new_command = subprocess.run(diamond_command, shell=True)
-    if check_fail("diamond", new_command) is True: return False
+    check_fail("diamond", new_command)
 
 def diamond(args: argparse.Namespace):
     dirpath = args.dirpath
@@ -22,6 +22,6 @@ def diamond(args: argparse.Namespace):
     combined_file = dirpath + "/preprocessing/combined_reads_contigs_file.fq"
 
     start = time.time()
-    if run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads) == False: return None
+    run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads)
     end = time.time()
     print("contig alignment against nr took: " + str(end - start))
