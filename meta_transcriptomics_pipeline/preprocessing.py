@@ -4,7 +4,7 @@ import operator
 import time
 import os
 import shutil
-from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 from meta_transcriptomics_pipeline.count_num_lines import countNumSeqs
@@ -77,8 +77,7 @@ def preprocessing(args: argparse.Namespace):
                     # -b -B, means we want our reads/pairs to be at most 100 bases
 
     start = time.time()
-    new_command = subprocess.run(fastp_command, shell=True)
-    check_fail("fastp", new_command)
+    run_shell_command(fastp_command)
     end = time.time()
     print("fastp took: " + str(end - start))
 
@@ -92,8 +91,7 @@ def preprocessing(args: argparse.Namespace):
                     " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
     
-    new_command = subprocess.run(star_command, shell=True)
-    check_fail("STAR", new_command)
+    run_shell_command(star_command)
 
     star_host_dedup1 = star_prefix + "Unmapped_1.fastq"
     star_host_dedup2 = star_prefix + "Unmapped_2.fastq"
@@ -106,8 +104,7 @@ def preprocessing(args: argparse.Namespace):
     snap_host_command = "snap-aligner" + " paired " + args.snap_host_index + " " + star_host_dedup1 + " " + star_host_dedup2 +\
                     " -o " + snap_host_mapping + " -t " + str(args.threads) + " -I "
     start = time.time()
-    new_command = subprocess.run(snap_host_command, shell=True)
-    check_fail("snap-aligner", new_command)
+    run_shell_command(snap_host_command)
     end = time.time()
     print("host subtraction via snap took: " + str(end - start))
 
@@ -125,8 +122,7 @@ def preprocessing(args: argparse.Namespace):
                         " -s " + host_spare + " " +\
                         snap_host_mapping
 
-    new_command = subprocess.run(samtools_host_subtract_command, shell=True)
-    check_fail("samtools", new_command)
+    run_shell_command(samtools_host_subtract_command)
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -155,8 +151,7 @@ def preprocessing(args: argparse.Namespace):
                     " --workdir " + dirpath + "/sortmerna" # default path is home, if more than one workdir folder exists, the program will fail
 
     start = time.time()
-    new_command = subprocess.run(sortmerna_command, shell=True)
-    check_fail("sortmerna", new_command)
+    run_shell_command(sortmerna_command)
     end = time.time()
     print("sortmerna took: " + str(end - start))
 
@@ -168,8 +163,7 @@ def preprocessing(args: argparse.Namespace):
     clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
                             " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t"
     
-    new_command = subprocess.run(clumpify_command, shell=True)
-    check_fail("clumpify.sh", new_command)
+    run_shell_command(clumpify_command)
 
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
     '''
@@ -180,14 +174,13 @@ def preprocessing(args: argparse.Namespace):
     kraken_command = "kraken2 --db " + args.kraken_db + " --threads " + str(args.threads) +\
                         " --output " + fast_mode_output + " --paired " + fullyQc1 + " " + fullyQc2
     
-    new_command = subprocess.run(kraken_command, shell=True)    
-    check_fail("kraken", new_command)
+    run_shell_command(kraken_command)    
     kraken_res_out = dirpath + "/kraken_res_out"
     process_fast_mode_output(fast_mode_output, kraken_res_out, num_reads)
     fastAbundances = dirpath + "/fastAbundances.txt"
     get_lineage_info(kraken_res_out, fastAbundances, args.taxdump_location)
     fastAbundancesKrona = dirpath + "/fastAbundancesKrona.html"
-    subprocess.run("ImportText.pl " + fastAbundances + " -o " + fastAbundancesKrona, shell=True)
+    run_shell_command("ImportText.pl " + fastAbundances + " -o " + fastAbundancesKrona)
     '''
     
     #################### MEGAHIT ###########################
@@ -206,11 +199,10 @@ def preprocessing(args: argparse.Namespace):
                         " -o " + megahit_out_path + " -t " + str(args.threads) # is an output directory 
     contigs = megahit_out_path + "/final_contigs.fa"
     start = time.time()
-    new_command = subprocess.run(megahit_command, shell=True)
-    check_fail("megahit", new_command)
+    run_shell_command(megahit_command)
     end = time.time()
     print("assembly via megahit took: " + str(end - start))
-    new_command = subprocess.run("mv " + megahit_out_path + "/final.contigs.fa " + contigs, shell=True)
+    run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
     # we must retrieve the unaligned reads
     reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
@@ -218,8 +210,7 @@ def preprocessing(args: argparse.Namespace):
                                 " in=" + fullyQc1 +\
                                 " in2=" + fullyQc2 +\
                                 " -out=" + reads_mapped_to_contigs_file  
-    new_command = subprocess.run(align_reads_to_contigs_cmd, shell=True)
-    check_fail("megahit", new_command)
+    run_shell_command(align_reads_to_contigs_cmd)
 
     # now lets retrieve the reads that did not align
     unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
@@ -228,8 +219,7 @@ def preprocessing(args: argparse.Namespace):
     # same principle here as the host mapping step
     align_command = "samtools fastq -f 12 -1 " + unassembled_reads_fwd +\
                     " -2 " + unassembled_reads_rev + " " + reads_mapped_to_contigs_file
-    new_command = subprocess.run(align_command, shell=True)
-    check_fail("samtools", new_command)
+    run_shell_command(align_command)
 
     unassembled_reads_shorter_1 = dirpath + "/unassembled_reads_shorter_fwd.fq"
     unassembled_reads_shorter_2 = dirpath + "/unassembled_reads_shorter_rev.fq"
@@ -242,37 +232,32 @@ def preprocessing(args: argparse.Namespace):
     # need to convert file above from fa to fq, simply done using seqtk
     contigs_fq = megahit_out_path + "/final_contigs.fq"
     seqtk_command = "seqtk" + " seq -F '#' " + contigs + " > " + contigs_fq
-    new_command = subprocess.run(seqtk_command, shell=True)
-    check_fail("seqtk", new_command)
+    run_shell_command(seqtk_command)
 
     # merge short reads, needed for blast alignment
     combined_file_sr_fq = dirpath + "/combined_sr_file.fq"
     merge_command = "seqtk mergepe " + unassembled_reads_shorter_1 + " " + unassembled_reads_shorter_2 + " > " + combined_file_sr_fq
-    new_command = subprocess.run(merge_command, shell=True)
-    check_fail("seqtk mergepe", new_command)
+    run_shell_command(merge_command)
 
     # convert above to fasta
     combined_file_sr_fa = dirpath + "/combined_sr_file.fa"
     convert_command = "seqtk seq -a " + combined_file_sr_fq + " > " + combined_file_sr_fa
-    new_command = subprocess.run(convert_command, shell=True)
-    check_fail("seqtk seq -a", new_command)
+    run_shell_command(convert_command)
 
     # need to merge paired end reads
     merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + unassembled_reads_fwd + " " + unassembled_reads_rev + " > " + merged_pe
-    new_command = subprocess.run(merge_command, shell=True)
-    check_fail("seqtk mergepe", new_command)
+    run_shell_command(merge_command)
 
     # merge pe reads with contigs
     combined_file_fq = dirpath + "/combined_reads_contigs_file.fq"
-    subprocess.run("cat " + contigs_fq + " > " + combined_file_fq, shell=True)
-    subprocess.run("cat " + merged_pe + " >> " + combined_file_fq, shell=True)
+    run_shell_command("cat " + contigs_fq + " > " + combined_file_fq)
+    run_shell_command("cat " + merged_pe + " >> " + combined_file_fq)
 
     # need to convert above to fasta
     combined_file_fa = dirpath + "/combined_reads_contigs_file.fa"
     seqtk_command = "seqtk" + " seq -a " + combined_file_fq + " > " + combined_file_fa
-    new_command = subprocess.run(seqtk_command, shell=True)
-    check_fail("seqtk", new_command)
+    run_shell_command(seqtk_command)
 
     # creating alignment folder
     alignments_path = args.dirpath
@@ -350,7 +335,6 @@ def preprocessing(args: argparse.Namespace):
 
     summaryFileWriter.close()
 
-
     # zipping any unecessary files with pigz (supports multithreaded zipping)
     # no need to check for errors
     for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
@@ -358,7 +342,7 @@ def preprocessing(args: argparse.Namespace):
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
-        new_command = subprocess.run(zip_command, shell=True)
+        run_shell_command(zip_command)
 
     os.remove(aligned + "_fwd.fq")
     os.remove(aligned + "_rev.fq")

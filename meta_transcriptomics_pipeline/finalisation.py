@@ -13,6 +13,7 @@ from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def fetch_taxids(infile):
     taxids = []
@@ -185,9 +186,9 @@ def finalisation(args: argparse.Namespace):
     minimap2_lr_out = dirpath + "/alignments/minimap2_lr_out_frompaf.m8"
     blast_sr_out = dirpath + "/alignments/nt_alignments_sr_blast.tsv"
     nt_alignments_file = dirpath + "/alignments/nt_alignments_file.tsv"
-    subprocess.run("cat " + minimap2_contig_out + " > " + nt_alignments_file, shell=True)
-    subprocess.run("cat " + minimap2_lr_out + " >> " + nt_alignments_file, shell=True)
-    subprocess.run("cat " + blast_sr_out + " >> " + nt_alignments_file, shell=True)
+    run_shell_command("cat " + minimap2_contig_out + " > " + nt_alignments_file)
+    run_shell_command("cat " + minimap2_lr_out + " >> " + nt_alignments_file)
+    run_shell_command("cat " + blast_sr_out + " >> " + nt_alignments_file)
 
     # may need to fetch the length of the query
 
@@ -195,9 +196,9 @@ def finalisation(args: argparse.Namespace):
     contigs_fq = dirpath + "/megahit_out/final_contigs.fq"
 
     # paf2blast_out_contigs = dirpath + "/minimap2_contig_out_frompaf.m8"
-    # new_command = subprocess.run("cat " + paf2blast_out_contigs + " >> " + nt_alignments_file, shell=True)
+    # new_command = run_shell_command("cat " + paf2blast_out_contigs + " >> " + nt_alignments_file)
     # paf2blast_out_lr = dirpath + "/minimap2_lr_out_frompaf.m8"
-    # new_command = subprocess.run("cat " + paf2blast_out_lr + " >> " + nr_alignments_file, shell=True)
+    # new_command = run_shell_command("cat " + paf2blast_out_lr + " >> " + nr_alignments_file)
 
     best_nt_scores = analysis_path + "/best_nt_scores.tsv"
     best_nr_scores = analysis_path + "/best_nr_scores.tsv"
@@ -226,7 +227,7 @@ def finalisation(args: argparse.Namespace):
     join_seq_to_taxid(best_nt_scores, best_nr_scores, nucl_accession_taxid_mapping_files, prot_accession_taxid_mapping_files, contigs_reads_taxids_temp, analysis_path)
 
     contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids.txt"
-    subprocess.run("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids, shell=True) # change space to tabs
+    run_shell_command("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids) # change space to tabs
     os.remove(contigs_reads_taxids_temp)
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
@@ -240,16 +241,16 @@ def finalisation(args: argparse.Namespace):
 
     species_avg_alignment_scores = analysis_path + "/species_avg_alignment_scores.txt"
     combined_nt_nr_scores_unsorted = analysis_path + "/combined_nt_nr_scores_unsorted.txt"
-    subprocess.run("cat " + best_nt_scores + " > " + combined_nt_nr_scores_unsorted, shell=True)
-    subprocess.run("cat " + best_nr_scores + " >> " + combined_nt_nr_scores_unsorted, shell=True)
+    run_shell_command("cat " + best_nt_scores + " > " + combined_nt_nr_scores_unsorted)
+    run_shell_command("cat " + best_nr_scores + " >> " + combined_nt_nr_scores_unsorted)
 
     combined_nt_nr_scores = analysis_path + "/combined_nt_nr_scores.txt"
-    subprocess.run("LC_COLLATE=C sort -k 1 " + combined_nt_nr_scores_unsorted + " > " + combined_nt_nr_scores, shell=True)
+    run_shell_command("LC_COLLATE=C sort -k 1 " + combined_nt_nr_scores_unsorted + " > " + combined_nt_nr_scores)
     match_scores(contigs_reads_taxids, combined_nt_nr_scores, analysis_path, species_avg_alignment_scores, args.taxdump_location)
     os.remove(combined_nt_nr_scores_unsorted)
 
     reads_belonging_to_contigs = analysis_path + "/reads_belonging_to_contigs.txt"
-    subprocess.run("LC_COLLATE=C sort -k 2 " + reads_belonging_to_contigs_unsorted + " > " + reads_belonging_to_contigs, shell=True)
+    run_shell_command("LC_COLLATE=C sort -k 2 " + reads_belonging_to_contigs_unsorted + " > " + reads_belonging_to_contigs)
     os.remove(reads_belonging_to_contigs_unsorted)
 
     # stores reads that assembled, and its contigs taxid
@@ -257,10 +258,10 @@ def finalisation(args: argparse.Namespace):
     contig_taxid_assignments = fetch_contig_taxids(contigs_reads_taxids)
     assign_taxids_to_assembled_reads(contig_taxid_assignments, reads_belonging_to_contigs, assembled_reads_taxids_temp)
     all_reads_taxids = analysis_path + "/all_reads_taxids.txt"
-    subprocess.run("cat " + assembled_reads_taxids_temp + " > " + all_reads_taxids, shell=True) # change space to tabs
+    run_shell_command("cat " + assembled_reads_taxids_temp + " > " + all_reads_taxids) # change space to tabs
 
     # we need to now combine the contig aligned reads to the non contig aligned reads
-    subprocess.run("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + all_reads_taxids, shell=True)
+    run_shell_command("awk '$1 !~ /^k[0-9]*/ {print $1\"\t\"$3}' " + contigs_reads_taxids + " >> " + all_reads_taxids)
 
     # before proceeeding any further, lets remove the contaminants, simply remove the taxids
     contaminant_removal = True
@@ -320,7 +321,7 @@ def finalisation(args: argparse.Namespace):
     wf.close()
 
     abundancesKronaReadMethod = final_plots_path + "/abundancesKronaReadMethod.html"
-    subprocess.run("ImportText.pl " + abundancesReadMethod + " -o " + abundancesKronaReadMethod + " -fil " + species_avg_alignment_scores, shell=True)
+    run_shell_command("ImportText.pl " + abundancesReadMethod + " -o " + abundancesKronaReadMethod + " -fil " + species_avg_alignment_scores)
 
     # now lets do abundance calculations via the tpm method
     # firstly get the length of the contigs
@@ -367,7 +368,7 @@ def finalisation(args: argparse.Namespace):
     wf.close()
 
     tpmAbundancesKrona = final_plots_path + "/tpmAbundancesKrona.html"
-    subprocess.run("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + species_avg_alignment_scores, shell=True)
+    run_shell_command("ImportText.pl " + tpmAbundances + " -o " + tpmAbundancesKrona  + " -fil " + species_avg_alignment_scores)
 
     # need to now go through each important output file to get relevant statistics for the output html
 

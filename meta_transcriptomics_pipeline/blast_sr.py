@@ -1,8 +1,7 @@
 import argparse
-import subprocess
 import time
 import os
-from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def blast_sr(args: argparse.Namespace):
     dirpath = args.dirpath
@@ -19,8 +18,7 @@ def blast_sr(args: argparse.Namespace):
     
     start = time.time()
     blast_command = blast_path + " -query " + combined_file_fa + " -db " + args.blast_ncbi_nt_database + " -out " + nt_alignments_file + " -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen\" -max_target_seqs 10 -num_threads " + str(args.threads)
-    new_command = subprocess.run(blast_command, shell=True)
-    check_fail(blast_path, new_command)
+    run_shell_command(blast_command)
 
     end = time.time()
     print("blast alignment against nt took: " + str(end - start))

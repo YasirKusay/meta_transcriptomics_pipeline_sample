@@ -4,8 +4,8 @@
 # mapping file or the nr mapping file
 # best hits are decided by e value (1) and bit scores (2)
 
-import subprocess
 import os
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_outfile, best_nr_outfile):
 
@@ -15,17 +15,17 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     # need to firstly merge and sort the 2 files
     temp_nt = path + "/temp_nt"
     add_nt = "awk '{print $0, \"\tN\"}' " + nt_alignments_file + " > " + temp_nt
-    command = subprocess.run(add_nt, shell=True)
+    run_shell_command(add_nt)
 
     temp_nr = path + "/temp_nr"
     add_nr = "awk '{print $0, \"\tP\"}' " + nr_alignments_file + " > " + temp_nr
-    command = subprocess.run(add_nr, shell=True)
+    run_shell_command(add_nr)
 
     nt_nr_alignments_combined_file = path + "/nt_nr_alignments_combined"
     command_1 = 'cat ' + temp_nt + " > " + nt_nr_alignments_combined_file
-    command = subprocess.run(command_1, shell=True) 
+    run_shell_command(command_1) 
     command_2 = 'cat ' + temp_nr + " >> " + nt_nr_alignments_combined_file
-    command = subprocess.run(command_2, shell=True)
+    run_shell_command(command_2)
 
     os.remove(temp_nt)
     os.remove(temp_nr)
@@ -35,7 +35,7 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     # now lets sort based on read/contig id
     nt_nr_alignments_combined_file_sorted = path + "/nt_nr_alignments_combined_sorted"
     sort_command = "LC_COLLATE=C sort -k1 " + nt_nr_alignments_combined_file + " > " + nt_nr_alignments_combined_file_sorted
-    command = subprocess.run(sort_command, shell=True) 
+    run_shell_command(sort_command) 
 
     os.remove(nt_nr_alignments_combined_file)
 

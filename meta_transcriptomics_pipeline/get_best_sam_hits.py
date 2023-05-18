@@ -1,5 +1,5 @@
-import subprocess
 import os
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 # takes a sam file
 # returns a file matching a read with its best matching hit (if a match exists)
@@ -15,7 +15,7 @@ def get_best_sam_hits(snap_file, best_read_hit_file, path):
     # need to firstly merge and sort the 2 files based on read id
     snap_sorted_file = path + "/snap_sorted_file"
     combine_and_sort_snap_command = 'egrep -v "^@" ' + snap_file + " | LC_COLLATE=C sort -k1 > " + snap_sorted_file
-    command = subprocess.run(combine_and_sort_snap_command, shell=True) 
+    run_shell_command(combine_and_sort_snap_command) 
 
     # now we can go about selecting the best hit
     # column 1 is the read name

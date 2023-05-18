@@ -1,9 +1,8 @@
 import argparse
-import subprocess
 import time
 import os
 import shutil
-from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
 
 def minimap2_reads(args: argparse.Namespace):
@@ -19,8 +18,7 @@ def minimap2_reads(args: argparse.Namespace):
 
     os.mkdir(tempdir)
     minimap2_command = "minimap2 -c -x sr -t " + str(args.threads) + " --split-prefix " + tempdir + "/temp" + " " + args.minimap2_index + " " + bigger_1 + " " + bigger_2 + " > " + minimap2_long_reads_out
-    new_command = subprocess.run(minimap2_command, shell=True)
-    check_fail("minimap2", new_command)
+    run_shell_command(minimap2_command)
 
     end = time.time()
     print("minimap2 long read alignment against nt took: " + str(end - start))

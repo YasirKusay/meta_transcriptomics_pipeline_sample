@@ -1,7 +1,6 @@
 import argparse
-import subprocess
 import time
-from meta_transcriptomics_pipeline.helpers import check_fail
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def run_diamond(index, in_path, out_path, threads):
     diamond_command = "diamond" + " blastx --db " + index +\
@@ -9,8 +8,8 @@ def run_diamond(index, in_path, out_path, threads):
                         " --masking 0 -c 1 -b 6" +\
                         " --threads " + str(threads) +\
                         " --out " + out_path
-    new_command = subprocess.run(diamond_command, shell=True)
-    check_fail("diamond", new_command)
+    
+    run_shell_command(diamond_command)
 
 def diamond(args: argparse.Namespace):
     dirpath = args.dirpath

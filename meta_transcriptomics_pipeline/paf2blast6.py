@@ -25,14 +25,12 @@ SOFTWARE.
 # originally from https://github.com/chanzuckerberg/czid-workflows/blob/72fa52585b318f29eea24c91496df6e116262315/short-read-mngs/idseq_utils/idseq_utils/paf2blast6.py
 
 import pandas as pd
-import subprocess
 import os.path
 import shlex
-import sys
 import math
 import re
 import numpy
-
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 nonmatch_pattern = re.compile(r"NM:i:(\d+);")
 cigar_pattern = re.compile(r"cg:Z:([A-Za-z0-9]+)")
@@ -64,9 +62,7 @@ class QualityCalculations:
 
 def standardize_paf(paf_file):
     """paf files can have variable number of optional key-value pairs"""
-    out = subprocess.run(shlex.split("sed 's/\t/;/13g' -i {}".format(paf_file)))
-
-    assert out.returncode == 0
+    run_shell_command(shlex.split("sed 's/\t/;/13g' -i {}".format(paf_file)))
 
 
 def main(paf_file, dirpath):

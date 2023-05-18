@@ -2,12 +2,13 @@ import subprocess
 import os
 import tempfile
 
-def check_fail(program_name, command):
-    if (command.returncode != 0):
+def run_shell_command(command):
+    processDetails = subprocess.run(command, shell=True)
+
+    if (processDetails.returncode != 0):
         print("########### COMMMAND FAILED ###########")
-        print(program_name + " failed")
-        print(command.stderr)
-        exit(command.returncode)
+        print(processDetails.stderr)
+        exit(processDetails.returncode)
 
 def check_command_exists(program_name):
     path_command = subprocess.run('which ' + program_name,
@@ -17,10 +18,8 @@ def check_command_exists(program_name):
                                 )
 
     if (path_command.returncode != 0):
-        print(program_name + " is not installed/initialised properly")
-        return False
-
-    return True
+        print(program_name + " is not installed or initialised properly")
+        exit(1)
 
 def generate_temp_file(extension, working_dir):
     file = tempfile.NamedTemporaryFile(

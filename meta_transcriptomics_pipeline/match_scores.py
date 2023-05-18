@@ -1,15 +1,15 @@
-import subprocess
 import pandas as pd
 from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
+from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def match_scores(mappings, combined_scores, dirpath, outfile, taxids_location):
     temp_out = dirpath + "/temp_out"
     wf = open(temp_out, "w")
 
     mappings_sorted = dirpath + "/mappings_sorted"
-    new_command = subprocess.run("LC_COLLATE=C sort -k1 " + mappings + " > " + mappings_sorted, shell=True)
+    run_shell_command("LC_COLLATE=C sort -k1 " + mappings + " > " + mappings_sorted)
     combined_scores_sorted = dirpath + "/combined_scores_sorted"
-    new_command = subprocess.run("LC_COLLATE=C sort -k1 " + combined_scores + " > " + combined_scores_sorted, shell=True)
+    run_shell_command("LC_COLLATE=C sort -k1 " + combined_scores + " > " + combined_scores_sorted)
 
     all_taxids = []
     with open(mappings_sorted, "r") as f:
