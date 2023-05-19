@@ -26,7 +26,6 @@ SOFTWARE.
 
 import pandas as pd
 import os.path
-import shlex
 import math
 import re
 import numpy
@@ -62,7 +61,7 @@ class QualityCalculations:
 
 def standardize_paf(paf_file):
     """paf files can have variable number of optional key-value pairs"""
-    run_shell_command(shlex.split("sed 's/\t/;/13g' -i {}".format(paf_file)))
+    run_shell_command("sed 's/\t/;/13g' -i {}".format(paf_file))
 
 
 def main(paf_file, dirpath):
