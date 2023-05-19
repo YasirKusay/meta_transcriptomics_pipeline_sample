@@ -331,13 +331,13 @@ htmlCode = """
                     Organism
                 </div>
                 <div class="result_element score_element header_field" id="perct_reads_mapped_header">
-                    Reads mapped
+                    Reads mapped (%)
                 </div>
                 <div class="result_element score_element header_field" id="tpm_score_header">
                     TPM score
                 </div>
                 <div class="result_element score_element header_field" id="num_reads_mapped_header">
-                    Num reads mapped
+                    Number of reads mapped
                 </div>
                 <div class="result_element score_element header_field" id ="e_val_header">
                     E-value
@@ -349,7 +349,7 @@ htmlCode = """
                     Percentage Identity (%)
                 </div>
                 <div class="result_element score_element header_field" id="avg_length_header">
-                    Average Length
+                    Average Sequence Length
                 </div>
             </div>
 """

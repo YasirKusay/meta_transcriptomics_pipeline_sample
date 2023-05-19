@@ -13,6 +13,7 @@ from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
 from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
+from meta_transcriptomics_pipeline.generate_table_output import generate_table_output
 from meta_transcriptomics_pipeline.helpers import run_shell_command
 
 def fetch_taxids(infile):
@@ -428,5 +429,67 @@ def finalisation(args: argparse.Namespace):
     summaryFileWriter.close()
 
     generate_pipeline_summary(summaryFile, final_plots_path + "/pipeline_summary.html")
+
+    # need to combine all scores and domain for each species to generate a final table output
+
+    species_tpms = {}
+    species_domains = {}
+    species_read_counts = {}
+    species_percent_reads_mapped = {}
+    species_e_val = {}
+    species_bitscores = {}
+    species_percent_ids = {}
+    species_sequence_lengths = {}
+
+    # only go through the species that are present in the tpm file
+    # we want to exclude any bad species
+
+    with open(tpmAbundances, "r") as f:
+        for line in f:
+            line = line.strip()
+            curr = line.split("\t")
+            species = curr[-1]
+            tpm = curr[0]
+            domain = curr[1]
+            species_tpms[species] = tpm
+            species_domains[species] = domain
+
+    with open(abundancesReadMethod, "r") as f:
+        for line in f:
+            line = line.strip()
+            curr = line.split("\t")
+            species = curr[-1]
+            read_counts = curr[0]
+            species_read_counts[species] = read_counts
+            species_percent_reads_mapped[species] = (read_counts * 100)/num_reads
+
+    with open(species_avg_alignment_scores, "r") as f:
+        for line in f:
+            line = line.strip()
+            curr = line.split("\t")
+            species = curr[0]
+            e_val = curr[1]
+            bitscore = curr[2]
+            percent_id = curr[3]
+            avg_seq_length = curr[4]
+            species_e_val[species] = e_val
+            species_bitscores[species] = bitscore
+            species_percent_ids[species] = percent_id
+            species_sequence_lengths[species] = avg_seq_length
+
+    table_summary_file = final_plots_path + "/table_summary.tsv"
+    summary_file_writer = open(table_summary_file, "w")
+
+    for species in species_tpms:
+        summary_file_writer.write("\t".join[species, species_percent_reads_mapped[species], 
+                                            species_tpms[species], species_read_counts[species],
+                                            species_e_val[species], species_bitscores[species],
+                                            species_percent_ids[species], species_sequence_lengths[species], 
+                                            species_domains[species] + "\n"])
+
+    summary_file_writer.close()
+
+    generate_table_output(table_summary_file, final_plots_path + "/table_summary.html")
+    os.remove(table_summary_file)
 
     # will now get intepreted

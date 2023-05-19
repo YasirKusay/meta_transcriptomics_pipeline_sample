@@ -66,6 +66,9 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxid
         else:
             final_tpm[taxids[key]] = tpm[key]
 
+    for key in final_tpm:
+        final_tpm[key] = final_tpm[key] * 1e12
+
     if os.path.isfile(output_file):
         os.remove(output_file)
     wf = open(output_file, "w")
