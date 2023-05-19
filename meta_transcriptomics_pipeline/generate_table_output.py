@@ -226,6 +226,7 @@ htmlCode = """
                 flex-direction: row;
                 justify-content: center;
                 overflow: hidden;
+                white-space: nowrap;
             }
 
             .species_name {
@@ -242,6 +243,16 @@ htmlCode = """
             .result_header {
                 filter: brightness(110%);
                 border-bottom: 1px solid;
+            }
+            
+            .header_field {
+                position: static;
+            }
+
+            .header_field:hover {
+                background: rgba(128, 128, 128, 0.3);
+                filter: brightness(90%);
+                cursor: pointer;
             }
         </style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -319,25 +330,25 @@ htmlCode = """
                 <div class="result_element species_name">
                     Organism
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id="perct_reads_mapped_header">
                     Reads mapped
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id="tpm_score_header">
                     TPM score
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id="num_reads_mapped_header">
                     Num reads mapped
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id ="e_val_header">
                     E-value
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id="bitscore_header">
                     Bitscore
                 </div>
-                <div class="result_element score_element">
-                Percentage Identity (%)
+                <div class="result_element score_element header_field" id="perct_identity_header">
+                    Percentage Identity (%)
                 </div>
-                <div class="result_element score_element">
+                <div class="result_element score_element header_field" id="avg_length_header">
                     Average Length
                 </div>
             </div>
@@ -405,7 +416,7 @@ jsScript = """
 
             var toConcat = ""
             for (let i = 0; i < toAdd.length; i++) {
-                toConcat = toConcat + toAdd[i].trim().replace('\\n','') + "</br>\\n"
+                toConcat = toConcat + toAdd[i].trim().replace('\n','') + "</br>\n"
             } 
 
             console.log(toConcat)
@@ -695,6 +706,69 @@ jsScript = """
                 }
             }
             console.log(currently_filtered_species)
+            }
+
+            function sortFloat(a,b) { return a - b; }
+
+            perct_reads_mapped_header = document.getElementById("perct_reads_mapped_header")
+            perct_reads_mapped_header.addEventListener('click', () => {reorderTable(1)})
+
+            tpm_score_header = document.getElementById("tpm_score_header")
+            tpm_score_header.addEventListener('click', () => {reorderTable(2)})
+
+            num_reads_mapped_header = document.getElementById("num_reads_mapped_header")
+            num_reads_mapped_header.addEventListener('click', () => {reorderTable(3)})
+
+            e_val_header = document.getElementById("e_val_header")
+            e_val_header.addEventListener('click', () => {reorderTable(4)})
+
+            bitscore_header = document.getElementById("bitscore_header")
+            bitscore_header.addEventListener('click', () => {reorderTable(5)})
+
+            perct_identity_header = document.getElementById("perct_identity_header")
+            perct_identity_header.addEventListener('click', () => {reorderTable(6)})
+
+            avg_length_header = document.getElementById("avg_length_header")
+            avg_length_header.addEventListener('click', () => {reorderTable(7)})
+
+            function reorderTable(position_of_elem) {
+                var species_value_map = new Map();
+                var all_displayed_species = document.getElementsByClassName("result_box")
+                var sorted = []
+                for (let i = 0; i < all_displayed_species.length; i++) {
+                    let curr_species = all_displayed_species[i]
+                    if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                    species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), 
+                        parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim()))
+                }
+
+                // sorting hashmap by key 
+                // from https://stackoverflow.com/questions/37982476/how-to-sort-a-map-by-value-in-javascript
+                
+                // descending order
+                var map_sorted;
+                if (position_of_elem !== 4)  {
+                    map_sorted = new Map([...species_value_map.entries()].sort((a, b) => b[1] - a[1]));
+                } else {
+                    map_sorted = new Map([...species_value_map.entries()].sort((a, b) => a[1] - b[1]));
+                }
+
+                const sorted_names = Array.from(map_sorted.keys())
+
+                for (let i = 0; i < all_displayed_species.length; i++) {
+                    let curr_species = all_displayed_species[i]
+                    if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                    console.log(sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()))
+                    curr_species.style.order = sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()) + 1
+                    // change the thing at the bottom with the black border also
+                    
+                    // last species
+                    if (curr_species.style.order == all_displayed_species.length - 1) {
+                        curr_species.style.borderBottom = "1px solid gray";
+                    } else {
+                        curr_species.style.borderBottom = "none";
+                    }
+                }
             }
 """
 
