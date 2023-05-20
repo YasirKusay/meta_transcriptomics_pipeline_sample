@@ -786,6 +786,8 @@ def generate_table_output(tableSummaryInput, outputHTMLSummary):
             avg_percent_identity = curr[6]
             avg_query_len = curr[7]
             domain = curr[8].strip() # final column
+            if domain == "Eukaryota":
+                domain = "Eukaryotes"
             htmlCode += "            <div class=\"result_box\">\n"
             htmlCode += "                <div class=\"result_element species_name\">\n"
             htmlCode += "                    " + str(organism) + "\n"
