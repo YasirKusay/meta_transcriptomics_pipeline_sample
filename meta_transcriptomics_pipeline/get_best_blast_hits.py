@@ -73,10 +73,14 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                     bitscore = to_print[11].strip()
                     qlen = to_print[12].strip()
 
-                    if to_print[13].strip() == "P": # diamond file
-                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
-                    else:
-                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                    # this has been an issue in the past, albeit quite rare
+                    # sometimes the bitscore is less than 0 and the e value is extremely large
+                    # we dont need these reads as they will mess up the average score calculations
+                    if e_value < 1 and bitscore > 0 and qlen > 0 and percent_id > 0:
+                        if to_print[13].strip() == "P": # diamond file
+                            best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                        else:
+                            best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
 
                 prev_query = curr[0]
                 best_e_value = float(curr[10])
@@ -96,10 +100,11 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             bitscore = to_print[11].strip()
             qlen = to_print[12].strip()
 
-            if to_print[13].strip() == "P": # diamond file
-                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
-            else:
-                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+            if e_value < 1 and bitscore > 0 and qlen > 0 and percent_id > 0:
+                if to_print[13].strip() == "P": # diamond file
+                    best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                else:
+                    best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
     
     best_nt_output.close()
     best_nr_output.close()

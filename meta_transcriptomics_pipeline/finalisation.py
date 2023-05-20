@@ -461,7 +461,7 @@ def finalisation(args: argparse.Namespace):
             species = curr[-1]
             read_counts = curr[0]
             species_read_counts[species] = read_counts
-            species_percent_reads_mapped[species] = (read_counts * 100)/num_reads
+            species_percent_reads_mapped[species] = str((int(read_counts) * 100)/num_reads)
 
     with open(species_avg_alignment_scores, "r") as f:
         for line in f:
@@ -480,12 +480,12 @@ def finalisation(args: argparse.Namespace):
     table_summary_file = final_plots_path + "/table_summary.tsv"
     summary_file_writer = open(table_summary_file, "w")
 
-    for species in species_tpms:
-        summary_file_writer.write("\t".join[species, species_percent_reads_mapped[species], 
+    for species in species_tpms.keys():
+        summary_file_writer.write("\t".join([species, species_percent_reads_mapped[species], 
                                             species_tpms[species], species_read_counts[species],
                                             species_e_val[species], species_bitscores[species],
                                             species_percent_ids[species], species_sequence_lengths[species], 
-                                            species_domains[species] + "\n"])
+                                            species_domains[species]]) + "\n")
 
     summary_file_writer.close()
 
