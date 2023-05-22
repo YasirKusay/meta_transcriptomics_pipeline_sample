@@ -66,7 +66,7 @@ def preprocessing(args: argparse.Namespace):
                     " --in2 " + args.inp2 +\
                     " --out1 " + qc1 +\
                     " --out2 " + qc2 +\
-                    " -b 100 -B 100 " +\
+                    " -b " + args.read_length + " -B " + args.read_length +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
                     " --length_required " + args.length_required +\

@@ -202,7 +202,7 @@ htmlCode = """
             .result_box {
                 background: rgba(128, 128, 128, 0.3);
                 width: 95%;
-                padding-left: 10px;
+                /* padding-left: 10px; */
                 height: 30px;
                 border-top: 1px solid gray;
                 border-left: 1px solid gray;
@@ -230,6 +230,7 @@ htmlCode = """
             }
 
             .species_name {
+                line-height: 30px;
                 flex: 3;
             }
 
@@ -327,7 +328,7 @@ htmlCode = """
 
             </div>
             <div class="result_box result_header">
-                <div class="result_element species_name">
+                <div class="result_element species_name header_field" id="organism_header">
                     Organism
                 </div>
                 <div class="result_element score_element header_field" id="perct_reads_mapped_header">
@@ -337,7 +338,7 @@ htmlCode = """
                     TPM score
                 </div>
                 <div class="result_element score_element header_field" id="num_reads_mapped_header">
-                    Number of reads mapped
+                    Reads mapped
                 </div>
                 <div class="result_element score_element header_field" id ="e_val_header">
                     E-value
@@ -346,10 +347,10 @@ htmlCode = """
                     Bitscore
                 </div>
                 <div class="result_element score_element header_field" id="perct_identity_header">
-                    Percentage Identity (%)
+                    Percentage Id
                 </div>
                 <div class="result_element score_element header_field" id="avg_length_header">
-                    Average Sequence Length
+                    Avg Query Length
                 </div>
             </div>
 """
@@ -416,7 +417,7 @@ jsScript = """
 
             var toConcat = ""
             for (let i = 0; i < toAdd.length; i++) {
-                toConcat = toConcat + toAdd[i].trim().replace('\\n','') + "</br>\\n"
+                toConcat = toConcat + toAdd[i].trim().replace('\n','') + "</br>\n"
             } 
 
             console.log(toConcat)
@@ -710,6 +711,9 @@ jsScript = """
 
             function sortFloat(a,b) { return a - b; }
 
+            organism_header = document.getElementById("organism_header")
+            organism_header.addEventListener('click', () => {reorderTable(0)})
+
             perct_reads_mapped_header = document.getElementById("perct_reads_mapped_header")
             perct_reads_mapped_header.addEventListener('click', () => {reorderTable(1)})
 
@@ -731,44 +735,101 @@ jsScript = """
             avg_length_header = document.getElementById("avg_length_header")
             avg_length_header.addEventListener('click', () => {reorderTable(7)})
 
+            current_sort_selected = -1
+
             function reorderTable(position_of_elem) {
-                var species_value_map = new Map();
-                var all_displayed_species = document.getElementsByClassName("result_box")
-                var sorted = []
-                for (let i = 0; i < all_displayed_species.length; i++) {
-                    let curr_species = all_displayed_species[i]
-                    if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                    species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), 
-                        parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim()))
-                }
+                if (current_sort_selected !== position_of_elem) {
+                    if (position_of_elem !== 0) {
+                        var species_value_map = new Map();
+                        var all_displayed_species = document.getElementsByClassName("result_box")
+                        var sorted = []
+                        for (let i = 0; i < all_displayed_species.length; i++) {
+                            let curr_species = all_displayed_species[i]
+                            if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                            species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), 
+                                parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim()))
+                        }
 
-                // sorting hashmap by key 
-                // from https://stackoverflow.com/questions/37982476/how-to-sort-a-map-by-value-in-javascript
-                
-                // descending order
-                var map_sorted;
-                if (position_of_elem !== 4)  {
-                    map_sorted = new Map([...species_value_map.entries()].sort((a, b) => b[1] - a[1]));
+                        // sorting hashmap by key 
+                        // from https://stackoverflow.com/questions/37982476/how-to-sort-a-map-by-value-in-javascript
+                        
+                        // descending order
+                        var map_sorted;
+                        if (position_of_elem !== 4)  {
+                            map_sorted = new Map([...species_value_map.entries()].sort((a, b) => b[1] - a[1]));
+                        } else {
+                            map_sorted = new Map([...species_value_map.entries()].sort((a, b) => a[1] - b[1]));
+                        }
+
+                        const sorted_names = Array.from(map_sorted.keys())
+
+                        for (let i = 0; i < all_displayed_species.length; i++) {
+                            let curr_species = all_displayed_species[i]
+                            if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                            console.log(sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()))
+                            curr_species.style.order = sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()) + 1
+                            // change the thing at the bottom with the black border also
+                            
+                            // last species
+                            if (curr_species.style.order == all_displayed_species.length - 1) {
+                                curr_species.style.borderBottom = "1px solid gray";
+                            } else {
+                                curr_species.style.borderBottom = "none";
+                            }
+                        }
+                    } else { // we are sorting the names of the organisms alphabetically
+                        const sorted_names = []
+
+                        var all_displayed_species = document.getElementsByClassName("result_box")
+                        for (let i = 0; i < all_displayed_species.length; i++) {
+                            let curr_species = all_displayed_species[i]
+                            if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                            sorted_names.push(curr_species.getElementsByTagName('div')[0].innerHTML.trim());
+                        }
+
+                        sorted_names.sort();
+
+                        for (let i = 0; i < all_displayed_species.length; i++) {
+                            console.log(all_displayed_species.length)
+                            let curr_species = all_displayed_species[i]
+                            if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                            console.log(curr_species.getElementsByTagName('div')[0].innerHTML.trim())
+                            console.log(sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()))
+                            curr_species.style.order = sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()) + 1
+                            // change the thing at the bottom with the black border also
+                            
+                            // last species
+                            if (curr_species.style.order == all_displayed_species.length - 1) {
+                                curr_species.style.borderBottom = "1px solid gray";
+                            } else {
+                                curr_species.style.borderBottom = "none";
+                            }
+                        }
+                    }
                 } else {
-                    map_sorted = new Map([...species_value_map.entries()].sort((a, b) => a[1] - b[1]));
-                }
+                    console.log("REVERSE")
+                    // simply reverse what we have right now
+                    var all_displayed_species = document.getElementsByClassName("result_box")
+                    for (let i = 0; i < all_displayed_species.length; i++) {
+                        let curr_species = all_displayed_species[i]
+                        if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
 
-                const sorted_names = Array.from(map_sorted.keys())
-
-                for (let i = 0; i < all_displayed_species.length; i++) {
-                    let curr_species = all_displayed_species[i]
-                    if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                    console.log(sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()))
-                    curr_species.style.order = sorted_names.indexOf(curr_species.getElementsByTagName('div')[0].innerHTML.trim()) + 1
-                    // change the thing at the bottom with the black border also
-                    
-                    // last species
-                    if (curr_species.style.order == all_displayed_species.length - 1) {
-                        curr_species.style.borderBottom = "1px solid gray";
-                    } else {
-                        curr_species.style.borderBottom = "none";
+                        let old = curr_species.style.order
+                        // below may not make sense but it is important for maintaining the order of the elements
+                        // if it was all_displayed_species - 1 - order, the order could become 0
+                        curr_species.style.order = all_displayed_species.length - curr_species.style.order
+                        console.log(old, curr_species.style.order)
+                        // change the thing at the bottom with the black border also
+                        
+                        // last species
+                        if (curr_species.style.order == all_displayed_species.length - 1) {
+                            curr_species.style.borderBottom = "1px solid gray";
+                        } else {
+                            curr_species.style.borderBottom = "none";
+                        }
                     }
                 }
+                current_sort_selected = position_of_elem
             }
 """
 

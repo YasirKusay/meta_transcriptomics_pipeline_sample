@@ -159,6 +159,20 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
 
     wf.close()
 
+def countDecimalLeadingZeroes(value):
+    for char in str(float(value) % 1)[2:0]:
+        if char != "0":
+            break
+        leading_zeroes += 1
+
+def decideDecimalFormatting(value):
+    if float(value) >= 1 or countDecimalLeadingZeroes(value) < 4:
+        value = str(round(float(value),7))
+    else:
+        value = '{:0.3e}'.format(float(value))
+
+    return value
+
 def finalisation(args: argparse.Namespace):
     dirpath = args.dirpath
 
@@ -451,6 +465,9 @@ def finalisation(args: argparse.Namespace):
             species = curr[-1]
             tpm = curr[0]
             domain = curr[1]
+            
+            tpm = decideDecimalFormatting(tpm)
+
             species_tpms[species] = tpm
             species_domains[species] = domain
 
@@ -460,8 +477,11 @@ def finalisation(args: argparse.Namespace):
             curr = line.split("\t")
             species = curr[-1]
             read_counts = curr[0]
+            read_percentage = str((int(read_counts) * 100)/num_reads)
+            read_percentage = decideDecimalFormatting(read_percentage)
+
             species_read_counts[species] = read_counts
-            species_percent_reads_mapped[species] = str((int(read_counts) * 100)/num_reads)
+            species_percent_reads_mapped[species] = read_percentage
 
     with open(species_avg_alignment_scores, "r") as f:
         for line in f:
@@ -469,9 +489,23 @@ def finalisation(args: argparse.Namespace):
             curr = line.split("\t")
             species = curr[0]
             e_val = curr[1]
+
             bitscore = curr[2]
             percent_id = curr[3]
             avg_seq_length = curr[4]
+
+            # bitscore/percent_id/avg_seq_length should be rounded to 4 dp
+            bitscore = str(round(float(bitscore),4))
+            percent_id = str(round(float(percent_id),4))
+            avg_seq_length = str(round(float(avg_seq_length),4))
+
+            # by default, any numbers with 4 or more zeroes at the start get formatted with "e"
+            # if the number is less than 0 and has 3 or less zeroes at the start, round to 7 dp
+            # else, round to 4 "digits"
+            # we should apply a similar logic when performing tpm/read % rounding
+
+            e_val = decideDecimalFormatting(e_val)
+
             species_e_val[species] = e_val
             species_bitscores[species] = bitscore
             species_percent_ids[species] = percent_id

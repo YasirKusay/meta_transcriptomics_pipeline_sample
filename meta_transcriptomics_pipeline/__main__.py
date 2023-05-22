@@ -81,6 +81,13 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
+        "--read_length",
+        type=str,
+        default="150",
+        help="The length of the reads produced during the sequencing run. Will trim any read/pair greater than this value."
+    )
+
+    parser_preprocessing.add_argument(
         "--average_qual",
         type=str,
         default="0",
@@ -90,7 +97,7 @@ def parse_args():
     parser_preprocessing.add_argument(
         "--length_required",
         type=str,
-        default="50",
+        default="35",
         help="DURING QC. Reads shorter than length_required will be discarded, default is 15. (int [=15])"
     )
 
