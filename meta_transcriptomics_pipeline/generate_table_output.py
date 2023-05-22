@@ -417,7 +417,7 @@ jsScript = """
 
             var toConcat = ""
             for (let i = 0; i < toAdd.length; i++) {
-                toConcat = toConcat + toAdd[i].trim().replace('\n','') + "</br>\n"
+                toConcat = toConcat + toAdd[i].trim().replace('\\n','') + "</br>\\n"
             } 
 
             console.log(toConcat)
