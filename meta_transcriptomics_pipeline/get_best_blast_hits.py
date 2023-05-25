@@ -30,6 +30,9 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     os.remove(temp_nt)
     os.remove(temp_nr)
 
+    numBadScores = 0
+    numBadTaxids = 0
+
     # N means Nucleotide, P means protein
 
     # now lets sort based on read/contig id
@@ -76,11 +79,16 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                     # this has been an issue in the past, albeit quite rare
                     # sometimes the bitscore is less than 0 and the e value is extremely large
                     # we dont need these reads as they will mess up the average score calculations
-                    if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
-                        if to_print[13].strip() == "P": # diamond file
-                            best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                    if accession != "":
+                        if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
+                            if to_print[13].strip() == "P": # diamond file
+                                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                            else:
+                                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
                         else:
-                            best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                            numBadScores += 1
+                    else:
+                        numBadTaxids += 1
 
                 prev_query = curr[0]
                 best_e_value = float(curr[10])
@@ -100,11 +108,19 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             bitscore = to_print[11].strip()
             qlen = to_print[12].strip()
 
-            if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
-                if to_print[13].strip() == "P": # diamond file
-                    best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+            if accession != "":
+                if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
+                    if to_print[13].strip() == "P": # diamond file
+                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                    else:
+                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
                 else:
-                    best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                    numBadScores += 1
+            else:
+                numBadTaxids += 1
+
+    print("We have excluded " + str(numBadScores) + " because they had unusual scores.")
+    print("We have excluded " + str(numBadTaxids) + " because they had an alignment to an empty accession.")
     
     best_nt_output.close()
     best_nr_output.close()

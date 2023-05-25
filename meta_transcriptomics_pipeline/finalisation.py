@@ -160,13 +160,16 @@ def getReadsLength(infile, outfile, contig_counts = None, readsTrue = False):
     wf.close()
 
 def countDecimalLeadingZeroes(value):
-    for char in str(float(value) % 1)[2:0]:
+    leading_zeroes = 0
+    for char in str(float(value) % 1)[2:]:
         if char != "0":
             break
         leading_zeroes += 1
+    
+    return leading_zeroes
 
 def decideDecimalFormatting(value):
-    if float(value) >= 1 or countDecimalLeadingZeroes(value) < 4:
+    if float(value) >= 1 or ('e' not in value and countDecimalLeadingZeroes(value) < 4):
         value = str(round(float(value),7))
     else:
         value = '{:0.3e}'.format(float(value))
@@ -387,7 +390,24 @@ def finalisation(args: argparse.Namespace):
 
     # need to now go through each important output file to get relevant statistics for the output html
 
+    # need to delete anything that may have been written below:
+
     summaryFile = dirpath + "/summary/summary.txt"
+    summaryFileTemp = dirpath + "/summary/summaryTemp.txt"
+
+    summaryFileWriter = open(summaryFileTemp, "w")
+
+    with open(summaryFile, "r") as f:
+        for line in f:
+            if line.startswith("numAssembledReads"):
+                break
+            summaryFileWriter.write(line)
+    
+    summaryFileWriter.close()
+
+    run_shell_command("cat " + summaryFileTemp + " > " + summaryFile)
+    os.remove(summaryFileTemp)
+
     summaryFileWriter = open(summaryFile, "a")
 
     # get number of assembled reads, put it into the megahit box
@@ -460,6 +480,7 @@ def finalisation(args: argparse.Namespace):
 
     with open(tpmAbundances, "r") as f:
         for line in f:
+            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[-1]
@@ -473,6 +494,7 @@ def finalisation(args: argparse.Namespace):
 
     with open(abundancesReadMethod, "r") as f:
         for line in f:
+            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[-1]
@@ -485,6 +507,7 @@ def finalisation(args: argparse.Namespace):
 
     with open(species_avg_alignment_scores, "r") as f:
         for line in f:
+            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[0]

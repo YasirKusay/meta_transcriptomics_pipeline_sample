@@ -51,7 +51,7 @@ def obtain_relevant_taxids(str accession_file, str mapping_file, str write_file)
         for i in range(0, len1 - 1):
             if curr_mapping_file_line[i] == '\0' or curr_mapping_file_line[i] == '\n':
                 break
-            if curr_mapping_file_line[i] == '\t':
+            if curr_mapping_file_line[i] == '\t' or curr_mapping_file_line[i] == '.':
                 strncpy(curr_mapping_file_accession, curr_mapping_file_line, i);
                 curr_mapping_file_accession[i] = "\0"
                 break

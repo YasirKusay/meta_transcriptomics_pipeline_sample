@@ -344,10 +344,13 @@ def preprocessing(args: argparse.Namespace):
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
         run_shell_command(zip_command)
 
-    os.remove(aligned + "_fwd.fq")
-    os.remove(aligned + "_rev.fq")
-    os.remove(aligned + ".log")
-    os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-    os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
-    os.remove(dirpath + "/star_host_Log.out")
-    os.remove(dirpath + "/star_host_Log.progress.out")
+    try:
+        os.remove(aligned + "_fwd.fq")
+        os.remove(aligned + "_rev.fq")
+        os.remove(aligned + ".log")
+        os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
+        os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
+        os.remove(dirpath + "/star_host_Log.out")
+        os.remove(dirpath + "/star_host_Log.progress.out")
+    except:
+        pass

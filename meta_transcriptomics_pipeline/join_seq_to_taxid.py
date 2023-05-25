@@ -10,9 +10,15 @@ def join_accessions_taxids(hits_file, retreived_mappings, append_file):
     accessions_mapped = {}
     with open(retreived_mappings, "r") as f:         
         for line in f:
+            line = line.strip()
             curr = line.split()
             accession = curr[0]
-            taxid = curr[2]
+            taxid = ""
+            if len(curr) > 2:
+                taxid = curr[2]
+            else:
+                # prot.accession2taxid.FULL full only has 2 columns, accession and taxid
+                taxid = curr[1]
             accessions_mapped[accession] = taxid
 
     wf = open(append_file, "a")
