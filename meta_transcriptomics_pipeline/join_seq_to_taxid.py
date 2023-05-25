@@ -12,7 +12,7 @@ def join_accessions_taxids(hits_file, retreived_mappings, append_file):
         for line in f:
             line = line.strip()
             curr = line.split()
-            accession = curr[0]
+            accession = curr[0].split(".")[0]
             taxid = ""
             if len(curr) > 2:
                 taxid = curr[2]
