@@ -15,6 +15,7 @@ from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
 from meta_transcriptomics_pipeline.generate_table_output import generate_table_output
 from meta_transcriptomics_pipeline.helpers import run_shell_command
+from meta_transcriptomics_pipeline.generate_full_read_contig_info import generate_full_read_contig_info
 
 def fetch_taxids(infile):
     taxids = []
@@ -245,7 +246,7 @@ def finalisation(args: argparse.Namespace):
     join_seq_to_taxid(best_nt_scores, best_nr_scores, nucl_accession_taxid_mapping_files, prot_accession_taxid_mapping_files, contigs_reads_taxids_temp, analysis_path)
 
     contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids.txt"
-    run_shell_command("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1  > " + contigs_reads_taxids) # change space to tabs
+    run_shell_command("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1 | awk '!seen[$1]++' > " + contigs_reads_taxids) # change space to tabs
     os.remove(contigs_reads_taxids_temp)
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
@@ -549,4 +550,14 @@ def finalisation(args: argparse.Namespace):
     generate_table_output(table_summary_file, final_plots_path + "/table_summary.html")
     os.remove(table_summary_file)
 
-    # will now get intepreted
+    # finally, we would like to generate a final file that matches the blast scores with its lineage
+
+    full_read_contig_info = dirpath + "/summary/full_read_contig_info.tsv" 
+
+    # this file is generated during the get_best_blast_hits section of the finalisation part, and is already sorted by read id
+    nt_nr_alignments_combined_sorted = dirpath + "/analysis/nt_nr_alignments_combined_sorted"
+
+    # this file is generated during the match_scores section of the finalisation part, and is already sorted by read id
+    contig_read_mappings_sorted = dirpath + "/analysis/contig_read_mappings_sorted"
+
+    generate_full_read_contig_info(nt_nr_alignments_combined_sorted, contig_read_mappings_sorted, taxid_lineages_resolved, full_read_contig_info)
