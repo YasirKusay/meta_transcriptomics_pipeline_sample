@@ -116,6 +116,9 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
     
     sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
 
+    numReadContaminants = 0
+    numReadBad = 0
+
     wf = open(outfile, "w")
 
     for taxid in sorted_results.keys():
@@ -123,6 +126,13 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
             wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
         elif (contaminants is None and taxid not in bad_taxids):
             wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
+
+        if taxid in contaminants:
+            numReadContaminants += 1
+        elif taxid in bad_taxids:
+            numReadBad += 1
+
+    print("We have removed " + str(numReadContaminants) + " reads as they belong to a contaminant taxid and " + str(numReadBad) + " reads as they had taxids that are higher than the rank 'species'.")
 
     wf.close()
 
