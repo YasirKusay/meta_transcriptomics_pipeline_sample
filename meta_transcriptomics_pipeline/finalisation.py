@@ -555,9 +555,9 @@ def finalisation(args: argparse.Namespace):
     full_read_contig_info = dirpath + "/summary/full_read_contig_info.tsv" 
 
     # this file is generated during the get_best_blast_hits section of the finalisation part, and is already sorted by read id
-    nt_nr_alignments_combined_sorted = dirpath + "/analysis/nt_nr_alignments_combined_sorted"
+    combined_best_blast_hits = dirpath + "/analysis/combined_best_blast_hits.tsv"
 
     # this file is generated during the match_scores section of the finalisation part, and is already sorted by read id
     contig_read_mappings_sorted = dirpath + "/analysis/contig_read_mappings_sorted"
 
-    generate_full_read_contig_info(nt_nr_alignments_combined_sorted, contig_read_mappings_sorted, taxid_lineages_resolved, full_read_contig_info)
+    generate_full_read_contig_info(combined_best_blast_hits, contig_read_mappings_sorted, taxid_lineages_resolved, full_read_contig_info)

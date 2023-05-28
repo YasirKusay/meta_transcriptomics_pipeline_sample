@@ -33,6 +33,9 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     numBadScores = 0
     numBadTaxids = 0
 
+    combined_best_blast_hits = path + "/combined_best_blast_hits.tsv"
+    blast_writer = open(combined_best_blast_hits, "w")
+
     # N means Nucleotide, P means protein
 
     # now lets sort based on read/contig id
@@ -85,6 +88,7 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                                 best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
                             else:
                                 best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                            blast_writer.write(best_line.strip() + "\n")
                         else:
                             numBadScores += 1
                     else:
@@ -114,6 +118,7 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                         best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
                     else:
                         best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                    blast_writer.write(best_line.strip() + "\n")
                 else:
                     numBadScores += 1
             else:
@@ -124,3 +129,4 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
     
     best_nt_output.close()
     best_nr_output.close()
+    blast_writer.close()
