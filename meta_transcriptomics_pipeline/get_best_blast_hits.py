@@ -77,17 +77,17 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                     percent_id = to_print[2]
                     e_value = to_print[10]
                     bitscore = to_print[11].strip()
-                    qlen = to_print[12].strip()
+                    alignment_length = str(int(to_print[12].strip()) - int(to_print[3]))
 
                     # this has been an issue in the past, albeit quite rare
                     # sometimes the bitscore is less than 0 and the e value is extremely large
                     # we dont need these reads as they will mess up the average score calculations
                     if accession != "":
-                        if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
+                        if float(e_value) < 1 and float(bitscore) > 0 and float(alignment_length) > 0 and float(percent_id) > 0:
                             if to_print[13].strip() == "P": # diamond file
-                                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                                best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + alignment_length + "\n")
                             else:
-                                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                                best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + alignment_length + "\n")
                             blast_writer.write(best_line.strip() + "\n")
                         else:
                             numBadScores += 1
@@ -110,14 +110,14 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             percent_id = to_print[2]
             e_value = to_print[10]
             bitscore = to_print[11].strip()
-            qlen = to_print[12].strip()
+            alignment_length = str(int(to_print[12].strip()) - int(to_print[3]))
 
             if accession != "":
-                if float(e_value) < 1 and float(bitscore) > 0 and float(qlen) > 0 and float(percent_id) > 0:
+                if float(e_value) < 1 and float(bitscore) > 0 and float(alignment_length) > 0 and float(percent_id) > 0:
                     if to_print[13].strip() == "P": # diamond file
-                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                        best_nr_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + alignment_length + "\n")
                     else:
-                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + qlen + "\n")
+                        best_nt_output.write(read + "\t" + accession + "\t" + e_value + "\t" + bitscore + "\t" + percent_id + "\t" + alignment_length + "\n")
                     blast_writer.write(best_line.strip() + "\n")
                 else:
                     numBadScores += 1

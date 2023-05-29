@@ -127,10 +127,10 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
         elif (contaminants is None and taxid not in bad_taxids):
             wf.write(taxid + "\t" + str(sorted_results[taxid]) + "\n")
 
-        if taxid in contaminants:
-            numReadContaminants += 1
+        if contaminants is not None and taxid in contaminants:
+            numReadContaminants += sorted_results[taxid]
         elif taxid in bad_taxids:
-            numReadBad += 1
+            numReadBad += sorted_results[taxid]
 
     print("We have removed " + str(numReadContaminants) + " reads as they belong to a contaminant taxid and " + str(numReadBad) + " reads as they had taxids that are higher than the rank 'species'.")
 
@@ -484,7 +484,7 @@ def finalisation(args: argparse.Namespace):
     species_e_val = {}
     species_bitscores = {}
     species_percent_ids = {}
-    species_sequence_lengths = {}
+    species_alignment_lengths = {}
 
     # only go through the species that are present in the tpm file
     # we want to exclude any bad species
@@ -526,12 +526,12 @@ def finalisation(args: argparse.Namespace):
 
             bitscore = curr[2]
             percent_id = curr[3]
-            avg_seq_length = curr[4]
+            avg_alignment_length = curr[4]
 
-            # bitscore/percent_id/avg_seq_length should be rounded to 4 dp
+            # bitscore/percent_id/avg_alignment_length should be rounded to 4 dp
             bitscore = str(round(float(bitscore),4))
             percent_id = str(round(float(percent_id),4))
-            avg_seq_length = str(round(float(avg_seq_length),4))
+            avg_alignment_length = str(round(float(avg_alignment_length),4))
 
             # by default, any numbers with 4 or more zeroes at the start get formatted with "e"
             # if the number is less than 0 and has 3 or less zeroes at the start, round to 7 dp
@@ -543,7 +543,7 @@ def finalisation(args: argparse.Namespace):
             species_e_val[species] = e_val
             species_bitscores[species] = bitscore
             species_percent_ids[species] = percent_id
-            species_sequence_lengths[species] = avg_seq_length
+            species_alignment_lengths[species] = avg_alignment_length
 
     table_summary_file = final_plots_path + "/table_summary.tsv"
     summary_file_writer = open(table_summary_file, "w")
@@ -552,7 +552,7 @@ def finalisation(args: argparse.Namespace):
         summary_file_writer.write("\t".join([species, species_percent_reads_mapped[species], 
                                             species_tpms[species], species_read_counts[species],
                                             species_e_val[species], species_bitscores[species],
-                                            species_percent_ids[species], species_sequence_lengths[species], 
+                                            species_percent_ids[species], species_alignment_lengths[species], 
                                             species_domains[species]]) + "\n")
 
     summary_file_writer.close()
