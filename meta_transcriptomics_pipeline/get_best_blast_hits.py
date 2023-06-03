@@ -77,7 +77,7 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
                     percent_id = to_print[2]
                     e_value = to_print[10]
                     bitscore = to_print[11].strip()
-                    alignment_length = str(int(to_print[12].strip()) - int(to_print[3]))
+                    alignment_length = int(to_print[3])
 
                     # this has been an issue in the past, albeit quite rare
                     # sometimes the bitscore is less than 0 and the e value is extremely large
@@ -110,7 +110,7 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             percent_id = to_print[2]
             e_value = to_print[10]
             bitscore = to_print[11].strip()
-            alignment_length = str(int(to_print[12].strip()) - int(to_print[3]))
+            alignment_length = int(to_print[3])
 
             if accession != "":
                 if float(e_value) < 1 and float(bitscore) > 0 and float(alignment_length) > 0 and float(percent_id) > 0:
