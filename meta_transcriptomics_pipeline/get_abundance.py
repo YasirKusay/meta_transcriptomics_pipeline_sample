@@ -55,9 +55,6 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxid
     for key in lengths:
         tpm[key] = fpkm[key]/(denom * 1e6)
 
-    for key in tpm:
-        print(str(key) + "\t" + str(tpm[key]) + "\n")
-
     final_tpm = {}
     # calculating tpm but for the taxids
     for key in lengths:

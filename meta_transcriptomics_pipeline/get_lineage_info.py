@@ -17,7 +17,7 @@ def get_lineage_info(taxids, taxdump_location):
         try:
             curr_lineage_full = ncbi.get_lineage(curr_taxid) # gets lineage of current taxid, returns only the its taxids
         except:
-            print(str(curr_taxid) + " NOT FOUND")
+            print("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
             continue
         lineage2ranks = ncbi.get_rank(curr_lineage_full) # gets ranks of the lineages in curr_lineage_full as a dict where taxid is the key
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items()) # same as above, flips keys however

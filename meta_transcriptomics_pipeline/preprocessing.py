@@ -31,8 +31,6 @@ def process_fast_mode_output(kraken_out, outfile, total_reads):
     sorted_results = dict( sorted(results.items(), key=operator.itemgetter(1),reverse=True))
     wf = open(outfile, "w")
 
-    print(sorted_results)
-
     for key in sorted_results.keys():
         wf.write(key + "\t" + str(sorted_results[key]) + "\n")
         wf.write(key + "\t" + str(sorted_results[key]) + "\n")

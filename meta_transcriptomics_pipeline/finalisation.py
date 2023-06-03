@@ -108,7 +108,7 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
     #     results[key] = (results[key]/total_reads) * 100
  
     unassigned_reads = total_reads - num_reads
-    print("unassigned_reads: " + str(unassigned_reads))
+    print("There is a total of: " + str(unassigned_reads) + " that were not successfully aligned.")
 
     # lets exclude unknown from final output
     # if (unassigned_reads != 0):
@@ -491,7 +491,6 @@ def finalisation(args: argparse.Namespace):
 
     with open(tpmAbundances, "r") as f:
         for line in f:
-            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[-1]
@@ -505,7 +504,6 @@ def finalisation(args: argparse.Namespace):
 
     with open(abundancesReadMethod, "r") as f:
         for line in f:
-            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[-1]
@@ -518,7 +516,6 @@ def finalisation(args: argparse.Namespace):
 
     with open(species_avg_alignment_scores, "r") as f:
         for line in f:
-            print(line)
             line = line.strip()
             curr = line.split("\t")
             species = curr[0]
