@@ -475,10 +475,10 @@ def finalisation(args: argparse.Namespace):
 
     generate_pipeline_summary(summaryFile, final_plots_path + "/pipeline_summary.html")
 
-    # need to combine all scores and domain for each species to generate a final table output
+    # need to combine all scores and lineage for each species to generate a final table output
 
     species_tpms = {}
-    species_domains = {}
+    species_lineages = {}
     species_read_counts = {}
     species_percent_reads_mapped = {}
     species_e_val = {}
@@ -495,12 +495,12 @@ def finalisation(args: argparse.Namespace):
             curr = line.split("\t")
             species = curr[-1]
             tpm = curr[0]
-            domain = curr[1]
+            lineage = ",".join(curr[1:]).strip()
             
             tpm = decideDecimalFormatting(tpm)
 
             species_tpms[species] = tpm
-            species_domains[species] = domain
+            species_lineages[species] = lineage
 
     with open(abundancesReadMethod, "r") as f:
         for line in f:
@@ -550,7 +550,7 @@ def finalisation(args: argparse.Namespace):
                                             species_tpms[species], species_read_counts[species],
                                             species_e_val[species], species_bitscores[species],
                                             species_percent_ids[species], species_alignment_lengths[species], 
-                                            species_domains[species]]) + "\n")
+                                            species_lineages[species]]) + "\n")
 
     summary_file_writer.close()
 
