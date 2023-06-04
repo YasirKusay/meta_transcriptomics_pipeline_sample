@@ -321,25 +321,25 @@
                 <div class="result_element species_name header_field" id="organism_header">
                     Organism
                 </div>
-                <div class="result_element score_element header_field" id="perct_reads_mapped_header">
+                <div class="result_element score_element header_field" id="percentage_reads_mapped">
                     Reads mapped (%)
                 </div>
-                <div class="result_element score_element header_field" id="tpm_score_header">
+                <div class="result_element score_element header_field" id="tpm_score">
                     TPM score
                 </div>
-                <div class="result_element score_element header_field" id="num_reads_mapped_header">
+                <div class="result_element score_element header_field" id="num_reads_mapped">
                     Reads mapped
                 </div>
-                <div class="result_element score_element header_field" id ="e_val_header">
+                <div class="result_element score_element header_field" id="average_e_value">
                     E-value
                 </div>
-                <div class="result_element score_element header_field" id="bitscore_header">
+                <div class="result_element score_element header_field" id="average_bitscore">
                     Bitscore
                 </div>
-                <div class="result_element score_element header_field" id="perct_identity_header">
+                <div class="result_element score_element header_field" id="average_percentage_identity">
                     Percentage Id
                 </div>
-                <div class="result_element score_element header_field" id="avg_length_header">
+                <div class="result_element score_element header_field" id="average_alignment_length">
                     Avg Alignment Length
                 </div>
             </div>
@@ -543,7 +543,7 @@
                     66.1455
                 </div>
                 <div class="lineage">
-                    Bacteria,Pseudomonadota,Gammaproteobacteria,Enterobacterales,Erwiniaceae,3026546,Erwinia gerundensis
+                    Bacteria,Pseudomonadota,Gammaproteobacteria,Enterobacterales,Erwiniaceae,Erwinia,Erwinia gerundensis
                 </div>
             </div>
             <div class="result_box">
@@ -1027,6 +1027,17 @@
 
             var lineages_filtered_list = []
 
+            // determining the position for the e_value within the header
+            var e_value_position = -1
+            var filtering_value_headers = document.getElementsByClassName('result_header')[0].getElementsByTagName("div");
+            for (var i = 1; i < filtering_value_headers.length; i++) {
+                if (filtering_value_headers[i].id === "average_e_value") {
+                    e_value_position = i;
+                    break;
+                }
+            }
+
+
             var select_species_dropdown_elem = document.getElementsByClassName('select_species_dropdown')[0]
             var filter_by_value_dropdown_elem = document.getElementsByClassName('filter_by_value_dropdown')[0]
 
@@ -1195,10 +1206,10 @@
 
             // current method is very flawed, what if order of select_filtering_options doesnt match our header order
             function get_index_of_select_element(name) {
-            var filtering_value_options = document.getElementsByClassName('select_filtering_options')[0].options;
+            var filtering_value_options = document.getElementsByClassName('result_header')[0].getElementsByTagName("div");
             var index_of_selected_elem = -1;
-            for (var i= 0; i < filtering_value_options.length; i++) {
-                if (filtering_value_options[i].value === name) {
+            for (var i= 1; i < filtering_value_options.length; i++) {
+                if (filtering_value_options[i].id === name) {
                     index_of_selected_elem = i;
                     break;
                 }
@@ -1245,7 +1256,6 @@
             var comparison_sign = ">";
             var filter_value_name = "";
             var filter_value_name_id = "";
-            console.log(document.getElementById("percentage_reads_mapped_active"));
             if (select_filtering_options_elem.value === "percentage_reads_mapped") {
                 filter_value_name = "Reads Mapped (%)";
                 filter_value_name_id = "percentage_reads_mapped_active";
@@ -1347,26 +1357,26 @@
             organism_header = document.getElementById("organism_header")
             organism_header.addEventListener('click', () => {reorderTable(0)})
 
-            perct_reads_mapped_header = document.getElementById("perct_reads_mapped_header")
-            perct_reads_mapped_header.addEventListener('click', () => {reorderTable(1)})
+            perct_reads_mapped_header = document.getElementById("percentage_reads_mapped")
+            perct_reads_mapped_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("percentage_reads_mapped"))})
 
-            tpm_score_header = document.getElementById("tpm_score_header")
-            tpm_score_header.addEventListener('click', () => {reorderTable(2)})
+            tpm_score_header = document.getElementById("tpm_score")
+            tpm_score_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("tpm_score"))})
 
-            num_reads_mapped_header = document.getElementById("num_reads_mapped_header")
-            num_reads_mapped_header.addEventListener('click', () => {reorderTable(3)})
+            num_reads_mapped_header = document.getElementById("num_reads_mapped")
+            num_reads_mapped_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("num_reads_mapped"))})
 
-            e_val_header = document.getElementById("e_val_header")
-            e_val_header.addEventListener('click', () => {reorderTable(4)})
+            e_val_header = document.getElementById("average_e_value")
+            e_val_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_e_value"))})
 
-            bitscore_header = document.getElementById("bitscore_header")
-            bitscore_header.addEventListener('click', () => {reorderTable(5)})
+            bitscore_header = document.getElementById("average_bitscore")
+            bitscore_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_bitscore"))})
 
-            perct_identity_header = document.getElementById("perct_identity_header")
-            perct_identity_header.addEventListener('click', () => {reorderTable(6)})
+            perct_identity_header = document.getElementById("average_percentage_identity")
+            perct_identity_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_percentage_identity"))})
 
-            avg_length_header = document.getElementById("avg_length_header")
-            avg_length_header.addEventListener('click', () => {reorderTable(7)})
+            avg_length_header = document.getElementById("average_alignment_length")
+            avg_length_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_alignment_length"))})
 
             // used to store the previously selected column to sort by
             // if what you select now is equal to this, sort it in reverse
@@ -1381,17 +1391,16 @@
                         for (let i = 0; i < all_displayed_species.length; i++) {
                             let curr_species = all_displayed_species[i]
                             if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                            species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), 
-                                parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim()))
+                            species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), // name of element
+                                parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim())) // value of element
                         }
 
                         // sorting hashmap by key 
                         // from https://stackoverflow.com/questions/37982476/how-to-sort-a-map-by-value-in-javascript
                         
-                        // descending order
-                        // will need to modify if position of e_value changes!
+                        // e_value will be ordered by descending order
                         var map_sorted;
-                        if (position_of_elem !== 4)  {
+                        if (position_of_elem !== e_value_position)  {
                             map_sorted = new Map([...species_value_map.entries()].sort((a, b) => b[1] - a[1]));
                         } else {
                             map_sorted = new Map([...species_value_map.entries()].sort((a, b) => a[1] - b[1]));
