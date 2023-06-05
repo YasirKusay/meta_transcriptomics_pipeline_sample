@@ -41,39 +41,18 @@ htmlCode = """
                 flex-wrap: nowrap;
             }
 
+            .autocomplete {
+                width: 250px;
+                position: absolute;
+                background: white;
+                top: 34px;
+                z-index: 2;
+            }
+
             .select_species {
                 height: 25px;
                 flex: 1;
                 border-radius: 8px;
-            }
-
-            .search_species {
-                display: flex;
-                flex-direction: column;
-                position: relative;
-            }
-
-            .search_species_input {
-                height: 25px;
-                width: 150px;
-                border-radius: 8px;
-                border-color: grey;
-            }
-
-            .autocomplete {
-                width: 150px;
-                position: absolute;
-                background: gray;
-                filter: brightness(150%);
-                top: 25px;
-                z-index: 2;
-            }
-
-            .submit_search_species {
-                position: relative;
-                left: -32px;
-                background: white;
-                border: none;
             }
 
             .arrow_down {
@@ -87,6 +66,20 @@ htmlCode = """
                 transform: rotate(135deg);
                 left: -25px;
                 top: 2px;
+            }
+
+            .search_recommendation {
+                padding: 5px;
+                cursor: pointer;
+            }
+
+            .search_recommendation:not(:last-child) {
+                border-bottom: 1px solid black;
+            }
+
+            .search_recommendation:hover {
+                background-color: grey;
+                width: 100%;
             }
 
             .select_species_dropdown {
@@ -119,12 +112,15 @@ htmlCode = """
             }
 
             .select_species_options {
-                width: 150px;
+                width: 300px;
+                height: 200px;
                 visibility: hidden;
                 position: absolute;
+                display: flex;
+                justify-content: space-between;
                 top: 55px;
-                background-color: rgba(128, 128, 128);
-                filter: brightness(150%);
+                background-color: rgba(179, 179, 179);
+                border-radius: 8px;
                 z-index: 2;
                 padding: 5px;
             }
@@ -136,6 +132,7 @@ htmlCode = """
                 position: absolute;
                 top: 55px;
                 background-color: rgba(179, 179, 179);
+                border-radius: 8px;
                 z-index: 2;
                 padding: 5px;
                 display: flex;
@@ -152,15 +149,18 @@ htmlCode = """
                 padding-left: 2px;
             }
 
-            .apply_filter {
-                position: absolute;
-                bottom: 10px;
+            .apply_filter_button {
                 height: 25px;
                 width: 125px;
                 border-radius: 8px;
             }
+            
+            #apply_filter_value.apply_filter_button {
+                bottom: 10px;
+                position: absolute;
+            }
 
-            .value_to_filter_by {
+            .text_input {
                 height: 25px;
                 border: 2px solid grey;
                 width: 125px;
@@ -179,10 +179,11 @@ htmlCode = """
 
             .applied_filter {
                 height: 30px;
-                width: 100px;
+                padding-left: 5px;
+                padding-right: 5px;
                 margin-bottom: 20px;
                 border-radius: 8px;
-                background: rgba(64, 224, 208, 1.0);
+                background: rgba(128, 128, 128, 0.8);
                 filter: brightness(150%);
                 font-size: 14px;
                 display: flex;
@@ -213,7 +214,7 @@ htmlCode = """
                 align-items: center;
             }
 
-            .domain {
+            .lineage {
                 display: none;
             }
 
@@ -255,6 +256,12 @@ htmlCode = """
                 filter: brightness(90%);
                 cursor: pointer;
             }
+
+            .species_name:hover {
+                background: rgba(128, 128, 128, 0.3);
+                filter: brightness(30%);
+                cursor: pointer;
+            }
         </style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     </head>
@@ -265,13 +272,6 @@ htmlCode = """
         </div>
         <div class="main_body">
             <div class="filtering_options">
-                <div class="search_species">
-                    <div class="search_field">
-                        <input type="text" placeholder="Search.." class="search_species_input">
-                        <button type="submit" class="submit_search_species"><i class="fa fa-search search_button"></i>
-                    </div>
-                    <div class="autocomplete"></div>
-                </div>
                 <div class="select_species_dropdown">
                     <div class="toggle_dropdown_button" id="toggle_species_dropdown">
                         <div class="toggle_dropdown" id="toggle_species_dropdown_text"> 
@@ -280,22 +280,12 @@ htmlCode = """
                         <i class="arrow_down" id="select_species_dropdown_arrow"></i>
                     </div>
                     <div class="select_species_options">
-                        <div class="filter_species">
-                            <input type="checkbox" id="eukaryotes_filter">
-                            Eukaryotes
+                        <div class="filtering_textbox">
+                            <input type="text" placeholder="Search.." class="text_input" id="lineage_to_filter_by">
                         </div>
-                        <div class="filter_species">
-                            <input type="checkbox" id="bacteria_filter">
-                            Bacteria
-                        </div>
-                        <div class="filter_species">
-                            <input type="checkbox" id="virus_filter">
-                            Viruses
-                        </div>
-                        <div class="filter_species">
-                            <input type="checkbox" id="archaea_filter">
-                            Archaea
-                        </div>
+                        <p class="invalid_input" id="display_input_warning">Invalid input.</p>
+                        <button class="apply_filter_button" id="apply_filter_lineage">Apply Filter</button>
+                        <div class="autocomplete"></div>
                     </div>
                 </div>
                 <div class="filter_by_value_dropdown">
@@ -313,13 +303,13 @@ htmlCode = """
                                 <option value="average_e_value">Average E-value</option>
                                 <option value="average_bitscore">Average Bitscore</option>
                                 <option value="average_percentage_identity">Average Percentage Identity</option>
-                                <option value="average_query_length">Average Query Length</option>
+                                <option value="average_alignment_length">Average Alignment Length</option>
                             </select>
                             <div class="filtering_textbox">
-                                <input type="text" placeholder="Search.." class="value_to_filter_by">
+                                <input type="text" placeholder="Search.." class="text_input" id="value_to_filter_by">
                             </div>
                             <p class="invalid_input" id="display_input_warning">Invalid input.</p>
-                            <button class="apply_filter">Apply Filter</button>
+                            <button id="apply_filter_value" class="apply_filter_button">Apply Filter</button>
                         </div>
                     </div>
                 </div>
@@ -331,38 +321,63 @@ htmlCode = """
                 <div class="result_element species_name header_field" id="organism_header">
                     Organism
                 </div>
-                <div class="result_element score_element header_field" id="perct_reads_mapped_header">
+                <div class="result_element score_element header_field" id="percentage_reads_mapped">
                     Reads mapped (%)
                 </div>
-                <div class="result_element score_element header_field" id="tpm_score_header">
+                <div class="result_element score_element header_field" id="tpm_score">
                     TPM score
                 </div>
-                <div class="result_element score_element header_field" id="num_reads_mapped_header">
+                <div class="result_element score_element header_field" id="num_reads_mapped">
                     Reads mapped
                 </div>
-                <div class="result_element score_element header_field" id ="e_val_header">
+                <div class="result_element score_element header_field" id="average_e_value">
                     E-value
                 </div>
-                <div class="result_element score_element header_field" id="bitscore_header">
+                <div class="result_element score_element header_field" id="average_bitscore">
                     Bitscore
                 </div>
-                <div class="result_element score_element header_field" id="perct_identity_header">
+                <div class="result_element score_element header_field" id="average_percentage_identity">
                     Percentage Id
                 </div>
-                <div class="result_element score_element header_field" id="avg_length_header">
-                    Avg Query Length
+                <div class="result_element score_element header_field" id="average_alignment_length">
+                    Avg Alignment Length
                 </div>
             </div>
 """
 
 jsScript = """
+            var all_lineages = [] // stores all unique lineages
+            // adding all unique lineages to all_lineages:
+            var all_displayed_species = document.getElementsByClassName("result_box")
+            for (let i = 0; i < all_displayed_species.length; i++) {
+                var curr_species = all_displayed_species[i]
+                if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                var curr_lineage = curr_species.getElementsByClassName('lineage')[0].innerHTML.trim().split(",")
+                for (let j = 0; j < curr_lineage.length; j++) {
+                    if (curr_lineage[j].trim().toLowerCase() == "unknown") continue;
+                    if (!all_lineages.includes(curr_lineage[j].trim().toLowerCase())) all_lineages.push(curr_lineage[j].trim().toLowerCase())
+                }
+            }
+
+            var lineages_filtered_list = []
+
+            // determining the position for the e_value within the header
+            var e_value_position = -1
+            var filtering_value_headers = document.getElementsByClassName('result_header')[0].getElementsByTagName("div");
+            for (var i = 1; i < filtering_value_headers.length; i++) {
+                if (filtering_value_headers[i].id === "average_e_value") {
+                    e_value_position = i;
+                    break;
+                }
+            }
+
+
             var select_species_dropdown_elem = document.getElementsByClassName('select_species_dropdown')[0]
             var filter_by_value_dropdown_elem = document.getElementsByClassName('filter_by_value_dropdown')[0]
 
             var select_species_options_elem = document.getElementsByClassName('select_species_options')[0]
             var filter_by_value_options_elem = document.getElementsByClassName('filter_by_value_options')[0]
 
-            var search_species_input_dropdown = document.getElementsByClassName('search_species_input')[0]
             var all_species_name = document.getElementsByClassName('species_name')
             var autocomplete_element = document.getElementsByClassName('autocomplete')[0]
             var invalid_input_elem = document.getElementById('display_input_warning')
@@ -370,18 +385,16 @@ jsScript = """
             select_species_dropdown_elem.addEventListener('click', () => {select_species_options_elem.style.visibility = 'visible';})
             filter_by_value_dropdown_elem.addEventListener('click', () => {filter_by_value_options_elem.style.visibility = 'visible';})
 
-            search_species_input_dropdown.addEventListener('keyup', suggestSpecies)
-
             // hashmap of lists
             // lust contains things currently filtered out for each filtering option
-            var currently_filtered_species = new Map([["domain", []],
+            var currently_filtered_species = new Map([["lineage", []],
                                                     ["percentage_reads_mapped", []], 
                                                     ["tpm_score", []], 
                                                     ["num_reads_mapped", []], 
                                                     ["average_e_value", []], 
                                                     ["average_bitscore", []], 
                                                     ["average_percentage_identity", []],
-                                                    ["average_query_length", []]]
+                                                    ["average_alignment_length", []]]
                                                     );
 
             // skip refers to what column we dont want to check
@@ -395,37 +408,6 @@ jsScript = """
             return false;
             }
 
-            function suggestSpecies({}) {
-            var searched = search_species_input_dropdown.value;
-
-            autocomplete_element.innerHTML = ""
-
-            if (searched.length < 4) {
-                return;
-            }
-
-            var toAdd = []
-
-            // need to grab the species
-            // skipping first element, as it is the title
-            for (let i = 1; i < all_species_name.length; i++) {
-                let curr_species = all_species_name[i].innerHTML;
-                if (curr_species.includes(searched) === true) {
-                toAdd.push(curr_species)
-                }
-            }
-
-            var toConcat = ""
-            for (let i = 0; i < toAdd.length; i++) {
-                toConcat = toConcat + toAdd[i].trim().replace('\\n','') + "</br>\\n"
-            } 
-
-            console.log(toConcat)
-
-            autocomplete_element.innerHTML = toConcat;
-            }
-
-
             window.addEventListener('click', ({ target }) => {
             if (!select_species_dropdown_elem.contains(target)) select_species_options_elem.style.visibility = 'hidden';
             if (!filter_by_value_dropdown_elem.contains(target)) {
@@ -434,89 +416,121 @@ jsScript = """
             }
             });
 
+            var lineage_to_filter_by = document.getElementById('lineage_to_filter_by');
+            lineage_to_filter_by.addEventListener('keyup', suggestSpecies)
+
+            function capitalise(string) {
+                return string[0].toUpperCase() + string.slice(1);
+            }
+
+            function suggestSpecies() {
+                var searched = lineage_to_filter_by.value.trim().toLowerCase();
+                autocomplete_element.innerHTML = ""
+                if (searched.length < 4) return;
+
+                var toAdd = []
+
+                // need to grab the species
+                // skipping first element, as it is the title
+                for (let i = 0; i < all_lineages.length; i++) {
+                    let curr_lineage = all_lineages[i].trim();
+                    if (curr_lineage.includes(searched) === true) toAdd.push(curr_lineage);
+                    if (toAdd.length === 10) break // do not display more than 10 elements
+                }
+
+                for (let i = 0; i < toAdd.length; i++) {
+                    var search_result_elem = document.createElement('div');
+                    search_result_elem.className = "search_recommendation"
+                    search_result_elem.innerHTML = toAdd[i].trim().replace('\n','')
+                    autocomplete_element.appendChild(search_result_elem)
+                    search_result_elem.addEventListener('click', ({target}) => {
+                        lineage_to_filter_by.value = target.innerHTML;
+                        autocomplete_element.innerHTML = ""
+                        add_filter_by_lineage();
+                    })
+                } 
+            }
 
             var filter_area = document.getElementsByClassName('applied_filters')[0]
 
-            var eukaryotes_check_box = document.getElementById('eukaryotes_filter')
-            var bacteria_filter_box = document.getElementById('bacteria_filter')
-            var virus_filter_box = document.getElementById('virus_filter')
-            var archaea_filter_box = document.getElementById('archaea_filter')
-
-            function clear_filter_by_name(elem) {
-            if (elem.id === "eukaryotes_filter_active") var temp = document.getElementById('eukaryotes_filter').checked = false
-            if (elem.id === "bacteria_filter_active") var temp = document.getElementById('bacteria_filter').checked = false
-            if (elem.id === "virus_filter_active") var temp = document.getElementById('virus_filter').checked = false
-            if (elem.id === "archaea_filter_active") var temp = document.getElementById('archaea_filter').checked = false
+            function clear_lineage_filtering({ target }) {
+                var filter_elem = (target.parentElement.className === "applied_filter") ? target.parentElement : target;
+                // need to remove the lineage from lineages_filtered_list
+                var lineage_to_remove = filter_elem.id.split("_")[0].trim().toLowerCase() // format is (lineage)_filter_active,
+                remove_elem_from_list(lineages_filtered_list, lineage_to_remove)
+                filter_elem.remove();
+                check_filter_by_lineage();
             }
 
-            function clear_filtering_checkbox({ target }) {
-            if (target.parentElement.className === "applied_filter") {
-                // also need to uncheck it from the checkbox
-                // get the id to determine the correct filter
-                clear_filter_by_name(target.parentElement)
-                target.parentElement.remove()
-            } else if (target.className === "applied_filter") {
-                clear_filter_by_name(target)
-                target.remove()
-            }
-            filter_by_domain()
-            } 
+            // need a way to ignore case
+            function add_filter_by_lineage() {
+                var selected_lineage = lineage_to_filter_by.value.trim().toLowerCase();
+                if (lineages_filtered_list.includes(selected_lineage)) return; // exit if lineage in currently_active_lineages
+                if (!all_lineages.includes(selected_lineage)) return;
 
-            function species_filter_checkbox({ target }) {
-            if (target.checked) {
-                // add a "visual" filtering tag 
+                // we need to check if our lineage is a valid lineage
+                // we should also take the case of something into account
+
+                lineages_filtered_list.push(selected_lineage) // add lineage to currently_active_lineages
+
+                // add a visual filtering "bubble"
                 var filter_display = document.createElement('div');
                 filter_display.className = "applied_filter";
                 var text = document.createElement('p');
-                if (target.id === "eukaryotes_filter") {
-                text.innerHTML = "Eukaryotes";
-                filter_display.id = "eukaryotes_filter_active";
-                }
-                if (target.id === "bacteria_filter") {
-                text.innerHTML = "Bacteria";
-                filter_display.id = "bacteria_filter_active";
-                }
-                if (target.id === "virus_filter") { 
-                text.innerHTML = "Viruses";
-                filter_display.id = "virus_filter_active";
-                }
-                if (target.id === "archaea_filter") { 
-                text.innerHTML = "Archaea";
-                filter_display.id = "archaea_filter_active";
-                }
-                var x_icon = document.createElement('p');
-                filter_display.appendChild(text)
-                filter_display.addEventListener('click', clear_filtering_checkbox)
+                text.innerHTML = capitalise(selected_lineage);
+                filter_display.id = selected_lineage.concat("_filter_active");
+                filter_display.appendChild(text);
+                filter_display.addEventListener('click', clear_lineage_filtering)
                 filter_area.appendChild(filter_display)
 
-                // now need to update the table according to the active species filter
-            } else {
-                if (target.id === "eukaryotes_filter") {
-                var toRemove = document.getElementById("eukaryotes_filter_active").remove()
-                console.log("hehe")
-                }
-                if (target.id === "bacteria_filter") {
-                var toRemove = document.getElementById("bacteria_filter_active").remove()
-                }
-                if (target.id === "virus_filter") {
-                var toRemove = document.getElementById("virus_filter_active").remove()
-                }
-                if (target.id === "archaea_filter") {
-                var toRemove = document.getElementById("archaea_filter_active").remove()
-                }
-                // remove the visual filtering tag
-            }
-            filter_by_domain()
+                check_filter_by_lineage();
             }
 
-            eukaryotes_check_box.addEventListener('click', species_filter_checkbox)
-            bacteria_filter_box.addEventListener('click', species_filter_checkbox)
-            virus_filter_box.addEventListener('click', species_filter_checkbox)
-            archaea_filter_box.addEventListener('click', species_filter_checkbox)
+            document.getElementById('apply_filter_lineage').addEventListener('click', add_filter_by_lineage)
 
-            var submit_filter = document.getElementsByClassName('apply_filter')[0]
+            function check_filter_by_lineage() {
+                var all_displayed_species = document.getElementsByClassName("result_box")
+                // nothing selected, remove every species from currently_filtered_species['lineage']
+                if (lineages_filtered_list.length == 0) {
+                    for (let i = 0; i < all_displayed_species.length; i++) {
+                        let curr_species = all_displayed_species[i]
+                        if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                        // for this scenario, its better to use capitalisation in the currently_filtered_species, so we match filter by value
+                        if (!check_if_currently_filtered(curr_species.getElementsByClassName('species_name')[0].innerHTML.trim(), 'lineage')) curr_species.style.display = "";
+                    }
+                    currently_filtered_species.set('lineage', [])
+                } else {
+                    for (let i = 0; i < all_displayed_species.length; i++) {
+                        let curr_species = all_displayed_species[i]
+                        var curr_species_name = curr_species.getElementsByClassName('species_name')[0].innerHTML.trim()
+                        if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+
+                        // need to determine if any lineages in lineages_filtered_list are part of the lineages of our current species
+                        // i.e. if there is an intersection between lineages_filtered_list and the lineages of the current species
+                        var curr_lineage = curr_species.getElementsByClassName('lineage')[0].innerHTML.trim().split(",")
+                        for (let j = 0; j < curr_lineage.length; j++) {
+                            curr_lineage[j] = curr_lineage[j].trim().toLowerCase() // to lowercase to match lineages_filtered_list
+                        }
+
+                        var intersection = lineages_filtered_list.filter(value => curr_lineage.includes(value));
+                        if (intersection.length > 0) {
+                            if (!check_if_currently_filtered(curr_species_name, 'lineage')) curr_species.style.display = "";
+                            currently_filtered_species.set('lineage', remove_elem_from_list(currently_filtered_species.get('lineage'), curr_species_name))
+                        } else {
+                            var lineage_filtered_list = currently_filtered_species.get("lineage");
+                            if (!lineage_filtered_list.includes(curr_species_name)) {
+                                lineage_filtered_list.push(curr_species_name);
+                                currently_filtered_species.set('lineage', lineage_filtered_list)
+                            }
+                            curr_species.style.display = "none";
+                        }
+                    }
+                }
+            }
+
+            var submit_value_filter = document.getElementById('apply_filter_value')
             var select_filtering_options_elem = document.getElementsByClassName('select_filtering_options')[0]
-            var value_to_filter_by_elem = document.getElementsByClassName('value_to_filter_by')[0]
+            var value_to_filter_by_elem = document.getElementById('value_to_filter_by')
 
             function updateFilterElemIfActive(elem, name, comparison_sign, value) {
             if (elem === null) return false;
@@ -524,11 +538,12 @@ jsScript = """
             return true;
             }
 
+            // current method is very flawed, what if order of select_filtering_options doesnt match our header order
             function get_index_of_select_element(name) {
-            var filtering_value_options = document.getElementsByClassName('select_filtering_options')[0].options;
+            var filtering_value_options = document.getElementsByClassName('result_header')[0].getElementsByTagName("div");
             var index_of_selected_elem = -1;
-            for (var i= 0; i < filtering_value_options.length; i++) {
-                if (filtering_value_options[i].value === name) {
+            for (var i= 1; i < filtering_value_options.length; i++) {
+                if (filtering_value_options[i].id === name) {
                     index_of_selected_elem = i;
                     break;
                 }
@@ -537,27 +552,27 @@ jsScript = """
             }
 
             function clear_value_filter({ target }) {
-            var filter_elem = (target.parentElement.className === "applied_filter") ? target.parentElement : target;
-            // we can get the name of the select tag from target.id (just need to trim _active from it)
-            // using that, we can get the index of the select elements.
-            var name_of_select_elem = filter_elem.id.replace('_active', '');
-            // var value_filtered_by
+                var filter_elem = (target.parentElement.className === "applied_filter") ? target.parentElement : target;
+                // we can get the name of the select tag from target.id (just need to trim _active from it)
+                // using that, we can get the index of the select elements.
+                var name_of_select_elem = filter_elem.id.replace('_active', '');
+                // var value_filtered_by
 
-            var all_displayed_species = document.getElementsByClassName("result_box")
-            for (let i = 0; i < all_displayed_species.length; i++) {
-                let curr_species = all_displayed_species[i]
-                var curr_species_name = curr_species.getElementsByClassName('species_name')[0].innerHTML.trim()
-                if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                if (!check_if_currently_filtered(curr_species_name, name_of_select_elem)) curr_species.style.display = "";
-            }
-            currently_filtered_species.set(name_of_select_elem, [])
+                var all_displayed_species = document.getElementsByClassName("result_box")
+                for (let i = 0; i < all_displayed_species.length; i++) {
+                    let curr_species = all_displayed_species[i]
+                    var curr_species_name = curr_species.getElementsByClassName('species_name')[0].innerHTML.trim()
+                    if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
+                    if (!check_if_currently_filtered(curr_species_name, name_of_select_elem)) curr_species.style.display = "";
+                }
+                currently_filtered_species.set(name_of_select_elem, [])
 
-            console.log(currently_filtered_species)
-            // now we can reverse the select 
-            filter_elem.remove();
+                console.log(currently_filtered_species)
+                // now we can reverse the select 
+                filter_elem.remove();
             } 
 
-            function click_apply_filter() {
+            function click_apply_value_filter() {
             invalid_input_elem.style.visibility = "hidden";
             if (
                 (select_filtering_options_elem.value === "average_e_value" && value_to_filter_by_elem.value > 1) ||
@@ -575,7 +590,6 @@ jsScript = """
             var comparison_sign = ">";
             var filter_value_name = "";
             var filter_value_name_id = "";
-            console.log(document.getElementById("percentage_reads_mapped_active"));
             if (select_filtering_options_elem.value === "percentage_reads_mapped") {
                 filter_value_name = "Reads Mapped (%)";
                 filter_value_name_id = "percentage_reads_mapped_active";
@@ -601,9 +615,9 @@ jsScript = """
                 filter_value_name = "Average Percentage Identity";
                 filter_value_name_id = "average_percentage_identity_active";
             }
-            if (select_filtering_options_elem.value === "average_query_length") {
-                filter_value_name = "Average Query Length";
-                filter_value_name_id = "average_query_length_active";
+            if (select_filtering_options_elem.value === "average_alignment_length") {
+                filter_value_name = "Average Alignment Length";
+                filter_value_name_id = "average_alignment_length_active";
             }
 
             // if (updateFilterElemIfActive(document.getElementById(filter_value_name_id), filter_value_name, comparison_sign, value_to_filter_by_elem.value)) return;
@@ -635,8 +649,13 @@ jsScript = """
                 // curr_species.style.display = ""; bad idea, will revert any previously applied filters
                 if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
                 // first comparison is the e-value case
-                if ((index_of_selected_elem === 4 && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) > parseFloat(value_to_filter_by_elem.value.trim()))) ||
-                (index_of_selected_elem !== 4 && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) < parseFloat(value_to_filter_by_elem.value.trim())))) {
+
+                //if ((index_of_selected_elem === 4 && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) > parseFloat(value_to_filter_by_elem.value.trim()))) ||
+                //(index_of_selected_elem !== 4 && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) < parseFloat(value_to_filter_by_elem.value.trim())))) {
+                
+                // below is actually a better way of implementing which column was selected, makes it much easier to include new headers
+                if ((select_filtering_options_elem.value === "average_e_value" && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) > parseFloat(value_to_filter_by_elem.value.trim()))) ||
+                (select_filtering_options_elem.value !== "average_e_value" && (parseFloat(curr_species.getElementsByTagName('div')[index_of_selected_elem].innerHTML.trim()) < parseFloat(value_to_filter_by_elem.value.trim())))) {
                     curr_species.style.display = "none";
                     var value_filtered_list = currently_filtered_species.get(select_filtering_options_elem.value);
                     var curr_species_name = curr_species.getElementsByClassName('species_name')[0].innerHTML.trim()
@@ -655,7 +674,7 @@ jsScript = """
             console.log(currently_filtered_species)
             }
 
-            submit_filter.addEventListener('click', click_apply_filter);
+            submit_value_filter.addEventListener('click', click_apply_value_filter);
 
             function remove_elem_from_list(list, value) {
             for (let i = 0; i < list.length; i++) {
@@ -667,74 +686,34 @@ jsScript = """
             return list;
             }
 
-            function filter_by_domain() {
-            var active_domain_filters = [];
-            if (document.getElementById('eukaryotes_filter').checked === true) active_domain_filters.push("Eukaryotes");
-            if (document.getElementById('bacteria_filter').checked === true) active_domain_filters.push("Bacteria");
-            if (document.getElementById('virus_filter').checked === true) active_domain_filters.push("Viruses");
-            if (document.getElementById('archaea_filter').checked === true) active_domain_filters.push("Archaea");
-
-            // ensure everything is visible (unless other filters are applied on them)
-            // IF THE ELEMENT IS CURRENTLY FILTERED OUT, PUT IT IN currently_filtered_species
-
-            var all_displayed_species = document.getElementsByClassName("result_box")
-            if (active_domain_filters.length === 0) {
-                for (let i = 0; i < all_displayed_species.length; i++) {
-                let curr_species = all_displayed_species[i]
-                if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                if (!check_if_currently_filtered(curr_species.getElementsByClassName('species_name')[0].innerHTML.trim(), 'domain')) curr_species.style.display = "";
-                currently_filtered_species.set('domain', [])
-                }
-            } else {
-                for (let i = 0; i < all_displayed_species.length; i++) {
-                curr_species = all_displayed_species[i]
-                var curr_species_name = curr_species.getElementsByClassName('species_name')[0].innerHTML.trim()
-                if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-
-                if (active_domain_filters.includes(curr_species.getElementsByClassName('domain')[0].innerHTML.trim())) {
-                    if (!check_if_currently_filtered(curr_species_name, 'domain')) curr_species.style.display = "";
-                    // remove it from here anyway
-                    // this process will get quite confusing
-                    currently_filtered_species.set('domain', remove_elem_from_list(currently_filtered_species.get('domain'), curr_species_name))
-                } else {
-                    var domain_filtered_list = currently_filtered_species.get("domain");
-                    if (!domain_filtered_list.includes(curr_species_name)) {
-                    domain_filtered_list.push(curr_species_name);
-                    currently_filtered_species.set('domain', domain_filtered_list)
-                    }
-                    curr_species.style.display = "none";
-                }
-                }
-            }
-            console.log(currently_filtered_species)
-            }
-
             function sortFloat(a,b) { return a - b; }
 
             organism_header = document.getElementById("organism_header")
             organism_header.addEventListener('click', () => {reorderTable(0)})
 
-            perct_reads_mapped_header = document.getElementById("perct_reads_mapped_header")
-            perct_reads_mapped_header.addEventListener('click', () => {reorderTable(1)})
+            perct_reads_mapped_header = document.getElementById("percentage_reads_mapped")
+            perct_reads_mapped_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("percentage_reads_mapped"))})
 
-            tpm_score_header = document.getElementById("tpm_score_header")
-            tpm_score_header.addEventListener('click', () => {reorderTable(2)})
+            tpm_score_header = document.getElementById("tpm_score")
+            tpm_score_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("tpm_score"))})
 
-            num_reads_mapped_header = document.getElementById("num_reads_mapped_header")
-            num_reads_mapped_header.addEventListener('click', () => {reorderTable(3)})
+            num_reads_mapped_header = document.getElementById("num_reads_mapped")
+            num_reads_mapped_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("num_reads_mapped"))})
 
-            e_val_header = document.getElementById("e_val_header")
-            e_val_header.addEventListener('click', () => {reorderTable(4)})
+            e_val_header = document.getElementById("average_e_value")
+            e_val_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_e_value"))})
 
-            bitscore_header = document.getElementById("bitscore_header")
-            bitscore_header.addEventListener('click', () => {reorderTable(5)})
+            bitscore_header = document.getElementById("average_bitscore")
+            bitscore_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_bitscore"))})
 
-            perct_identity_header = document.getElementById("perct_identity_header")
-            perct_identity_header.addEventListener('click', () => {reorderTable(6)})
+            perct_identity_header = document.getElementById("average_percentage_identity")
+            perct_identity_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_percentage_identity"))})
 
-            avg_length_header = document.getElementById("avg_length_header")
-            avg_length_header.addEventListener('click', () => {reorderTable(7)})
+            avg_length_header = document.getElementById("average_alignment_length")
+            avg_length_header.addEventListener('click', () => {reorderTable(get_index_of_select_element("average_alignment_length"))})
 
+            // used to store the previously selected column to sort by
+            // if what you select now is equal to this, sort it in reverse
             current_sort_selected = -1
 
             function reorderTable(position_of_elem) {
@@ -746,16 +725,16 @@ jsScript = """
                         for (let i = 0; i < all_displayed_species.length; i++) {
                             let curr_species = all_displayed_species[i]
                             if (curr_species.contains(document.getElementsByClassName("result_header")[0])) continue;
-                            species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), 
-                                parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim()))
+                            species_value_map.set(curr_species.getElementsByTagName('div')[0].innerHTML.trim(), // name of element
+                                parseFloat(curr_species.getElementsByTagName('div')[position_of_elem].innerHTML.trim())) // value of element
                         }
 
                         // sorting hashmap by key 
                         // from https://stackoverflow.com/questions/37982476/how-to-sort-a-map-by-value-in-javascript
                         
-                        // descending order
+                        // e_value will be ordered by descending order
                         var map_sorted;
-                        if (position_of_elem !== 4)  {
+                        if (position_of_elem !== e_value_position)  {
                             map_sorted = new Map([...species_value_map.entries()].sort((a, b) => b[1] - a[1]));
                         } else {
                             map_sorted = new Map([...species_value_map.entries()].sort((a, b) => a[1] - b[1]));
@@ -808,6 +787,7 @@ jsScript = """
                     }
                 } else {
                     console.log("REVERSE")
+                    // sorting the previously selected column but in reverse
                     // simply reverse what we have right now
                     var all_displayed_species = document.getElementsByClassName("result_box")
                     for (let i = 0; i < all_displayed_species.length; i++) {
