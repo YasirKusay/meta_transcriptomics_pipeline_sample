@@ -4,6 +4,7 @@ import time
 import os
 import re 
 import operator 
+from ete3 import NCBITaxa
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 from meta_transcriptomics_pipeline.get_best_sam_hits import get_best_sam_hits
 from meta_transcriptomics_pipeline.get_best_blast_hits import get_best_blast_hits
@@ -260,6 +261,83 @@ def finalisation(args: argparse.Namespace):
     os.remove(contigs_reads_taxids_temp)
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
+
+    # this is the best place to merge the taxids, it will be way harder to control further down the 
+    # pipeline because we will need to control many different things
+    # however, I do not mind this too much, as it can even make slow steps further down the pipeline faster
+    
+    # the dictionary below stores taxids that we want to change
+    # the key is the taxid, and the value is its identical taxid
+    merged_taxids = {}
+    ncbi = NCBITaxa()
+
+    # but still, what is the best way of doing this?
+    # will need to fetch the lineages, if a taxid is a subspecies, get its species rank (DONE)
+    # also, if a species contains "sp.", merge them, how can I do this though?
+    
+    seen_taxids = []
+
+    with open(contigs_reads_taxids, "r") as f:
+        for line in f:
+            curr = line.strip().split("\t")
+            curr_taxid = curr[2]
+
+            # to save time and requests (down below)
+            if curr_taxid in seen_taxids:
+                continue
+            else:
+                seen_taxids.append(curr_taxid)
+
+            curr_lineage_full = ncbi.get_lineage(curr_taxid)
+            lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)
+            # sorting dictionary values by the original order in curr_lineage full, lineage2ranks_unsorted keys is ranked in ascending order
+            lineage2ranks = {i: lineage2ranks_unsorted[i] for i in curr_lineage_full}
+            ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
+
+            if lineage2ranks[curr_taxid] == "no rank":
+                continue
+            for rank in ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']:
+                rank_taxid = ranks2lineage.get(rank, 'Unknown') # returns value of rank if it exists as a key in the dict, 'Unknown' otherwise
+                if rank_taxid == "Unknown" and rank == "species":
+                    break
+                if rank_taxid == curr_taxid and rank != "species":
+                    break
+                if rank == "species":
+                    if ranks2lineage["species"] == curr_taxid:
+                        break
+                    else:
+                        merged_taxids[curr_taxid] = rank_taxid
+
+                    # lets now handle things with (genus) sp.
+                    # if the rank above that is unclassified (genus) and the rank even above that is genus
+                    # give it the taxid unclassified (genus)
+                    #if ranks2lineage["species"] == curr_taxid:
+                    species_name = ncbi.get_taxid_translator(curr_taxid)[curr_taxid] # get_taxid_translator returns key: taxid and value the scientific film
+                    if " sp. " in species_name:
+                        species_index = ranks2lineage.keys().index("species")
+                        genus = species_name.split(" ")[0]
+
+                        taxid_above_species = ranks2lineage.values()[species_index - 1]
+                        taxid_above_species_2 = ranks2lineage.values()[species_index - 2]
+
+                        if "unclassified " + genus in ncbi.get_taxid_translator(taxid_above_species)[taxid_above_species] and \
+                        genus in ncbi.get_taxid_translator(taxid_above_species_2)[taxid_above_species_2] and \
+                        ranks2lineage.keys()[species_index - 2] == genus:
+                            merged_taxids[curr_taxid] = taxid_above_species
+
+    temp_contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
+    w = open(temp_contigs_reads_taxids, "w")
+
+    with open(contigs_reads_taxids, "r") as f:
+        for line in f:
+            curr = line.strip().split("\t")
+            curr_taxid = curr[2]
+            if curr_taxid in merged_taxids.keys(): 
+                curr[2] = merged_taxids[curr_taxid] + "\n"
+            w.write("\t".join(curr))
+
+    w.close()
+    run_shell_command("cat " + temp_contigs_reads_taxids + " > " + contigs_reads_taxids)
 
     # map reads to their contigs
     reads_belonging_to_contigs_unsorted = analysis_path + "/reads_belonging_to_contigs_unsorted.txt"
