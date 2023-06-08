@@ -288,13 +288,23 @@ def finalisation(args: argparse.Namespace):
             else:
                 seen_taxids.append(curr_taxid)
 
-            curr_lineage_full = ncbi.get_lineage(curr_taxid)
+            curr_lineage_full = []
+
+            try:
+                curr_lineage_full = ncbi.get_lineage(curr_taxid)
+            except:
+                continue
             lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)
             # sorting dictionary values by the original order in curr_lineage full, lineage2ranks_unsorted keys is ranked in ascending order
-            lineage2ranks = {i: lineage2ranks_unsorted[i] for i in curr_lineage_full}
+            lineage2ranks = {str(i): lineage2ranks_unsorted[i] for i in curr_lineage_full}
+            no_rank_num = 1
+            for key in lineage2ranks:
+                if lineage2ranks[key] == "no rank":
+                    lineage2ranks[key] = "no rank" + str(no_rank_num)
+                    no_rank_num += 1
             ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
 
-            if lineage2ranks[curr_taxid] == "no rank":
+            if curr_taxid in lineage2ranks.keys() and lineage2ranks[curr_taxid] == "no rank":
                 continue
             for rank in ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']:
                 rank_taxid = ranks2lineage.get(rank, 'Unknown') # returns value of rank if it exists as a key in the dict, 'Unknown' otherwise
@@ -303,29 +313,34 @@ def finalisation(args: argparse.Namespace):
                 if rank_taxid == curr_taxid and rank != "species":
                     break
                 if rank == "species":
-                    if ranks2lineage["species"] == curr_taxid:
-                        break
-                    else:
+                    if ranks2lineage["species"] != curr_taxid:
                         merged_taxids[curr_taxid] = rank_taxid
 
                     # lets now handle things with (genus) sp.
                     # if the rank above that is unclassified (genus) and the rank even above that is genus
                     # give it the taxid unclassified (genus)
                     #if ranks2lineage["species"] == curr_taxid:
-                    species_name = ncbi.get_taxid_translator(curr_taxid)[curr_taxid] # get_taxid_translator returns key: taxid and value the scientific film
-                    if " sp. " in species_name:
-                        species_index = ranks2lineage.keys().index("species")
+                    species_name = ncbi.get_taxid_translator([curr_taxid])[int(curr_taxid)] # get_taxid_translator returns key: taxid and value the scientific film
+                    if " sp." in species_name:
+                        species_index = list(ranks2lineage.keys()).index("species")
                         genus = species_name.split(" ")[0]
 
-                        taxid_above_species = ranks2lineage.values()[species_index - 1]
-                        taxid_above_species_2 = ranks2lineage.values()[species_index - 2]
+                        taxid_above_species = list(ranks2lineage.values())[species_index - 1]
+                        taxid_above_species_2 = list(ranks2lineage.values())[species_index - 2]
 
-                        if "unclassified " + genus in ncbi.get_taxid_translator(taxid_above_species)[taxid_above_species] and \
-                        genus in ncbi.get_taxid_translator(taxid_above_species_2)[taxid_above_species_2] and \
-                        ranks2lineage.keys()[species_index - 2] == genus:
-                            merged_taxids[curr_taxid] = taxid_above_species
+                        if "unclassified " + genus in ncbi.get_taxid_translator([taxid_above_species])[int(taxid_above_species)] and \
+                        genus in ncbi.get_taxid_translator([taxid_above_species_2])[int(taxid_above_species_2)] and \
+                        list(ranks2lineage.keys())[species_index - 2] == "genus":
+                            # merged_taxids[curr_taxid] = taxid_above_species // bad idea actually, because the get_lineage_info step will not be able to identify this taxid as its not a species
+                            # use the taxid for the species: genus + sp.
+                            base_name = species_name.split(" sp.")[0] + " sp."
+                            try:
+                                merged_taxids[curr_taxid] = str(ncbi.get_name_translator([base_name])[base_name][0])
+                            except:
+                                merged_taxids[curr_taxid] = str(ncbi.get_name_translator([species_name])[species_name][0])
 
     temp_contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
+    temp_contigs_reads_taxids_2 = analysis_path + "/contigs_reads_accessions_taxids_temp_2.txt"
     w = open(temp_contigs_reads_taxids, "w")
 
     with open(contigs_reads_taxids, "r") as f:
@@ -334,9 +349,12 @@ def finalisation(args: argparse.Namespace):
             curr_taxid = curr[2]
             if curr_taxid in merged_taxids.keys(): 
                 curr[2] = merged_taxids[curr_taxid] + "\n"
+            else:
+                curr[2] += "\n"
             w.write("\t".join(curr))
 
     w.close()
+    run_shell_command("cat " + contigs_reads_taxids + " > " + temp_contigs_reads_taxids_2)
     run_shell_command("cat " + temp_contigs_reads_taxids + " > " + contigs_reads_taxids)
 
     # map reads to their contigs

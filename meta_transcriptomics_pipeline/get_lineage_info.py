@@ -19,7 +19,10 @@ def get_lineage_info(taxids, taxdump_location):
         except:
             print("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
             continue
-        lineage2ranks = ncbi.get_rank(curr_lineage_full) # gets ranks of the lineages in curr_lineage_full as a dict where taxid is the key
+
+        lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)  # gets ranks of the lineages in curr_lineage_full as a dict where taxid is the key
+        # sorting dictionary values by the original order in curr_lineage full, lineage2ranks_unsorted keys is ranked in ascending order
+        lineage2ranks = {i: lineage2ranks_unsorted[i] for i in curr_lineage_full}
         ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items()) # same as above, flips keys however
         curr_lineage = []
 
@@ -80,6 +83,6 @@ def get_lineage_info(taxids, taxdump_location):
         all_lineages_resolved[curr_species_taxid] = []
 
         for item in curr_lineage:
-            all_lineages_resolved[curr_species_taxid].append(sci_names[item])
+            all_lineages_resolved[curr_species_taxid].append(sci_names[item].replace(",", " "))
 
     return all_lineages_resolved, bad_taxids
