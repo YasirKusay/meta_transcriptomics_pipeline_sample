@@ -316,6 +316,12 @@ def finalisation(args: argparse.Namespace):
                     if ranks2lineage["species"] != curr_taxid:
                         merged_taxids[curr_taxid] = rank_taxid
 
+                    # the above case handles situations where our current taxid is a subtype/strain of a species
+                    # however, this could have the form Escherichia sp. B str. 123
+                    # i.e. its parent species (Escherichia sp. B) is also undetermined
+                    # the below case will handle this and convert Escherichia sp. B to Escherichia sp.
+                    # this is why this order is makes sense and will not incorrectly translate our current taxid
+
                     # lets now handle things with (genus) sp.
                     # if the rank above that is unclassified (genus) and the rank even above that is genus
                     # give it the taxid unclassified (genus)
