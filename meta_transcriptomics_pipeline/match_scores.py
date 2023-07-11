@@ -32,6 +32,7 @@ def match_scores(contig_read_mappings, combined_scores, dirpath, outfile, taxids
             curr_cs_read = curr_cs_line[0]
 
             if curr_cs_read == curr_mf_read and sci_names[curr_mf_taxid] != "Unknown":
+                # similarly here, we remove commas from the name as it could mess up the Krona chart where the scores are comma delimited
                 wf.write(sci_names[curr_mf_taxid].replace(",", " ") + "\t" + curr_cs_line[2] + "\t" + curr_cs_line[3] + "\t" + curr_cs_line[4] + "\t" + curr_cs_line[5].strip() + "\n")
 
                 curr_mf_line = mf.readline().split("\t")

@@ -441,7 +441,7 @@ jsScript = """
                 for (let i = 0; i < toAdd.length; i++) {
                     var search_result_elem = document.createElement('div');
                     search_result_elem.className = "search_recommendation"
-                    search_result_elem.innerHTML = toAdd[i].trim().replace('\n','')
+                    search_result_elem.innerHTML = toAdd[i].trim().replace('\\n','')
                     autocomplete_element.appendChild(search_result_elem)
                     search_result_elem.addEventListener('click', ({target}) => {
                         lineage_to_filter_by.value = target.innerHTML;
@@ -825,22 +825,20 @@ def generate_table_output(tableSummaryInput, outputHTMLSummary):
             e_value = curr[4]
             bitscore = curr[5]
             avg_percent_identity = curr[6]
-            avg_query_len = curr[7]
-            domain = curr[8].strip() # final column
-            if domain == "Eukaryota":
-                domain = "Eukaryotes"
+            avg_alignment_len = curr[7]
+            lineage = curr[8].strip() # final column
             htmlCode += "            <div class=\"result_box\">\n"
             htmlCode += "                <div class=\"result_element species_name\">\n"
             htmlCode += "                    " + str(organism) + "\n"
             htmlCode += "                </div>\n"
 
-            for score in [percent_reads_mapped, tpm_score, num_reads_mapped, e_value, bitscore, avg_percent_identity, avg_query_len]:
+            for score in [percent_reads_mapped, tpm_score, num_reads_mapped, e_value, bitscore, avg_percent_identity, avg_alignment_len]:
                 htmlCode += "                <div class=\"result_element score_element\">\n"
                 htmlCode += "                    " + str(score) + "\n"
                 htmlCode += "                </div>\n"
 
-            htmlCode += "                <div class=\"domain\">\n"
-            htmlCode += "                    " + domain + "\n"
+            htmlCode += "                <div class=\"lineage\">\n"
+            htmlCode += "                    " + lineage + "\n"
             htmlCode += "                </div>\n"
 
             htmlCode += "            </div>\n"

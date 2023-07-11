@@ -102,6 +102,12 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
+        "--ercc_expected_concentration",
+        type=str,
+        help="This is a file that shows the expected ERCC concentration within the sample. If your star index contains ercc sequences, it will use it to compare the expected ERCC concentration with the actual concentration in your sample."
+    )
+
+    parser_preprocessing.add_argument(
         "--threads",
         type=int,
         default=multiprocessing.cpu_count(),

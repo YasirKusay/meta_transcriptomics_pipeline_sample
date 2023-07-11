@@ -51,6 +51,8 @@ def join(hits_file, mapping_file, append_file, path):
     for curr_mapping_file in mapping_file:
         obtain_relevant_taxids(unique_accessions, curr_mapping_file, retreived_mappings)
         retreived_mappings_sorted = path + "/retreived_mappings_sorted.txt"
+        if os.path.isfile(retreived_mappings) is False:
+            continue
         run_shell_command("LC_COLLATE=C sort -k1 " + retreived_mappings + " > " + retreived_mappings_sorted)
         join_accessions_taxids(hits_file_sorted, retreived_mappings_sorted, append_file)
         if os.path.exists(retreived_mappings):

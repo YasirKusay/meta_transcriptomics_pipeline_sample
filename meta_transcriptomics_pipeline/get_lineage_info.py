@@ -34,9 +34,10 @@ def get_lineage_info(taxids, taxdump_location):
         # step, this was the case for one of our samples
         # if the below is true, then our taxid is not a species
 
+        # lets skip, as we would still like to obtain the lineages
         if 'species' not in ranks2lineage.keys():
             bad_taxids.append(curr_taxid)
-            continue
+            # continue
 
         # to identify if a species is ranked 
 
@@ -83,6 +84,6 @@ def get_lineage_info(taxids, taxdump_location):
         all_lineages_resolved[curr_species_taxid] = []
 
         for item in curr_lineage:
-            all_lineages_resolved[curr_species_taxid].append(sci_names[item].replace(",", " "))
+            all_lineages_resolved[curr_species_taxid].append(sci_names[item].replace(",", " ")) # comma could mess up the Krona chart later, as the scores are comma delimited
 
     return all_lineages_resolved, bad_taxids

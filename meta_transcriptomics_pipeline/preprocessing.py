@@ -1,9 +1,12 @@
 import argparse
+import math
 import subprocess
 import operator
 import time
 import os
 import shutil
+import numpy as np
+import matplotlob.pyplot as plt
 from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
@@ -52,6 +55,9 @@ def preprocessing(args: argparse.Namespace):
     if os.path.exists(dirpath + "/analysis") is False:
         os.mkdir(dirpath + "/analysis")
 
+    if os.path.exists(dirpath + "/final_plots") is False:
+        os.mkdir(dirpath + "/final_plots")
+
     dirpath = dirpath + "/preprocessing"
 
     ##################### FASTP ########################
@@ -97,15 +103,129 @@ def preprocessing(args: argparse.Namespace):
     os.rename(star_prefix + "Unmapped.out.mate1", star_host_dedup1)
     os.rename(star_prefix + "Unmapped.out.mate2", star_host_dedup2)
 
+    # need to extract ERCC coverages (if they exist)
+
+    run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
+    run_shell_command("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt")
+
+    # dict stores ercc as keys, and its values is a list with the expected as first value and readcount (actual value) as the second value
+    # the first value within these sublists will be the "x" within the plot and the secon value will be the "y"
+    ercc_counts = {}
+
+    # check if the output file is empty
+    if os.path.exists(dirpath + "/ercc_coverage.txt") is True and os.stat(dirpath + "/ercc_coverage.txt").st_size > 0:
+        if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
+            # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
+            # then combine the
+            with open(args.ercc_expected_concentration) as f:
+                for line in f:
+                    if line == "\n":
+                        continue
+                    if line == "":
+                        break
+                    curr = line.strip().split("\t")
+                    if len(curr) < 2:
+                        continue
+                    if float(curr[1]) == 0:
+                        continue
+                    ercc_counts[curr[0]] = [math.log(float(curr[1]), 10)]
+
+            # now do the same but for the actual read counts
+            with open(dirpath + "/ercc_coverage.txt") as f:
+                for line in f:
+                    if line == "\n":
+                        continue
+                    if line == "":
+                        break
+                    curr = line.strip().split("\t")
+                    if len(curr) < 2:
+                        continue
+                    if float(curr[1]) == 0:
+                        continue
+                    if curr[0] in ercc_counts.keys():
+                        ercc_counts[curr[0]].append(math.log(float(curr[1]), 10))
+
+            # in case we missed anything
+            # actually remove them, treat as 0 for read count
+
+            keys_to_remove = []
+
+            for key in ercc_counts.keys():    
+                if len(ercc_counts[key]) == 1:
+                    keys_to_remove.append(key)
+
+            for key in keys_to_remove:
+                del ercc_counts[key]
+
+            #for key in ercc_counts.keys():
+            #    if len(ercc_counts[key]) == 1:
+            #        ercc_counts[key].append(0)
+            # check if we have at least one value
+
+            # check if we have at least one value
+            if len(ercc_counts) > 0:
+                data = np.asarray(list(ercc_counts.values()))
+                x_values = data[:,0]
+                y_values = data[:,1]
+                #plt.plot(data[:,0], data[:, 1])
+                a, b = np.polyfit(x_values, y_values, 1)
+                plt.scatter(x_values, y_values, color='red', edgecolor='black', linewidth=0.4)
+
+                best_fit = [a*x_val+b for x_val in x_values]
+                # below wont show dots spaced evenly: https://stackoverflow.com/questions/29906892/pyplot-cannot-draw-dotted-line
+                # plt.plot(x_values, a*x_values+b, color='black', linestyle=(0, (1, 10)), linewidth=0.8)
+
+                # calculating r^2: https://towardsdatascience.com/r-squared-recipe-5814995fa39a
+                # starting at step 2
+                mean_y = y_values.mean()
+
+                # step 3
+                differences_regression_line = []
+                for i in range(0, len(x_values)):
+                    differences_regression_line.append((a * x_values[i] + b) - y_values[i])
+
+                regression_sum = 0
+                for i in differences_regression_line:
+                    regression_sum += (i*i)
+
+                # step 4
+                differences_mean_line = [mean_y - y_val for y_val in y_values]
+                mean_sum = 0
+                for i in differences_mean_line:
+                    mean_sum += (i*i)
+
+                # step 5
+                r_squared = (mean_sum - regression_sum)/mean_sum
+
+                plt.plot([min(x_values), max(x_values)], [min(best_fit), max(best_fit)], color='black', linestyle=':', linewidth=0.8)
+                plt.text(min(x_values), max(y_values), "R² = " + str(r_squared))
+
+                # plt.plot(x_values, a*x_values+b, label = "R² = ",color='black', linestyle='--', linewidth=2)
+                # plt.text(, "R² = ") # trendline equation
+                # we have got the above from: https://www.statology.org/line-of-best-fit-python/
+                plt.xlabel("Log10 ERCC spike-in concentration")
+                plt.ylabel("Log10 coverage per gene")
+                plt.savefig(dirpath + '../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
+
+        else:
+            print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to args.ercc_expected_concentration.")
+
     #################################### SNAP HOST ###########################
-    snap_host_mapping = dirpath + "/snap_host_mapped.bam"
+    snap_host_mapping_unsorted = dirpath + "/snap_host_mapped_unsorted.bam"
     snap_host_command = "snap-aligner" + " paired " + args.snap_host_index + " " + star_host_dedup1 + " " + star_host_dedup2 +\
-                    " -o " + snap_host_mapping + " -t " + str(args.threads) + " -I "
+                    " -o " + snap_host_mapping_unsorted + " -t " + str(args.threads) + " -I "
     start = time.time()
     run_shell_command(snap_host_command)
     end = time.time()
     print("host subtraction via snap took: " + str(end - start))
 
+    snap_host_mapping = dirpath + "/snap_host_mapped.bam"
+
+    # the snap output file must be sorted by name otherwise samtools fastq will not work as intended
+    # biostars.org/p/303292/
+    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + snap_host_mapping_unsorted + " -o " + snap_host_mapping
+    run_shell_command(samtools_sort_command)
+    
     host_subtract_1 = dirpath + "/host_depleted1.fastq"
     host_subtract_2 = dirpath + "/host_depleted2.fastq"
     host_spare = dirpath + "/undetermined.fastq"
@@ -346,8 +466,9 @@ def preprocessing(args: argparse.Namespace):
         os.remove(aligned + "_fwd.fq")
         os.remove(aligned + "_rev.fq")
         os.remove(aligned + ".log")
-        os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-        os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
+        os.remove(snap_host_mapping_unsorted)
+        #os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
+        #os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
         os.remove(dirpath + "/star_host_Log.out")
         os.remove(dirpath + "/star_host_Log.progress.out")
     except:
