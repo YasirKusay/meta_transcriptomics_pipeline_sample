@@ -10,6 +10,12 @@ def getScientificNames(taxids, taxdump_location):
     # since taxids in file are strings, it will make comparisons much clearer
     tmpList = [int(taxid) for taxid in taxids]
     tmpList.sort()
+
+    # deleting duplicates
+    for i in range(len(tmpList)-1,0,-1):
+        if tmpList[i] == tmpList[i-1]:
+            del tmpList[i]
+            
     taxids = [str(taxid) for taxid in tmpList]
 
     # list increment of taxids list

@@ -12,6 +12,7 @@ from meta_transcriptomics_pipeline.remove_contaminants_control import remove_con
 from meta_transcriptomics_pipeline.join_seq_to_taxid import join_seq_to_taxid
 from meta_transcriptomics_pipeline.match_scores import match_scores
 from meta_transcriptomics_pipeline.get_abundance import get_abundance
+from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
 from meta_transcriptomics_pipeline.count_num_lines import countNumLines
 from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pipeline_summary
 from meta_transcriptomics_pipeline.generate_table_output import generate_table_output
@@ -277,6 +278,11 @@ def finalisation(args: argparse.Namespace):
     
     seen_taxids = []
 
+    all_known_taxids = []
+
+    # contains the full lineage for each taxid
+    all_full_lineages = {}
+
     with open(contigs_reads_taxids, "r") as f:
         for line in f:
             curr = line.strip().split("\t")
@@ -292,6 +298,28 @@ def finalisation(args: argparse.Namespace):
 
             try:
                 curr_lineage_full = ncbi.get_lineage(curr_taxid)
+                all_full_lineages[curr_taxid] = curr_lineage_full
+                all_known_taxids += curr_lineage_full
+            except:
+                continue
+
+    # now get all unique taxids
+    # no need to sort all_taxids as the getScientificNames does it for us (and removes seen taxids)
+    all_taxids_translated = getScientificNames(all_known_taxids)
+
+    with open(contigs_reads_taxids, "r") as f:
+        for line in f:
+            curr = line.strip().split("\t")
+            curr_taxid = curr[2]
+
+            # to save time and requests (down below)
+            if curr_taxid in seen_taxids:
+                continue
+
+            curr_lineage_full = []
+
+            try:
+                curr_lineage_full = all_full_lineages(curr_taxid)
             except:
                 continue
             lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)
@@ -326,7 +354,7 @@ def finalisation(args: argparse.Namespace):
                     # if the rank above that is unclassified (genus) and the rank even above that is genus
                     # give it the taxid unclassified (genus)
                     #if ranks2lineage["species"] == curr_taxid:
-                    species_name = ncbi.get_taxid_translator([curr_taxid])[int(curr_taxid)] # get_taxid_translator returns key: taxid and value the scientific film
+                    species_name = all_taxids_translated[curr_taxid] # get_taxid_translator returns key: taxid and value the scientific film
                     if " sp." in species_name:
                         species_index = list(ranks2lineage.keys()).index("species")
                         genus = species_name.split(" ")[0]
@@ -334,8 +362,8 @@ def finalisation(args: argparse.Namespace):
                         taxid_above_species = list(ranks2lineage.values())[species_index - 1]
                         taxid_above_species_2 = list(ranks2lineage.values())[species_index - 2]
 
-                        if "unclassified " + genus in ncbi.get_taxid_translator([taxid_above_species])[int(taxid_above_species)] and \
-                        genus in ncbi.get_taxid_translator([taxid_above_species_2])[int(taxid_above_species_2)] and \
+                        if "unclassified " + genus in all_taxids_translated[taxid_above_species] and \
+                        genus in all_taxids_translated[taxid_above_species_2] and \
                         list(ranks2lineage.keys())[species_index - 2] == "genus":
                             # merged_taxids[curr_taxid] = taxid_above_species // bad idea actually, because the get_lineage_info step will not be able to identify this taxid as its not a species
                             # use the taxid for the species: genus + sp.
@@ -344,6 +372,10 @@ def finalisation(args: argparse.Namespace):
                                 merged_taxids[curr_taxid] = str(ncbi.get_name_translator([base_name])[base_name][0])
                             except:
                                 merged_taxids[curr_taxid] = str(ncbi.get_name_translator([species_name])[species_name][0])
+
+    del all_known_taxids
+    del all_full_lineages
+    del all_taxids_translated
 
     temp_contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
     temp_contigs_reads_taxids_2 = analysis_path + "/contigs_reads_accessions_taxids_temp_2.txt"
