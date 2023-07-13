@@ -6,7 +6,7 @@ import time
 import os
 import shutil
 import numpy as np
-import matplotlob.pyplot as plt
+import matplotlib.pyplot as plt
 from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
@@ -104,9 +104,13 @@ def preprocessing(args: argparse.Namespace):
     os.rename(star_prefix + "Unmapped.out.mate2", star_host_dedup2)
 
     # need to extract ERCC coverages (if they exist)
+    if os.path.exists(dirpath + "/star_coverage.txt"):
+        os.remove(dirpath + "/star_coverage.txt")
 
     run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
-    run_shell_command("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt")
+
+    # running this manually as if we fail to grep anything, it will return NOT 1 and hence will exit.
+    subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
 
     # dict stores ercc as keys, and its values is a list with the expected as first value and readcount (actual value) as the second value
     # the first value within these sublists will be the "x" within the plot and the secon value will be the "y"
@@ -205,7 +209,7 @@ def preprocessing(args: argparse.Namespace):
                 # we have got the above from: https://www.statology.org/line-of-best-fit-python/
                 plt.xlabel("Log10 ERCC spike-in concentration")
                 plt.ylabel("Log10 coverage per gene")
-                plt.savefig(dirpath + '../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
+                plt.savefig(dirpath + '/../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
 
         else:
             print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to args.ercc_expected_concentration.")

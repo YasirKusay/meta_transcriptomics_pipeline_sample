@@ -2,7 +2,7 @@ from ete3 import NCBITaxa
 from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
 
 # returns a dictionary
-def get_lineage_info(taxids, taxdump_location):
+def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
     ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
     ncbi = NCBITaxa()
     all_species_lineages = []
@@ -68,7 +68,17 @@ def get_lineage_info(taxids, taxdump_location):
             if rank != "species":
                 curr_lineage.append(str(rank_taxid))
             else:
-                curr_lineage.append(str(curr_taxid)) 
+                if rank_taxid == curr_taxid:
+                    curr_lineage.append(str(curr_taxid)) 
+                else:
+                    if addSubspeciesLineage is False:
+                        curr_lineage.append(str(curr_taxid)) 
+                    else:
+                        # we would like add the species lineage and anything after that
+                        # go through curr_lineage_full, get indexes of rank_taxid and full_taxid
+                        for j in range(curr_lineage_full.index(rank_taxid), curr_lineage_full.index(curr_taxid)):
+                            curr_lineage.append(str(curr_lineage_full[j])) 
+                        curr_lineage.append(str(curr_taxid)) 
 
         # previously, curr_lineage used to start with the abundance (read/tmp),
         # now it starts with the taxid of the highest level thing of the species

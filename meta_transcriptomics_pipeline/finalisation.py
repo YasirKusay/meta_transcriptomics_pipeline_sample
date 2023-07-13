@@ -305,7 +305,7 @@ def finalisation(args: argparse.Namespace):
 
     # now get all unique taxids
     # no need to sort all_taxids as the getScientificNames does it for us (and removes seen taxids)
-    all_taxids_translated = getScientificNames(all_known_taxids)
+    all_taxids_translated = getScientificNames(all_known_taxids, args.taxdump_location)
 
     with open(contigs_reads_taxids, "r") as f:
         for line in f:
@@ -319,7 +319,7 @@ def finalisation(args: argparse.Namespace):
             curr_lineage_full = []
 
             try:
-                curr_lineage_full = all_full_lineages(curr_taxid)
+                curr_lineage_full = all_full_lineages[curr_taxid]
             except:
                 continue
             lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)
@@ -701,4 +701,11 @@ def finalisation(args: argparse.Namespace):
     # this file is generated during the match_scores section of the finalisation part, and is already sorted by read id
     contig_read_mappings_sorted = dirpath + "/analysis/contig_read_mappings_sorted"
 
-    generate_full_read_contig_info(combined_best_blast_hits, contig_read_mappings_sorted, taxid_lineages_resolved, full_read_contig_info)
+    original_read_contigs_sorted = dirpath + "/analysis/original_read_contigs_sorted"
+    run_shell_command("LC_COLLATE=C sort -k1 " + temp_contigs_reads_taxids_2 + " > " + original_read_contigs_sorted)
+
+    complete_taxid_list = fetch_taxids(original_read_contigs_sorted)
+    good_taxids_2, bad_taxids_2 = get_lineage_info(complete_taxid_list, args.taxdump_location, True)
+    good_taxids_2.update(bad_taxids_2)
+
+    generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, good_taxids_2, full_read_contig_info)
