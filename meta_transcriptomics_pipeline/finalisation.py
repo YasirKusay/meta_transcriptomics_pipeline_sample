@@ -263,6 +263,53 @@ def finalisation(args: argparse.Namespace):
     end = time.time()
     print("taxid identification via accessions took: " + str(end - start))
 
+    ncbi = NCBITaxa()
+    seen_taxids = []
+
+    # before we do species/subspecies merging, we should try and get rid of redundant taxids
+    # that is, taxids that are merged to another taxid
+    # in that case, we take the merge of the taxids
+    # this is simply achieved by taking the lineage and checking if the final
+    # taxid is not equal to the merge of the taxid
+    redundant_taxids = {}
+    with open(contigs_reads_taxids, "r") as f:
+        for line in f:
+            curr = line.strip().split("\t")
+            curr_taxid = curr[2]
+
+            # to save time and requests (down below)
+            if curr_taxid in seen_taxids:
+                continue
+            else:
+                seen_taxids.append(curr_taxid)
+
+            curr_lineage_full = []
+
+            try:
+                curr_lineage_full = ncbi.get_lineage(curr_taxid)
+                if curr_lineage_full[-1] != curr_taxid:
+                    redundant_taxids[curr_taxid] = curr_lineage_full[-1]
+            except:
+                continue
+
+    temp_contigs_reads_taxids = analysis_path + "/contigs_reads_accessions_taxids_temp.txt"
+    w = open(temp_contigs_reads_taxids, "w")
+
+    with open(contigs_reads_taxids, "r") as f:
+        for line in f:
+            curr = line.strip().split("\t")
+            curr_taxid = curr[2]
+
+            if curr_taxid in redundant_taxids.keys(): 
+                curr[2] = redundant_taxids[curr_taxid] + "\n"
+            else:
+                curr[2] += "\n"
+            w.write("\t".join(curr))
+    
+    w.close()
+    run_shell_command("cat " + temp_contigs_reads_taxids + " > " + contigs_reads_taxids)
+    os.remove(temp_contigs_reads_taxids)
+
     # this is the best place to merge the taxids, it will be way harder to control further down the 
     # pipeline because we will need to control many different things
     # however, I do not mind this too much, as it can even make slow steps further down the pipeline faster
@@ -270,7 +317,6 @@ def finalisation(args: argparse.Namespace):
     # the dictionary below stores taxids that we want to change
     # the key is the taxid, and the value is its identical taxid
     merged_taxids = {}
-    ncbi = NCBITaxa()
 
     # but still, what is the best way of doing this?
     # will need to fetch the lineages, if a taxid is a subspecies, get its species rank (DONE)
@@ -299,6 +345,7 @@ def finalisation(args: argparse.Namespace):
             try:
                 curr_lineage_full = ncbi.get_lineage(curr_taxid)
                 all_full_lineages[curr_taxid] = curr_lineage_full
+                all_known_taxids.append(curr_taxid)
                 all_known_taxids += curr_lineage_full
             except:
                 continue
@@ -307,14 +354,18 @@ def finalisation(args: argparse.Namespace):
     # no need to sort all_taxids as the getScientificNames does it for us (and removes seen taxids)
     all_taxids_translated = getScientificNames(all_known_taxids, args.taxdump_location)
 
+    seen_taxids_2 = []
+
     with open(contigs_reads_taxids, "r") as f:
         for line in f:
             curr = line.strip().split("\t")
             curr_taxid = curr[2]
 
             # to save time and requests (down below)
-            if curr_taxid in seen_taxids:
+            if curr_taxid in seen_taxids_2:
                 continue
+            else:
+                seen_taxids_2.append(curr_taxid)
 
             curr_lineage_full = []
 
@@ -693,7 +744,7 @@ def finalisation(args: argparse.Namespace):
 
     # finally, we would like to generate a final file that matches the blast scores with its lineage
 
-    full_read_contig_info = dirpath + "/summary/full_read_contig_info.tsv" 
+    full_read_contig_info = dirpath + "/final_plots/full_read_contig_info.tsv" 
 
     # this file is generated during the get_best_blast_hits section of the finalisation part, and is already sorted by read id
     combined_best_blast_hits = dirpath + "/analysis/combined_best_blast_hits.tsv"

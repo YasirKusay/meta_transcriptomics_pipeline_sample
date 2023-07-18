@@ -20,6 +20,10 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
             print("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
             continue
 
+        # a situation that we must consider is that some taxids may have been merged to another taxid
+        # if addSubspeciesLineage is False, this will not be an issue because we will simply use our
+        # taxid and overwrite the merged_taxid
+
         lineage2ranks_unsorted = ncbi.get_rank(curr_lineage_full)  # gets ranks of the lineages in curr_lineage_full as a dict where taxid is the key
         # sorting dictionary values by the original order in curr_lineage full, lineage2ranks_unsorted keys is ranked in ascending order
         lineage2ranks = {i: lineage2ranks_unsorted[i] for i in curr_lineage_full}
@@ -37,11 +41,13 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
         # lets skip, as we would still like to obtain the lineages
         if 'species' not in ranks2lineage.keys():
             bad_taxids.append(curr_taxid)
-            # continue
+            continue
 
         # to identify if a species is ranked 
 
         # taxids in ranks2lineage are ints, we should convert to strings
+
+        skipSeq = False
 
         if curr_taxid != "Unknown":
             all_taxids.append(str(curr_taxid))
@@ -51,6 +57,8 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
                 all_taxids.append(str(rank_taxid))
             if rank_taxid == "Unknown" and rank == "species":
                 bad_taxids.append(curr_taxid)
+                skipSeq = True
+                break
 
             # taxid of a hit is not a "species taxid"
             # this is very important to filter out as it could mess up
@@ -60,6 +68,8 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
             # step, this was the case for one of our samples
             if rank_taxid == curr_taxid and rank != "species":
                 bad_taxids.append(curr_taxid)
+                skipSeq = True
+                break
 
             # sometimes our taxid's rank is not a species (similar to the scenario above),
             # however, it does not necessarily mean that its rank is a species
@@ -76,13 +86,30 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
                     else:
                         # we would like add the species lineage and anything after that
                         # go through curr_lineage_full, get indexes of rank_taxid and full_taxid
-                        for j in range(curr_lineage_full.index(rank_taxid), curr_lineage_full.index(curr_taxid)):
-                            curr_lineage.append(str(curr_lineage_full[j])) 
+
+                        try:
+                            for j in range(curr_lineage_full.index(rank_taxid), curr_lineage_full.index(int(curr_taxid))):
+                                curr_lineage.append(str(curr_lineage_full[j])) 
+                        except:
+                            pass
                         curr_lineage.append(str(curr_taxid)) 
 
         # previously, curr_lineage used to start with the abundance (read/tmp),
         # now it starts with the taxid of the highest level thing of the species
-        all_species_lineages.append(curr_lineage) 
+        if skipSeq is False:
+            all_species_lineages.append(curr_lineage) 
+    
+    # simply add the full lineage
+    if addSubspeciesLineage is True:
+        for curr_bad_taxid in bad_taxids:
+            curr_lineage_full = []
+            if curr_bad_taxid == "Unknown":
+                continue
+            try:
+                curr_lineage_full = ncbi.get_lineage(curr_bad_taxid) # gets lineage of current taxid, returns only the its taxids
+            except:
+                continue
+            all_species_lineages.append(curr_lineage_full)
 
     # all_taxids will NEVER contain 'Unknown'
     sci_names = getScientificNames(all_taxids, taxdump_location) 
