@@ -4,6 +4,7 @@ import subprocess
 import operator
 import time
 import os
+import json
 import shutil
 import numpy as np
 import matplotlib.pyplot as plt
@@ -111,6 +112,8 @@ def preprocessing(args: argparse.Namespace):
     # need to extract ERCC coverages (if they exist)
     if os.path.exists(dirpath + "/star_coverage.txt"):
         os.remove(dirpath + "/star_coverage.txt")
+    if os.path.exists(dirpath + "/ercc_coverage.txt"):
+        os.remove(dirpath + "/ercc_coverage.txt")
 
     erccReadCounts = None
 
@@ -221,9 +224,10 @@ def preprocessing(args: argparse.Namespace):
                 plt.xlabel("Log10 ERCC spike-in concentration")
                 plt.ylabel("Log10 coverage per gene")
                 plt.savefig(dirpath + '/../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
-
         else:
-            print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
+            print("The coverage file generated from the snap output (preprocessing/star_coverage.txt) is empty. ERCC step has failed but the pipeline will continue. In the future, please recheck the STAR index provided.")    
+    else:
+        print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
 
     #################################### SNAP HOST ###########################
     snap_host_mapping_unsorted = dirpath + "/snap_host_mapped_unsorted.bam"
@@ -300,7 +304,7 @@ def preprocessing(args: argparse.Namespace):
     fullyQc2 = dirpath + "/fullyQc_rev.fq"
 
     clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
-                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t"
+                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t &> " + dirpath + "/clumpify.log"
     
     start = time.time()
     run_shell_command(clumpify_command)
@@ -441,24 +445,14 @@ def preprocessing(args: argparse.Namespace):
 
     numReadsAtStart = 0
 
-    # we do not want to read the entire json file (potentially too much memory to handle)
-    # what we need is found in the fourth line, an example json file structure is found below
-    #{
-	#       "summary": {
-	#	            "before_filtering": {
-	#		                "total_reads":16763944,
-
     start = time.time()
 
-    with open(fastp_json, "r") as f:
-        numReadsAtStart = f.readline()
-        numReadsAtStart = f.readline()
-        numReadsAtStart = f.readline()
-        numReadsAtStart = f.readline().strip().replace(",","").split(":")[1]
+    with open(fastp_json, "r") as fp_json:
+        fastp_data = json.load(fp_json)
+        numReadsAtStart = fastp_data["summary"]["before_filtering"]["total_reads"]/2
+        numReadsAfterFastq = fastp_data["summary"]["after_filtering"]["total_reads"]/2
 
     summaryFileWriter.write("Start\t" + str(numReadsAtStart) + "\n")
-    
-    numReadsAfterFastq = countNumSeqs(qc1, False)
     summaryFileWriter.write("Fastq\t" + str(numReadsAfterFastq) + "\n")
     
     numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
@@ -472,11 +466,15 @@ def preprocessing(args: argparse.Namespace):
     numReadsAfterSnap = countNumSeqs(host_subtract_1, False)
     summaryFileWriter.write("Snap\t" + str(numReadsAfterSnap) + "\n")
     
-    numReadsAfterSortmerna = countNumSeqs(noRna1, False)
-    summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
-    
-    numReadsAfterClumpify = countNumSeqs(fullyQc1, False)
-    summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
+    # go through clumpify log file
+    with open(dirpath + "/clumpify.log", "r") as f:
+        for line in f:
+            if "Reads In:" in line:
+                numReadsAfterSortmerna = line.split(":")[1].strip()
+                summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+            if "Reads Out:" in line:
+                numReadsAfterClumpify = line.split(":")[1].strip()
+                summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
 
     log_path = megahit_out_path + "/log"
     assemblyStats = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')
@@ -500,13 +498,11 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.write("n50\t" + str(n50) + "\n")
 
     # will retreive numAssembledContigs at the finalisation step
-    numReadsUnassembled = countNumSeqs(unassembled_reads_fwd, False)
-    summaryFileWriter.write("numReadsUnassembled\t" + str(numReadsUnassembled) + "\n")
-
     numLongReadsUnassembled = countNumSeqs(unassembled_reads_longer_1, False)
-    summaryFileWriter.write("numLongReadsUnassembled\t" + str(numLongReadsUnassembled) + "\n")
-
     numShortReadsUnassembled = countNumSeqs(unassembled_reads_shorter_1, False)
+
+    summaryFileWriter.write("numReadsUnassembled\t" + str(int(numLongReadsUnassembled) + int(numShortReadsUnassembled)) + "\n")
+    summaryFileWriter.write("numLongReadsUnassembled\t" + str(numLongReadsUnassembled) + "\n")
     summaryFileWriter.write("numShortReadsUnassembled\t" + str(numShortReadsUnassembled) + "\n")
 
     summaryFileWriter.close()
@@ -530,11 +526,7 @@ def preprocessing(args: argparse.Namespace):
     try:
         os.remove(aligned + "_fwd.fq")
         os.remove(aligned + "_rev.fq")
-        os.remove(aligned + ".log")
         os.remove(snap_host_mapping_unsorted)
-        #os.remove(dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-        #os.remove(dirpath + "/star_host_Aligned.toTranscriptome.out.bam")
-        os.remove(dirpath + "/star_host_Log.out")
-        os.remove(dirpath + "/star_host_Log.progress.out")
+        os.remove(reads_mapped_to_contigs_file_unsorted)
     except:
         pass
