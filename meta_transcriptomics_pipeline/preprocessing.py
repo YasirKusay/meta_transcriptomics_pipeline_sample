@@ -97,9 +97,9 @@ def preprocessing(args: argparse.Namespace):
                     " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
     
-    start = time.start()
+    start = time.time()
     run_shell_command(star_command)
-    end = time.end()
+    end = time.time()
     print("Human depletion via star took: " + str(end - start))
 
     star_host_dedup1 = star_prefix + "Unmapped_1.fastq"
@@ -116,9 +116,9 @@ def preprocessing(args: argparse.Namespace):
 
     # check if the output file is empty
     if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
-        start = time.start()
+        start = time.time()
         run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
-        end = time.start()
+        end = time.time()
 
         print("pileup.sh on the star output took: " + str(end - start))
 
@@ -524,7 +524,7 @@ def preprocessing(args: argparse.Namespace):
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
         run_shell_command(zip_command)
     
-    end = time.end()
+    end = time.time()
     print("Zipping the output files took: " + str(end - start))
 
     try:
