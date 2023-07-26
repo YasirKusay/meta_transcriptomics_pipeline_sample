@@ -64,12 +64,14 @@ def preprocessing(args: argparse.Namespace):
 
     qc1 = dirpath + "/fastp_1.fastq"
     qc2 = dirpath + "/fastp_2.fastq"
+    fastp_json = dirpath + "/fastp.json"
 
     fastp_command = "fastp" +\
                     " --in1 " + args.inp1 +\
                     " --in2 " + args.inp2 +\
                     " --out1 " + qc1 +\
                     " --out2 " + qc2 +\
+                    " --json " + fastp_json +\
                     " -b " + args.read_length + " -B " + args.read_length +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
                     " --unqualified_percent_limit " + args.unqualified_percent_limit +\
@@ -83,7 +85,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(fastp_command)
     end = time.time()
-    print("fastp took: " + str(end - start))
+    print("Fastp took: " + str(end - start))
 
     #################################### STAR HOST ###########################
 
@@ -95,7 +97,10 @@ def preprocessing(args: argparse.Namespace):
                     " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
                     " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
     
+    start = time.start()
     run_shell_command(star_command)
+    end = time.end()
+    print("Human depletion via star took: " + str(end - start))
 
     star_host_dedup1 = star_prefix + "Unmapped_1.fastq"
     star_host_dedup2 = star_prefix + "Unmapped_2.fastq"
@@ -107,18 +112,24 @@ def preprocessing(args: argparse.Namespace):
     if os.path.exists(dirpath + "/star_coverage.txt"):
         os.remove(dirpath + "/star_coverage.txt")
 
-    run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
-
-    # running this manually as if we fail to grep anything, it will return NOT 1 and hence will exit.
-    subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
-
-    # dict stores ercc as keys, and its values is a list with the expected as first value and readcount (actual value) as the second value
-    # the first value within these sublists will be the "x" within the plot and the secon value will be the "y"
-    ercc_counts = {}
+    erccReadCounts = None
 
     # check if the output file is empty
-    if os.path.exists(dirpath + "/ercc_coverage.txt") is True and os.stat(dirpath + "/ercc_coverage.txt").st_size > 0:
-        if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
+    if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
+        start = time.start()
+        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
+        end = time.start()
+
+        print("pileup.sh on the star output took: " + str(end - start))
+
+        # running this manually as if we fail to grep anything, it will return NOT 1 and hence will exit.
+        subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
+
+        # dict stores ercc as keys, and its values is a list with the expected as first value and readcount (actual value) as the second value
+        # the first value within these sublists will be the "x" within the plot and the secon value will be the "y"
+        ercc_counts = {}
+
+        if os.path.exists(dirpath + "/ercc_coverage.txt") is True and os.stat(dirpath + "/ercc_coverage.txt").st_size > 0:
             # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
             # then combine the
             with open(args.ercc_expected_concentration) as f:
@@ -212,7 +223,7 @@ def preprocessing(args: argparse.Namespace):
                 plt.savefig(dirpath + '/../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
 
         else:
-            print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to args.ercc_expected_concentration.")
+            print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
 
     #################################### SNAP HOST ###########################
     snap_host_mapping_unsorted = dirpath + "/snap_host_mapped_unsorted.bam"
@@ -221,14 +232,17 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(snap_host_command)
     end = time.time()
-    print("host subtraction via snap took: " + str(end - start))
+    print("Host subtraction via snap took: " + str(end - start))
 
     snap_host_mapping = dirpath + "/snap_host_mapped.bam"
 
     # the snap output file must be sorted by name otherwise samtools fastq will not work as intended
     # biostars.org/p/303292/
     samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + snap_host_mapping_unsorted + " -o " + snap_host_mapping
+    start = time.time()
     run_shell_command(samtools_sort_command)
+    end = time.time()
+    print("Sorting the sam file generated by the snap depletion step took: " + str(end - start))
     
     host_subtract_1 = dirpath + "/host_depleted1.fastq"
     host_subtract_2 = dirpath + "/host_depleted2.fastq"
@@ -244,7 +258,10 @@ def preprocessing(args: argparse.Namespace):
                         " -s " + host_spare + " " +\
                         snap_host_mapping
 
+    start = time.time()
     run_shell_command(samtools_host_subtract_command)
+    end = time.time()
+    print("Extracting sequences from the sam file from the snap step (after sorting it) took: " + str(end - start))
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -275,7 +292,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(sortmerna_command)
     end = time.time()
-    print("sortmerna took: " + str(end - start))
+    print("Sortmerna rRNA depletion took: " + str(end - start))
 
     #################################### CLUMPIFY DEDUP #######################
 
@@ -285,7 +302,10 @@ def preprocessing(args: argparse.Namespace):
     clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
                             " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t"
     
+    start = time.time()
     run_shell_command(clumpify_command)
+    end = time.time()
+    print("Deduplication via clumpify took: " + str(end - start))
 
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
     '''
@@ -320,19 +340,33 @@ def preprocessing(args: argparse.Namespace):
                         " -2 " + fullyQc2 +\
                         " -o " + megahit_out_path + " -t " + str(args.threads) # is an output directory 
     contigs = megahit_out_path + "/final_contigs.fa"
+
     start = time.time()
     run_shell_command(megahit_command)
     end = time.time()
-    print("assembly via megahit took: " + str(end - start))
+    print("Assembly via megahit took: " + str(end - start))
+
     run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
     # we must retrieve the unaligned reads
-    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
+    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
     align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
                                 " in=" + fullyQc1 +\
                                 " in2=" + fullyQc2 +\
-                                " -out=" + reads_mapped_to_contigs_file  
+                                " -out=" + reads_mapped_to_contigs_file_unsorted  
+    
+    start = time.time()
     run_shell_command(align_reads_to_contigs_cmd)
+    end = time.time()
+    print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
+
+    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
+    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
+
+    start = time.time()
+    run_shell_command(samtools_sort_command)
+    end = time.time()
+    print("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
 
     # now lets retrieve the reads that did not align
     unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
@@ -341,7 +375,11 @@ def preprocessing(args: argparse.Namespace):
     # same principle here as the host mapping step
     align_command = "samtools fastq -f 12 -1 " + unassembled_reads_fwd +\
                     " -2 " + unassembled_reads_rev + " " + reads_mapped_to_contigs_file
+    
+    start = time.time()
     run_shell_command(align_command)
+    end = time.time()
+    print("Retreiving the unassembled reads from the previous step took: " + str(end - start))
 
     unassembled_reads_shorter_1 = dirpath + "/unassembled_reads_shorter_fwd.fq"
     unassembled_reads_shorter_2 = dirpath + "/unassembled_reads_shorter_rev.fq"
@@ -402,10 +440,21 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter = open(summaryFile, "w")
 
     numReadsAtStart = 0
-    if (os.path.splitext(args.inp1) == ".fa" or os.path.splitext(args.inp1) == ".fna" or os.path.splitext(args.inp1) == ".fasta"):
-        numReadsAtStart =  countNumSeqs(args.inp1, True)
-    else:
-        numReadsAtStart =  countNumSeqs(args.inp1, False)
+
+    # we do not want to read the entire json file (potentially too much memory to handle)
+    # what we need is found in the fourth line, an example json file structure is found below
+    #{
+	#       "summary": {
+	#	            "before_filtering": {
+	#		                "total_reads":16763944,
+
+    start = time.time()
+
+    with open(fastp_json, "r") as f:
+        numReadsAtStart = f.readline()
+        numReadsAtStart = f.readline()
+        numReadsAtStart = f.readline()
+        numReadsAtStart = f.readline().strip().replace(",","").split(":")[1]
 
     summaryFileWriter.write("Start\t" + str(numReadsAtStart) + "\n")
     
@@ -414,6 +463,11 @@ def preprocessing(args: argparse.Namespace):
     
     numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
     summaryFileWriter.write("Star\t" + str(numReadsAfterStar) + "\n")
+
+    if erccReadCounts is None:
+        summaryFileWriter.write("erccReadCounts\t" + str("N/A") + "\n")
+    else:
+        summaryFileWriter.write("erccReadCounts\t" + str(erccReadCounts) + "\n")
     
     numReadsAfterSnap = countNumSeqs(host_subtract_1, False)
     summaryFileWriter.write("Snap\t" + str(numReadsAfterSnap) + "\n")
@@ -457,14 +511,21 @@ def preprocessing(args: argparse.Namespace):
 
     summaryFileWriter.close()
 
+    end = time.time()
+    print("Writing the statistics for the pipeline summary took: " + str(end - start))
+
     # zipping any unecessary files with pigz (supports multithreaded zipping)
     # no need to check for errors
+    start = time.time()
     for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
                   snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab"]:
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
         run_shell_command(zip_command)
+    
+    end = time.end()
+    print("Zipping the output files took: " + str(end - start))
 
     try:
         os.remove(aligned + "_fwd.fq")

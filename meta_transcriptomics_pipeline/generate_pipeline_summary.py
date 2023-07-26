@@ -321,6 +321,7 @@ htmlCode = """
         <b>Num Reads Remaining After Human Depletion:</b> <br>
         <b>Num Reads Remaining After STAR Command:</b> <br>
         <b>Num Reads Remaining After SNAP Command:</b> <br>
+        <b>Num ERCC Reads Removed:</b> <br>
         <b>Inputs:</b> fastp_1.fastq, fastp_2.fastq <br>
         <b>Outputs:</b> host_depleted1.fastq, host_depleted2.fastq <br> <br>
         <div class="code_style">
@@ -569,12 +570,14 @@ def generate_pipeline_summary(summaryFile, outputFile):
             if curr[0] == "Start":
                 htmlCode = htmlCode.replace("Num Reads at Start:</b> ", "Num Reads at Start:</b> " + str(curr[1]))
             if curr[0] == "Fastq":
-                htmlCode = htmlCode.replace("Num Reads After Fastq:</b> ", "Num Reads After Fastq:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Num Reads After Fastq:</b> ", "Num Reads After Fastp:</b> " + str(curr[1]))
             if curr[0] == "Snap":
                 htmlCode = htmlCode.replace("Num Reads Remaining After Human Depletion:</b> ", "Num Reads Remaining After Human Depletion:</b> " + str(curr[1]))
                 htmlCode = htmlCode.replace("Num Reads Remaining After SNAP Command:</b> ", "Num Reads Remaining After SNAP Command:</b> " + str(curr[1]))
             if curr[0] == "Star":
                 htmlCode = htmlCode.replace("Num Reads Remaining After STAR Command:</b> ", "Num Reads Remaining After STAR Command:</b> " + str(curr[1]))
+            if curr[0] == "erccReadCounts":
+                htmlCode = htmlCode.replace("Num ERCC Reads Removed:</b> ", "Num ERCC Reads Removed:</b> " + str(curr[1]))
             if curr[0] == "Sortmerna":
                 htmlCode = htmlCode.replace("Num Reads After rRNA Depletion:</b> ", "Num Reads After rRNA Depletion:</b> " + str(curr[1]))
             if curr[0] == "Clumpify":
