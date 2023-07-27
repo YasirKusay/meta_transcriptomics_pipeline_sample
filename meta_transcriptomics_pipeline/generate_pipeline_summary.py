@@ -505,8 +505,10 @@ htmlCode = """
         <b>Number of Mapped Accessions:</b> <br>
         <b>Number of Unique Taxids:</b> <br>
         <b>Number of Contigs with a Taxid:</b> <br>
+        <b>Number of Reads with a Taxid</b> <br>
         <b>Number of Unassembled Reads with a Taxid</b> <br>
         <b>Number of Assembled Reads with a Taxid</b> <br>
+        <b>Number of Reads Not Mapped to a Taxid</b> <br>
         <b>Outputs:</b> contigs_reads_accessions_taxids.txt, assembled_reads_taxids_temp.txt<br>
         <p>
             <b>Explanation of Step:</b> For both best_nt_scores.tsv and best_nr_scores.tsv, we sort them individually by their accessions and extract their query and accession IDs (ignoring version number). We then run them against one or more corresponding mapping files (which are sorted by accession ID) and this will take O(N) time (where N refers to the number of records in the mapping file). We will compare the accessions from best_nt_scores.tsv against dead_wgs.accession2taxid, nucl_gb.accession2taxid, nucl_wgs.accession2taxid and nucl_wgs.accession2taxid.EXTRA and we will compare the accessions from best_nr_scores.tsv against prot.accession2taxid.
@@ -641,6 +643,10 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 htmlCode = htmlCode.replace("Number of Unassembled Reads with a Taxid</b> ", "Number of Unassembled Reads with a Taxid</b> " + str(curr[1]))
             if curr[0] == "numAssembledReadsWithTaxids":
                 htmlCode = htmlCode.replace("Number of Assembled Reads with a Taxid</b> ", "Number of Assembled Reads with a Taxid</b> " + str(curr[1]))
+            if curr[0] == "numReadsWithTaxid":
+                htmlCode = htmlCode.replace("Number of Reads with a Taxid</b> ", "Number of Reads with a Taxid</b> " + str(curr[1]))
+            if curr[0] == "numReadsWithoutTaxid":
+                htmlCode = htmlCode.replace("Number of Reads Not Mapped to a Taxid</b> ", "Number of Reads Not Mapped to a Taxid</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithRankSpecies":
                 htmlCode = htmlCode.replace("Number of Taxid Lineages Successfully Identified:</b> ", "Number of Taxid Lineages Successfully Identified:</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithoutRankSpecies":

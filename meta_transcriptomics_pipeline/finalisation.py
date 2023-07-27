@@ -301,7 +301,7 @@ def finalisation(args: argparse.Namespace):
             curr_taxid = curr[2]
 
             if curr_taxid in redundant_taxids.keys(): 
-                curr[2] = redundant_taxids[curr_taxid] + "\n"
+                curr[2] = str(redundant_taxids[curr_taxid]) + "\n"
             else:
                 curr[2] += "\n"
             w.write("\t".join(curr))
@@ -422,7 +422,7 @@ def finalisation(args: argparse.Namespace):
                             try:
                                 merged_taxids[curr_taxid] = str(ncbi.get_name_translator([base_name])[base_name][0])
                             except:
-                                merged_taxids[curr_taxid] = str(ncbi.get_name_translator([species_name])[species_name][0])
+                                pass
 
     del all_known_taxids
     del all_full_lineages
@@ -650,6 +650,9 @@ def finalisation(args: argparse.Namespace):
     numAssembledReadsWithTaxids = countNumLines(assembled_reads_taxids_temp)
     summaryFileWriter.write("numAssembledReadsWithTaxids\t" + str(numAssembledReadsWithTaxids) + "\n")
 
+    summaryFileWriter.write("numReadsWithTaxid\t" + str(int(numAssembledReadsWithTaxids) + int(numUnassembledReadsWithTaxids)) + "\n")
+    summaryFileWriter.write("numReadsWithoutTaxid\t" + str(num_reads - (int(numAssembledReadsWithTaxids) + int(numUnassembledReadsWithTaxids))) + "\n")
+
     # nothing worthwhile to put in get median scores
 
     # put in get lineages for each taxid
@@ -757,6 +760,5 @@ def finalisation(args: argparse.Namespace):
 
     complete_taxid_list = fetch_taxids(original_read_contigs_sorted)
     good_taxids_2, bad_taxids_2 = get_lineage_info(complete_taxid_list, args.taxdump_location, True)
-    good_taxids_2.update(bad_taxids_2)
 
     generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, good_taxids_2, full_read_contig_info)
