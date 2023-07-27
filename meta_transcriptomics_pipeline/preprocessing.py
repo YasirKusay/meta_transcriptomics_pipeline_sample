@@ -120,7 +120,7 @@ def preprocessing(args: argparse.Namespace):
     # check if the output file is empty
     if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
         start = time.time()
-        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt")
+        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt" + " -Xmx" + str(args.memory) + "g")
         end = time.time()
 
         print("pileup.sh on the star output took: " + str(end - start))
@@ -147,6 +147,10 @@ def preprocessing(args: argparse.Namespace):
                     if float(curr[1]) == 0:
                         continue
                     ercc_counts[curr[0]] = [math.log(float(curr[1]), 10)]
+                    if erccReadCounts is None:
+                        erccReadCounts = int(curr[1])
+                    else:
+                        erccReadCounts += int(curr[1])
 
             # now do the same but for the actual read counts
             with open(dirpath + "/ercc_coverage.txt") as f:
@@ -304,7 +308,7 @@ def preprocessing(args: argparse.Namespace):
     fullyQc2 = dirpath + "/fullyQc_rev.fq"
 
     clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
-                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t &> " + dirpath + "/clumpify.log"
+                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t &> " + dirpath + "/clumpify.log" + " -Xmx" + str(args.memory) + "g"
     
     start = time.time()
     run_shell_command(clumpify_command)
@@ -315,7 +319,7 @@ def preprocessing(args: argparse.Namespace):
     '''
     num_reads_bytes = subprocess.run(['grep', '-c', '.*', fullyQc1], stdout=subprocess.PIPE)
     num_reads_str = num_reads_bytes.stdout.decode('utf-8')
-    num_reads = int(num_reads_str.replace('\n', ''))/4 # finally in int format, dividing by 4 because its in fastq format
+    # num_reads = int(num_reads_str.replace('', ''))/4 finally in int format, dividing by 4 because its in fastq format
     fast_mode_output = dirpath + "/fast_mode_output"
     kraken_command = "kraken2 --db " + args.kraken_db + " --threads " + str(args.threads) +\
                         " --output " + fast_mode_output + " --paired " + fullyQc1 + " " + fullyQc2
@@ -353,18 +357,18 @@ def preprocessing(args: argparse.Namespace):
     run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
     # we must retrieve the unaligned reads
-    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
+    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.bam"
     align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
                                 " in=" + fullyQc1 +\
                                 " in2=" + fullyQc2 +\
-                                " -out=" + reads_mapped_to_contigs_file_unsorted  
+                                " -out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
     
     start = time.time()
     run_shell_command(align_reads_to_contigs_cmd)
     end = time.time()
     print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
 
-    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
+    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.bam"
     samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
 
     start = time.time()
@@ -444,16 +448,18 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter = open(summaryFile, "w")
 
     numReadsAtStart = 0
+    numReadsAfterFastq = 0
 
     start = time.time()
 
     with open(fastp_json, "r") as fp_json:
         fastp_data = json.load(fp_json)
-        numReadsAtStart = fastp_data["summary"]["before_filtering"]["total_reads"]/2
-        numReadsAfterFastq = fastp_data["summary"]["after_filtering"]["total_reads"]/2
+        numReadsAtStart = int(fastp_data["summary"]["before_filtering"]["total_reads"]/2)
+        numReadsAfterFastq = int(fastp_data["summary"]["after_filtering"]["total_reads"]/2)
 
     summaryFileWriter.write("Start\t" + str(numReadsAtStart) + "\n")
     summaryFileWriter.write("Fastq\t" + str(numReadsAfterFastq) + "\n")
+    summaryFileWriter.write("lowQuality\t" + str(numReadsAtStart - numReadsAfterFastq) + "\n")
     
     numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
     summaryFileWriter.write("Star\t" + str(numReadsAfterStar) + "\n")
@@ -465,16 +471,33 @@ def preprocessing(args: argparse.Namespace):
     
     numReadsAfterSnap = countNumSeqs(host_subtract_1, False)
     summaryFileWriter.write("Snap\t" + str(numReadsAfterSnap) + "\n")
+
+    if erccReadCounts is None:
+        erccReadCounts = 0
     
+    nonERCCHostReads = (numReadsAfterFastq - numReadsAfterStar - erccReadCounts) + (numReadsAfterStar - numReadsAfterSnap)
+
+    summaryFileWriter.write("nonERCCHostReads\t" + str(nonERCCHostReads) + "\n")
+
     # go through clumpify log file
     with open(dirpath + "/clumpify.log", "r") as f:
+        numReadsAfterSortmerna = 0
+        nonHostRRNA = 0
+        numDuplicates = 0
         for line in f:
             if "Reads In:" in line:
-                numReadsAfterSortmerna = line.split(":")[1].strip()
+                numReadsAfterSortmerna = int(line.split(":")[1].strip()/2)
+                nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
                 summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+                summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
             if "Reads Out:" in line:
-                numReadsAfterClumpify = line.split(":")[1].strip()
+                numReadsAfterClumpify = int(line.split(":")[1].strip()/2)
+                numDuplicates = numReadsAfterSortmerna - numReadsAfterClumpify
                 summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
+                summaryFileWriter.write("duplicates\t" + str(numDuplicates) + "\n")
+
+    totalReads = numReadsAfterFastq + nonERCCHostReads + erccReadCounts + nonHostRRNA + numDuplicates
+    summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
 
     log_path = megahit_out_path + "/log"
     assemblyStats = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')
@@ -514,7 +537,8 @@ def preprocessing(args: argparse.Namespace):
     # no need to check for errors
     start = time.time()
     for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
-                  snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab"]:
+                  snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab", 
+                  aligned + "_fwd.fq", aligned + "_rev.fq"]:
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
@@ -524,8 +548,6 @@ def preprocessing(args: argparse.Namespace):
     print("Zipping the output files took: " + str(end - start))
 
     try:
-        os.remove(aligned + "_fwd.fq")
-        os.remove(aligned + "_rev.fq")
         os.remove(snap_host_mapping_unsorted)
         os.remove(reads_mapped_to_contigs_file_unsorted)
     except:
