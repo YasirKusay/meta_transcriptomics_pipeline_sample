@@ -651,7 +651,7 @@ def finalisation(args: argparse.Namespace):
     summaryFileWriter.write("numAssembledReadsWithTaxids\t" + str(numAssembledReadsWithTaxids) + "\n")
 
     summaryFileWriter.write("numReadsWithTaxid\t" + str(int(numAssembledReadsWithTaxids) + int(numUnassembledReadsWithTaxids)) + "\n")
-    summaryFileWriter.write("numReadsWithoutTaxid\t" + str(num_reads - (int(numAssembledReadsWithTaxids) + int(numUnassembledReadsWithTaxids))) + "\n")
+    summaryFileWriter.write("numReadsWithoutTaxid\t" + str(int(num_reads) - (int(numAssembledReadsWithTaxids) + int(numUnassembledReadsWithTaxids))) + "\n")
 
     # nothing worthwhile to put in get median scores
 

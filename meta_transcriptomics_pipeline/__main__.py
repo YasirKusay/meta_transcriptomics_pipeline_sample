@@ -114,6 +114,19 @@ def parse_args():
         help="The number of cpu threads to use"
     )
 
+    parser_preprocessing.add_argument(
+        "--memory",
+        type=int,
+        default=16,
+        help="The maximum memory to use (in gigabytes). This is provided to bbmap to prevent out of memory issues."
+    )
+
+    #parser_preprocessing.add_argument(
+    #    "--continueFromFailure",
+    #    action='store_true',
+    #    help="If the pipeline fails and you wish to rerun this step from the part that failed, specify this flag."
+    #)
+
     parser_preprocessing.set_defaults(func=preprocessing)
 
     parser_minimap_contigs = subparsers.add_parser(

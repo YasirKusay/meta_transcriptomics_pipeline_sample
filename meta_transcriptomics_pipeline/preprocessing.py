@@ -61,6 +61,18 @@ def preprocessing(args: argparse.Namespace):
 
     dirpath = dirpath + "/preprocessing"
 
+    # failedStep = None
+    # failFile = dirpath + "/failedStep.txt"
+
+    # # records the part that the preprocessing step failed at
+    # # hence, we do not need to rerun the entire pipeline should just one step fail
+    # if os.path.exists(failFile):
+    #     if args.continueFromFailure is True and os.stat(failFile).st_size > 0:
+    #         with open(failFile, "r") as f:
+    #             failedStep = f.readline().strip()
+    #     else:
+    #         os.remove(failFile)
+
     ##################### FASTP ########################
 
     qc1 = dirpath + "/fastp_1.fastq"
@@ -120,7 +132,7 @@ def preprocessing(args: argparse.Namespace):
     # check if the output file is empty
     if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
         start = time.time()
-        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt" + " -Xmx" + str(args.memory) + "g")
+        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt" + " -Xmx" + str(args.memory) + "g" + " secondary=false")
         end = time.time()
 
         print("pileup.sh on the star output took: " + str(end - start))
@@ -133,8 +145,23 @@ def preprocessing(args: argparse.Namespace):
         ercc_counts = {}
 
         if os.path.exists(dirpath + "/ercc_coverage.txt") is True and os.stat(dirpath + "/ercc_coverage.txt").st_size > 0:
+
+            # https://www.biostars.org/p/110052/
+            # need to get the ERCC couunts, firstly grab the ERCC sequences from the bam file, get instances where both reads
+            # are mapped (I strongly believe that the unmapped files will also include sequences where only one pair is mapped)
+            # then count up the sequences
+
+            regions = []
+
+            with open(dirpath + "/ercc_coverage.txt", "r") as f:
+                for line in f:
+                    curr = line.split("\t")
+                    regions.append(curr[0])
+
+            run_shell_command("samtools index " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
+            erccReadCounts = int(int(subprocess.check_output("samtools view -c -F 12 " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam " + " ".join(regions), shell=True).decode('utf-8').strip('\n').split(' ')[0])/2)
+
             # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
-            # then combine the
             with open(args.ercc_expected_concentration) as f:
                 for line in f:
                     if line == "\n":
@@ -147,10 +174,6 @@ def preprocessing(args: argparse.Namespace):
                     if float(curr[1]) == 0:
                         continue
                     ercc_counts[curr[0]] = [math.log(float(curr[1]), 10)]
-                    if erccReadCounts is None:
-                        erccReadCounts = int(curr[1])
-                    else:
-                        erccReadCounts += int(curr[1])
 
             # now do the same but for the actual read counts
             with open(dirpath + "/ercc_coverage.txt") as f:
@@ -357,7 +380,7 @@ def preprocessing(args: argparse.Namespace):
     run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
     # we must retrieve the unaligned reads
-    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.bam"
+    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
     align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
                                 " in=" + fullyQc1 +\
                                 " in2=" + fullyQc2 +\
@@ -368,7 +391,7 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
 
-    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.bam"
+    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
     samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
 
     start = time.time()
@@ -486,17 +509,17 @@ def preprocessing(args: argparse.Namespace):
         numDuplicates = 0
         for line in f:
             if "Reads In:" in line:
-                numReadsAfterSortmerna = int(line.split(":")[1].strip()/2)
+                numReadsAfterSortmerna = int(int(line.split(":")[1].strip())/2)
                 nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
                 summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
                 summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
             if "Reads Out:" in line:
-                numReadsAfterClumpify = int(line.split(":")[1].strip()/2)
+                numReadsAfterClumpify = int(int(line.split(":")[1].strip())/2)
                 numDuplicates = numReadsAfterSortmerna - numReadsAfterClumpify
                 summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
                 summaryFileWriter.write("duplicates\t" + str(numDuplicates) + "\n")
 
-    totalReads = numReadsAfterFastq + nonERCCHostReads + erccReadCounts + nonHostRRNA + numDuplicates
+    totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numDuplicates + numReadsAfterClumpify
     summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
 
     log_path = megahit_out_path + "/log"

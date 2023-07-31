@@ -289,15 +289,15 @@ htmlCode = """
     </body>
     <div class="info" id="start_info">
         <h1 style="text-align: center;">Start</h1> <br />
-        <b>Num Reads at Start:</b> <br />
+        <b>Number of Reads at Start:</b> <br />
     </div>
     <div class="info" id="qc_info">
         <h1 style="text-align: center;">Quality Control</h1>
         <p>
             <b>Description:</b> This step uses Fastp to remove reads that have low quality, low complexity or are too short (less than 50bp). It also strips away the adapters.
         </p>
-        <b>Num Reads After Fastq:</b> <br>
-        <b>Num Low Quality Reads:</b> <br>
+        <b>Number of Reads After Fastq:</b> <br>
+        <b>Number of Low Quality Reads:</b> <br>
         <b>Outputs:</b> fastp_1.fastq, fastp_2.fastq <br> <br>
         <div class="code_style">
             <code>
@@ -319,11 +319,11 @@ htmlCode = """
     <div class="info" id="human_subtraction_info">
         <h1 style="text-align: center;">Human Subtraction</h1>
         <b>Description:</b> This step removes human sequences from the library. It uses STAR to align the library against an index of the HG38 assembly built using STAR and we extract the reads that failed to map (i.e. the non-human reads). To maximise the amount of reads removed, this step is repeated using SNAP to align the remaining reads against the HG38 index built using SNAP. <br> <br>
-        <b>Num Reads Remaining After Human Depletion:</b> <br>
-        <b>Num Reads Remaining After STAR Command:</b> <br>
-        <b>Num Reads Remaining After SNAP Command:</b> <br>
-        <b>Num ERCC Reads Removed:</b> <br>
-        <b>Num non-ERCC Host Reads:</b> <br>
+        <b>Number of Reads Remaining After Human Depletion:</b> <br>
+        <b>Number of Reads Remaining After STAR Command:</b> <br>
+        <b>Number of Reads Remaining After SNAP Command:</b> <br>
+        <b>Number of ERCC Reads Removed:</b> <br>
+        <b>Number of non-ERCC Host Reads:</b> <br>
         <b>Inputs:</b> fastp_1.fastq, fastp_2.fastq <br>
         <b>Outputs:</b> host_depleted1.fastq, host_depleted2.fastq <br> <br>
         <div class="code_style">
@@ -364,8 +364,8 @@ htmlCode = """
     <div class="info" id="rrna_depletion_info">
         <h1 style="text-align: center;">rRNA Depletion</h1>
         <b>Description:</b> This step removed any rRNA reads from the library by aligning them against the "default" sortmerna database available from <a href="https://github.com/sortmerna/sortmerna/releases">here</a>. It is important to run this step after the human read depletion step as sortmerna is very slow and RAM hungry, hence removing as much reads as possible prior to this step will increase performance. <br> <br>
-        <b>Num Reads After rRNA Depletion:</b> <br>
-        <b>Num Non-host rRNA Reads:</b> <br>
+        <b>Number of Reads After rRNA Depletion:</b> <br>
+        <b>Number of Non-host rRNA Reads:</b> <br>
         <b>Inputs:</b> host_depleted1.fastq, host_depleted2.fastq  <br>
         <b>Outputs:</b> noRna_fwd.fq, noRna_rev.fq <br> <br>
         <div class="code_style">
@@ -386,8 +386,8 @@ htmlCode = """
         <p>
             <b>Description:</b> Remove duplicate sequences, these may have been the same read amplified multiple times during PCR. This is the final step in the quality control phase of the pipeline and the reads we get out from this step will be used for quantification and analysis.
         </p>
-        <b>Num Reads After Deduplication:</b> <br>
-        <b>Num Duplicate Reads:</b> <br>
+        <b>Number of Reads After Deduplication:</b> <br>
+        <b>Number of Duplicate Reads:</b> <br>
         <b>Total Reads Processed:</b> <br>
         <b>Inputs:</b> noRna_fwd.fq, noRna_rev.fq  <br>
         <b>Outputs:</b> fullyQc_fwd.fq, fullyQc_rev.fq <br> <br>
@@ -403,9 +403,9 @@ htmlCode = """
         <p>
             <b>Description:</b> Assemble our reads using megahit and identify unassembled/assembled reads.
         </p>
-        <b>Num Contigs Assembled:</b> <br>
-        <b>Num Reads Assembled into Contigs:</b> <br>
-        <b>Num Reads Unassembled:</b> <br>
+        <b>Number of Contigs Assembled:</b> <br>
+        <b>Number of Reads Assembled into Contigs:</b> <br>
+        <b>Number of Reads Unassembled:</b> <br>
         <b>Total Contig Bases:</b> <br>
         <b>Shortest Contig:</b> <br>
         <b>Longest Contig:</b> <br>
@@ -441,7 +441,7 @@ htmlCode = """
         <p>
             <b>Description:</b> Aligns the unassembled reads and contigs against the NCBI NT database using BLAST.
         </p>
-        <b>Num Unique BLAST Hits:</b> <br>
+        <b>Number of Unique BLAST Hits:</b> <br>
         <b>Inputs:</b> unassembled_reads_fwd.fq, unassembled_reads_rev.fq, megahit_out/final_contigs.fq (as combined_file.fa where the paired end reads are interleaved)  <br>
         <b>Outputs:</b> nt_alignments_file.tsv <br> <br>
         <div class="code_style">
@@ -461,7 +461,7 @@ htmlCode = """
         <p>
             <b>Description:</b> Use diamond to align the unassembled reads and contigs against an index of the NCBI NR database built using diamond.
         </p>
-        <b>Num Unique Diamond Hits:</b> <br>
+        <b>Number of Unique Diamond Hits:</b> <br>
         <b>Inputs:</b> unassembled_reads_fwd.fq, unassembled_reads_rev.fq, megahit_out/final_contigs.fq (as combined_file.fq where the paired end reads are interleaved)  <br>
         <b>Outputs:</b> nr_alignments_file.tsv <br> <br>
         <div class="code_style">
@@ -575,42 +575,42 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 continue
             curr[1] = curr[1].strip()
             if curr[0] == "Start":
-                htmlCode = htmlCode.replace("Num Reads at Start:</b> ", "Num Reads at Start:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads at Start:</b> ", "Number of Reads at Start:</b> " + str(curr[1]))
             if curr[0] == "Fastq":
-                htmlCode = htmlCode.replace("Num Reads After Fastq:</b> ", "Num Reads After Fastp:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads After Fastq:</b> ", "Number of Reads After Fastp:</b> " + str(curr[1]))
             if curr[0] == "lowQuality":
-                htmlCode = htmlCode.replace("Num Low Quality Reads:</b> ", "Num Low Quality Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Low Quality Reads:</b> ", "Number of Low Quality Reads:</b> " + str(curr[1]))
             if curr[0] == "Snap":
-                htmlCode = htmlCode.replace("Num Reads Remaining After Human Depletion:</b> ", "Num Reads Remaining After Human Depletion:</b> " + str(curr[1]))
-                htmlCode = htmlCode.replace("Num Reads Remaining After SNAP Command:</b> ", "Num Reads Remaining After SNAP Command:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Remaining After Human Depletion:</b> ", "Number of Reads Remaining After Human Depletion:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Remaining After SNAP Command:</b> ", "Number of Reads Remaining After SNAP Command:</b> " + str(curr[1]))
             if curr[0] == "Star":
-                htmlCode = htmlCode.replace("Num Reads Remaining After STAR Command:</b> ", "Num Reads Remaining After STAR Command:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Remaining After STAR Command:</b> ", "Number of Reads Remaining After STAR Command:</b> " + str(curr[1]))
             if curr[0] == "erccReadCounts":
-                htmlCode = htmlCode.replace("Num ERCC Reads Removed:</b> ", "Num ERCC Reads Removed:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of ERCC Reads Removed:</b> ", "Number of ERCC Reads Removed:</b> " + str(curr[1]))
             if curr[0] == "nonERCCHostReads":
-                htmlCode = htmlCode.replace("Num non-ERCC Host Reads:</b> ", "Num non-ERCC Host Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of non-ERCC Host Reads:</b> ", "Number of non-ERCC Host Reads:</b> " + str(curr[1]))
             if curr[0] == "Sortmerna":
-                htmlCode = htmlCode.replace("Num Reads After rRNA Depletion:</b> ", "Num Reads After rRNA Depletion:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads After rRNA Depletion:</b> ", "Number of Reads After rRNA Depletion:</b> " + str(curr[1]))
             if curr[0] == "nonHostRRNA":
-                htmlCode = htmlCode.replace("Num Non-host rRNA Reads:</b> ", "Num Non-host rRNA Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Non-host rRNA Reads:</b> ", "Number of Non-host rRNA Reads:</b> " + str(curr[1]))
             if curr[0] == "Clumpify":
-                htmlCode = htmlCode.replace("Num Reads After Deduplication:</b> ", "Num Reads After Deduplication:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads After Deduplication:</b> ", "Number of Reads After Deduplication:</b> " + str(curr[1]))
             if curr[0] == "duplicates":
-                htmlCode = htmlCode.replace("Num Duplicate Reads:</b> ", "Num Duplicate Reads:</b> " + str(curr[1]))
-            if curr[0] == "totalReads":
+                htmlCode = htmlCode.replace("Number of Duplicate Reads:</b> ", "Number of Duplicate Reads:</b> " + str(curr[1]))
+            if curr[0] == "totalReadsChecked":
                 htmlCode = htmlCode.replace("Total Reads Processed:</b> ", "Total Reads Processed:</b> " + str(curr[1]))
             if curr[0] == "numContigs":
-                htmlCode = htmlCode.replace("Num Contigs Assembled:</b> ", "Num Contigs Assembled:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Contigs Assembled:</b> ", "Number of Contigs Assembled:</b> " + str(curr[1]))
             if curr[0] == "numAssembledReads":
-                htmlCode = htmlCode.replace("Num Reads Assembled into Contigs:</b> ", "Num Reads Assembled into Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Assembled into Contigs:</b> ", "Number of Reads Assembled into Contigs:</b> " + str(curr[1]))
             if curr[0] == "numReadsUnassembled":
-                htmlCode = htmlCode.replace("Num Reads Unassembled:</b> ", "Num Reads Unassembled:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Unassembled:</b> ", "Number of Reads Unassembled:</b> " + str(curr[1]))
             if curr[0] == "totalContigsBases":
                 htmlCode = htmlCode.replace("Total Contig Bases:</b> ", "Total Contig Bases:</b> " + str(curr[1]))
             if curr[0] == "shortestContig":
-                htmlCode = htmlCode.replace("Shortest Contig:</b> ", "Shortest Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Shortest Contig:</b> ", "Shortest Contig Length:</b> " + str(curr[1]))
             if curr[0] == "longestContig":
-                htmlCode = htmlCode.replace("Longest Contig:</b> ", "Longest Contig:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Longest Contig:</b> ", "Longest Contig Length:</b> " + str(curr[1]))
             if curr[0] == "avgContigLength":
                 htmlCode = htmlCode.replace("Average Contig Length:</b> ", "Average Contig Length:</b> " + str(curr[1]))
             if curr[0] == "n50":
@@ -620,9 +620,9 @@ def generate_pipeline_summary(summaryFile, outputFile):
             if curr[0] == "numLongReadsUnassembled":
                 htmlCode = htmlCode.replace("Number of Unassembled Long Reads:</b> ", "Number of Unassembled Long Reads:</b> " + str(curr[1]))
             if curr[0] == "numUniqueNTHits":
-                htmlCode = htmlCode.replace("Num Unique BLAST Hits:</b> ", "Num Unique BLAST Hits:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unique BLAST Hits:</b> ", "Number of Unique BLAST Hits:</b> " + str(curr[1]))
             if curr[0] == "numUniqueNRHits":
-                htmlCode = htmlCode.replace("Num Unique Diamond Hits:</b> ", "Num Unique Diamond Hits:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unique Diamond Hits:</b> ", "Number of Unique Diamond Hits:</b> " + str(curr[1]))
             if curr[0] == "numBestNTHits":
                 htmlCode = htmlCode.replace("Number of Best Hits from the NT Alignment:</b> ", "Number of Best Hits from the NT Alignment:</b> " + str(curr[1]))
             if curr[0] == "numBestNRHits":
@@ -632,7 +632,7 @@ def generate_pipeline_summary(summaryFile, outputFile):
             if curr[0] == "numMappedContigs":
                 htmlCode = htmlCode.replace("Number of Contigs Successfully Aligned:</b> ", "Number of Contigs Successfully Aligned:</b> " + str(curr[1]))
             if curr[0] == "totalUniqueAccessions":
-                htmlCode = htmlCode.replace("Number of Unique Accessions</b> ", "Number of Unique Accessions</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unique Accessions</b> ", "Number of Unique Accessions:</b> " + str(curr[1]))
             if curr[0] == "numMappedAccessions":
                 htmlCode = htmlCode.replace("Number of Mapped Accessions:</b> ", "Number of Mapped Accessions:</b> " + str(curr[1]))
             if curr[0] == "numUniqueTaxids":
@@ -640,13 +640,13 @@ def generate_pipeline_summary(summaryFile, outputFile):
             if curr[0] == "numContigsWithTaxids":
                 htmlCode = htmlCode.replace("Number of Contigs with a Taxid:</b> ", "Number of Contigs with a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numUnassembledReadsWithTaxids":
-                htmlCode = htmlCode.replace("Number of Unassembled Reads with a Taxid</b> ", "Number of Unassembled Reads with a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Unassembled Reads with a Taxid</b> ", "Number of Unassembled Reads with a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numAssembledReadsWithTaxids":
-                htmlCode = htmlCode.replace("Number of Assembled Reads with a Taxid</b> ", "Number of Assembled Reads with a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Assembled Reads with a Taxid</b> ", "Number of Assembled Reads with a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numReadsWithTaxid":
-                htmlCode = htmlCode.replace("Number of Reads with a Taxid</b> ", "Number of Reads with a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads with a Taxid</b> ", "Number of Reads with a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numReadsWithoutTaxid":
-                htmlCode = htmlCode.replace("Number of Reads Not Mapped to a Taxid</b> ", "Number of Reads Not Mapped to a Taxid</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Not Mapped to a Taxid</b> ", "Number of Reads Not Mapped to a Taxid:</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithRankSpecies":
                 htmlCode = htmlCode.replace("Number of Taxid Lineages Successfully Identified:</b> ", "Number of Taxid Lineages Successfully Identified:</b> " + str(curr[1]))
             if curr[0] == "numTaxidsWithoutRankSpecies":
