@@ -20,6 +20,8 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
             print("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
             continue
 
+        all_taxids += [str(item) for item in curr_lineage_full]
+
         # a situation that we must consider is that some taxids may have been merged to another taxid
         # if addSubspeciesLineage is False, this will not be an issue because we will simply use our
         # taxid and overwrite the merged_taxid
@@ -79,7 +81,7 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
                 curr_lineage.append(str(rank_taxid))
             else:
                 if rank_taxid == curr_taxid:
-                    curr_lineage.append(str(curr_taxid)) 
+                    curr_lineage.append(str(curr_taxid))
                 else:
                     if addSubspeciesLineage is False:
                         curr_lineage.append(str(curr_taxid)) 
@@ -92,7 +94,7 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
                                 curr_lineage.append(str(curr_lineage_full[j])) 
                         except:
                             pass
-                        curr_lineage.append(str(curr_taxid)) 
+                        curr_lineage.append(str(curr_taxid))
 
         # previously, curr_lineage used to start with the abundance (read/tmp),
         # now it starts with the taxid of the highest level thing of the species
@@ -109,7 +111,7 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
                 curr_lineage_full = ncbi.get_lineage(curr_bad_taxid) # gets lineage of current taxid, returns only the its taxids
             except:
                 continue
-            all_species_lineages.append(curr_lineage_full)
+            all_species_lineages.append([str(item) for item in curr_lineage_full])
 
     # all_taxids will NEVER contain 'Unknown'
     sci_names = getScientificNames(all_taxids, taxdump_location) 
