@@ -385,7 +385,7 @@ def preprocessing(args: argparse.Namespace):
         align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
                                     " in=" + fullyQc1 +\
                                     " in2=" + fullyQc2 +\
-                                    " -out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
+                                    " out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
         
         start = time.time()
         run_shell_command(align_reads_to_contigs_cmd)
