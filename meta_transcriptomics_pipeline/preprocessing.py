@@ -379,38 +379,50 @@ def preprocessing(args: argparse.Namespace):
 
     run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
-    # we must retrieve the unaligned reads
-    reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
-    align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
-                                " in=" + fullyQc1 +\
-                                " in2=" + fullyQc2 +\
-                                " -out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
-    
-    start = time.time()
-    run_shell_command(align_reads_to_contigs_cmd)
-    end = time.time()
-    print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
+    if os.stat(contigs).st_size != 0:
+        # we must retrieve the unaligned reads
+        reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
+        align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
+                                    " in=" + fullyQc1 +\
+                                    " in2=" + fullyQc2 +\
+                                    " out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
+        
+        start = time.time()
+        run_shell_command(align_reads_to_contigs_cmd)
+        end = time.time()
+        print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
 
-    reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
-    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
+        reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
+        samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
 
-    start = time.time()
-    run_shell_command(samtools_sort_command)
-    end = time.time()
-    print("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
+        start = time.time()
+        run_shell_command(samtools_sort_command)
+        end = time.time()
+        print("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
 
-    # now lets retrieve the reads that did not align
-    unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
-    unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
+        # now lets retrieve the reads that did not align
+        unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
+        unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
 
-    # same principle here as the host mapping step
-    align_command = "samtools fastq -f 12 -1 " + unassembled_reads_fwd +\
-                    " -2 " + unassembled_reads_rev + " " + reads_mapped_to_contigs_file
-    
-    start = time.time()
-    run_shell_command(align_command)
-    end = time.time()
-    print("Retreiving the unassembled reads from the previous step took: " + str(end - start))
+        # same principle here as the host mapping step
+        align_command = "samtools fastq -f 12 -1 " + unassembled_reads_fwd +\
+                        " -2 " + unassembled_reads_rev + " " + reads_mapped_to_contigs_file
+        
+        start = time.time()
+        run_shell_command(align_command)
+        end = time.time()
+        print("Retreiving the unassembled reads from the previous step took: " + str(end - start))
+
+        # need to convert file above from fa to fq, simply done using seqtk
+        contigs_fq = megahit_out_path + "/final_contigs.fq"
+        seqtk_command = "seqtk" + " seq -F '#' " + contigs + " > " + contigs_fq
+        run_shell_command(seqtk_command)
+
+    else:
+        unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
+        unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
+        shutil.copyfile(fullyQc1, unassembled_reads_fwd)
+        shutil.copyfile(fullyQc2, unassembled_reads_rev)
 
     unassembled_reads_shorter_1 = dirpath + "/unassembled_reads_shorter_fwd.fq"
     unassembled_reads_shorter_2 = dirpath + "/unassembled_reads_shorter_rev.fq"
@@ -419,11 +431,6 @@ def preprocessing(args: argparse.Namespace):
 
     separate_reads_by_size(unassembled_reads_fwd, unassembled_reads_longer_1, unassembled_reads_shorter_1)
     separate_reads_by_size(unassembled_reads_rev, unassembled_reads_longer_2, unassembled_reads_shorter_2)
-
-    # need to convert file above from fa to fq, simply done using seqtk
-    contigs_fq = megahit_out_path + "/final_contigs.fq"
-    seqtk_command = "seqtk" + " seq -F '#' " + contigs + " > " + contigs_fq
-    run_shell_command(seqtk_command)
 
     # merge short reads, needed for blast alignment
     combined_file_sr_fq = dirpath + "/combined_sr_file.fq"
@@ -439,16 +446,22 @@ def preprocessing(args: argparse.Namespace):
     merged_pe = dirpath + "/merged_reads.fq"
     merge_command = "seqtk mergepe " + unassembled_reads_fwd + " " + unassembled_reads_rev + " > " + merged_pe
     run_shell_command(merge_command)
-
-    # merge pe reads with contigs
+    
     combined_file_fq = dirpath + "/combined_reads_contigs_file.fq"
-    run_shell_command("cat " + contigs_fq + " > " + combined_file_fq)
-    run_shell_command("cat " + merged_pe + " >> " + combined_file_fq)
 
+    if os.stat(contigs).st_size != 0:
+        # merge pe reads with contigs
+        run_shell_command("cat " + contigs_fq + " > " + combined_file_fq)
+        run_shell_command("cat " + merged_pe + " >> " + combined_file_fq)
+    else:
+        # if megahit failed, just runs merged_pe.
+        run_shell_command("cat " + merged_pe + " > " + combined_file_fq)
+        
     # need to convert above to fasta
     combined_file_fa = dirpath + "/combined_reads_contigs_file.fa"
     seqtk_command = "seqtk" + " seq -a " + combined_file_fq + " > " + combined_file_fa
     run_shell_command(seqtk_command)
+
 
     # creating alignment folder
     alignments_path = args.dirpath
