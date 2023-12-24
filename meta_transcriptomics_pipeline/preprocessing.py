@@ -377,9 +377,19 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("Assembly via megahit took: " + str(end - start))
 
+    # need to check a few things to see if megahit failed by looking at the last line of the log file
+    did_megahit_fail = False
+    log_path = megahit_out_path + "/log"
+    megahit_exit_message = subprocess.check_output('tail -n 1 ' + log_path, shell=True).decode('utf-8').strip('\n').replace("[","").replace("]","")
+
+    if "Exit code" in megahit_exit_message:
+        megahit_exit_status = megahit_exit_message.split(" ")[2]
+        if megahit_exit_status.isnumeric() and int(megahit_exit_status) != 0:
+            did_megahit_fail = True
+
     run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
 
-    if os.stat(contigs).st_size != 0:
+    if did_megahit_fail is False:
         # we must retrieve the unaligned reads
         reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
         align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
@@ -449,7 +459,7 @@ def preprocessing(args: argparse.Namespace):
     
     combined_file_fq = dirpath + "/combined_reads_contigs_file.fq"
 
-    if os.stat(contigs).st_size != 0:
+    if did_megahit_fail is False:
         # merge pe reads with contigs
         run_shell_command("cat " + contigs_fq + " > " + combined_file_fq)
         run_shell_command("cat " + merged_pe + " >> " + combined_file_fq)
@@ -535,26 +545,33 @@ def preprocessing(args: argparse.Namespace):
     totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numDuplicates + numReadsAfterClumpify
     summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
 
-    log_path = megahit_out_path + "/log"
-    assemblyStats = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')
+    if did_megahit_fail is False:
+        assemblyStats = subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')
 
-    numContigs = assemblyStats[2]
-    summaryFileWriter.write("numContigs\t" + str(numContigs) + "\n")
+        numContigs = assemblyStats[2]
+        summaryFileWriter.write("numContigs\t" + str(numContigs) + "\n")
 
-    totalBases = assemblyStats[5]
-    summaryFileWriter.write("totalContigsBases\t" + str(totalBases) + "\n")
+        totalBases = assemblyStats[5]
+        summaryFileWriter.write("totalContigsBases\t" + str(totalBases) + "\n")
 
-    shortestContig = assemblyStats[8]
-    summaryFileWriter.write("shortestContig\t" + str(shortestContig) + "\n")
-    
-    longestContig = assemblyStats[11]
-    summaryFileWriter.write("longestContig\t" + str(longestContig) + "\n")
+        shortestContig = assemblyStats[8]
+        summaryFileWriter.write("shortestContig\t" + str(shortestContig) + "\n")
+        
+        longestContig = assemblyStats[11]
+        summaryFileWriter.write("longestContig\t" + str(longestContig) + "\n")
 
-    avgContigLength = assemblyStats[14]
-    summaryFileWriter.write("avgContigLength\t" + str(avgContigLength) + "\n")
+        avgContigLength = assemblyStats[14]
+        summaryFileWriter.write("avgContigLength\t" + str(avgContigLength) + "\n")
 
-    n50 = assemblyStats[17]
-    summaryFileWriter.write("n50\t" + str(n50) + "\n")
+        n50 = assemblyStats[17]
+        summaryFileWriter.write("n50\t" + str(n50) + "\n")
+    else:
+        summaryFileWriter.write("numContigs\t" + "N/A" + "\n")
+        summaryFileWriter.write("totalContigsBases\t" + "N/A" + "\n")
+        summaryFileWriter.write("shortestContig\t" + "N/A" + "\n")
+        summaryFileWriter.write("longestContig\t" + "N/A" + "\n")
+        summaryFileWriter.write("avgContigLength\t" + "N/A" + "\n")
+        summaryFileWriter.write("n50\t" + "N/A" + "\n")
 
     # will retreive numAssembledContigs at the finalisation step
     numLongReadsUnassembled = countNumSeqs(unassembled_reads_longer_1, False)
