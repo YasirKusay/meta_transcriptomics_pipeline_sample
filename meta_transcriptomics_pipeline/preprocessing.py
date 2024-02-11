@@ -8,7 +8,7 @@ import json
 import shutil
 import numpy as np
 import matplotlib.pyplot as plt
-from meta_transcriptomics_pipeline.helpers import run_shell_command
+from meta_transcriptomics_pipeline.helpers import run_shell_command, check_megahit_success
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 from meta_transcriptomics_pipeline.count_num_lines import countNumSeqs
@@ -385,14 +385,8 @@ def preprocessing(args: argparse.Namespace):
     print("Assembly via megahit took: " + str(end - start))
 
     # need to check a few things to see if megahit failed by looking at the last line of the log file
-    did_megahit_fail = False
     log_path = megahit_out_path + "/log"
-    megahit_exit_message = subprocess.check_output('tail -n 1 ' + log_path, shell=True).decode('utf-8').strip('\n').replace("[","").replace("]","")
-
-    if "Exit code" in megahit_exit_message:
-        megahit_exit_status = megahit_exit_message.split(" ")[2]
-        if megahit_exit_status.isnumeric() and int(megahit_exit_status) != 0:
-            did_megahit_fail = True
+    did_megahit_fail = False if check_megahit_success(log_path) == True else True # a bit confusing
 
     unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
     unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"

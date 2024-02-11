@@ -2,7 +2,7 @@ import argparse
 import time
 import os
 import shutil
-from meta_transcriptomics_pipeline.helpers import run_shell_command
+from meta_transcriptomics_pipeline.helpers import run_shell_command, check_megahit_success
 from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
 
 def minimap2_contigs(args: argparse.Namespace):
@@ -15,6 +15,14 @@ def minimap2_contigs(args: argparse.Namespace):
 
     if os.path.isdir(tempdir):
         shutil.rmtree(tempdir)
+
+    # I want to stop this step without stopping the pipeline itself if megahit failed
+    # I did it this way as a temporary solution as I would otherwise need to rewrite
+    # The submission scripts (it is too difficult to to update given there are multiple)
+    # Copies of it
+    if check_megahit_success(contig_path + "/log") == False:
+        print("Skipping minimap2_contigs as megahit had failed.")
+        return
 
     os.mkdir(tempdir)
 

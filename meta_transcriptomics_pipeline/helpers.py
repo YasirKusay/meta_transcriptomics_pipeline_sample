@@ -36,3 +36,13 @@ def generate_temp_file(extension, working_dir):
 def delete_temp_files(files):
     for file in files:
         os.remove(file)
+
+def check_megahit_success(log): 
+    megahit_exit_message = subprocess.check_output('tail -n 1 ' + log, shell=True).decode('utf-8').strip('\n').replace("[","").replace("]","")
+
+    if "Exit code" in megahit_exit_message:
+        megahit_exit_status = megahit_exit_message.split(" ")[2]
+        if megahit_exit_status.isnumeric() and int(megahit_exit_status) != 0:
+            return False
+    
+    return True
