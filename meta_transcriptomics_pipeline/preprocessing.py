@@ -380,7 +380,7 @@ def preprocessing(args: argparse.Namespace):
     contigs = megahit_out_path + "/final_contigs.fa"
 
     start = time.time()
-    run_shell_command(megahit_command)
+    subprocess.run(megahit_command, shell=True) # running it this method as our normal method will exit if megahit failed
     end = time.time()
     print("Assembly via megahit took: " + str(end - start))
 
@@ -394,9 +394,11 @@ def preprocessing(args: argparse.Namespace):
         if megahit_exit_status.isnumeric() and int(megahit_exit_status) != 0:
             did_megahit_fail = True
 
-    run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
+    unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
+    unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
 
     if did_megahit_fail is False:
+        run_shell_command("mv " + megahit_out_path + "/final.contigs.fa " + contigs)
         # we must retrieve the unaligned reads
         reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
         align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
@@ -418,8 +420,6 @@ def preprocessing(args: argparse.Namespace):
         print("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
 
         # now lets retrieve the reads that did not align
-        unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
-        unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
 
         # same principle here as the host mapping step
         align_command = "samtools fastq -f 12 -1 " + unassembled_reads_fwd +\
@@ -436,8 +436,6 @@ def preprocessing(args: argparse.Namespace):
         run_shell_command(seqtk_command)
 
     else:
-        unassembled_reads_fwd = dirpath + "/unassembled_reads_fwd.fq"
-        unassembled_reads_rev = dirpath + "/unassembled_reads_rev.fq"
         shutil.copyfile(fullyQc1, unassembled_reads_fwd)
         shutil.copyfile(fullyQc2, unassembled_reads_rev)
 
