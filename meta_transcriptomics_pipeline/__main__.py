@@ -115,6 +115,15 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
+        "--nucleic_acid",
+        type=str,
+        default="RNA",
+        choices=["DNA", "RNA"],
+        default=multiprocessing.cpu_count(),
+        help="The nucleic acid type of the input. Must be either DNA or RNA."
+    )
+
+    parser_preprocessing.add_argument(
         "--memory",
         type=int,
         default=16,

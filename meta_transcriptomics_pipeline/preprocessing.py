@@ -321,17 +321,23 @@ def preprocessing(args: argparse.Namespace):
 		            " --paired_in TRUE" +\
                     " --workdir " + dirpath + "/sortmerna" # default path is home, if more than one workdir folder exists, the program will fail
 
-    start = time.time()
-    run_shell_command(sortmerna_command)
-    end = time.time()
-    print("Sortmerna rRNA depletion took: " + str(end - start))
+    if args.nucleic_acid == "RNA":
+        start = time.time()
+        run_shell_command(sortmerna_command)
+        end = time.time()
+        print("Sortmerna rRNA depletion took: " + str(end - start))
+        clumpifyIn1 = noRna1
+        clumpifyIn2 = noRna2
+    else:
+        clumpifyIn1 = host_subtract_1
+        clumpifyIn2 = host_subtract_2
 
     #################################### CLUMPIFY DEDUP #######################
 
     fullyQc1 = dirpath + "/fullyQc_fwd.fq"
     fullyQc2 = dirpath + "/fullyQc_rev.fq"
 
-    clumpify_command = "clumpify.sh  in1=" + noRna1 + " in2=" + noRna2 +\
+    clumpify_command = "clumpify.sh  in1=" + clumpifyIn1 + " in2=" + clumpifyIn2 +\
                             " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t &> " + dirpath + "/clumpify.log" + " -Xmx" + str(args.memory) + "g"
     
     start = time.time()
@@ -533,10 +539,14 @@ def preprocessing(args: argparse.Namespace):
         numDuplicates = 0
         for line in f:
             if "Reads In:" in line:
-                numReadsAfterSortmerna = int(int(line.split(":")[1].strip())/2)
-                nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
-                summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
-                summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
+                if args.nucleuc_acid == "RNA":
+                    numReadsAfterSortmerna = int(int(line.split(":")[1].strip())/2)
+                    nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
+                    summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+                    summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
+                else:
+                    summaryFileWriter.write("Sortmerna\t" + "N/A" + "\n")
+                    summaryFileWriter.write("nonHostRRNA\t" + "N/A" + "\n")
             if "Reads Out:" in line:
                 numReadsAfterClumpify = int(int(line.split(":")[1].strip())/2)
                 numDuplicates = numReadsAfterSortmerna - numReadsAfterClumpify
@@ -592,7 +602,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
                   snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab", 
-                  aligned + "_fwd.fq", aligned + "_rev.fq"]:
+                  aligned + "_fwd.fq", aligned + "_rev.fq", dirpath + "/star_host_Aligned.ERCC_only.out.sam"]:
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
         zip_command = "pigz " + toZip + " -p " + str(args.threads)
