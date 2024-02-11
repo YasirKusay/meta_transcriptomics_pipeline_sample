@@ -159,7 +159,8 @@ def preprocessing(args: argparse.Namespace):
                     regions.append(curr[0])
 
             run_shell_command("samtools index " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-            erccReadCounts = int(int(subprocess.check_output("samtools view -c -F 12 " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam " + " ".join(regions), shell=True).decode('utf-8').strip('\n').split(' ')[0])/2)
+            run_shell_command("samtools view -F 260 " + dirpath + "/star_host_Aligned.sortedByCoord.out.sam " + " ".join(regions) + " -o " + dirpath + "/star_host_Aligned.ERCC_only.out.sam")
+            erccReadCounts = int(subprocess.check_output("cut -f 1 " + dirpath + "/star_host_Aligned.ERCC_only.out.sam" + " | sort -k 1 | uniq | wc -l", shell=True).decode('utf-8').strip())
 
             # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
             with open(args.ercc_expected_concentration) as f:
