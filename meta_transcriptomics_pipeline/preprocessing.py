@@ -159,7 +159,7 @@ def preprocessing(args: argparse.Namespace):
                     regions.append(curr[0])
 
             run_shell_command("samtools index " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-            run_shell_command("samtools view -F 260 " + dirpath + "/star_host_Aligned.sortedByCoord.out.sam " + " ".join(regions) + " -o " + dirpath + "/star_host_Aligned.ERCC_only.out.sam")
+            run_shell_command("samtools view -F 260 " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam " + " ".join(regions) + " -o " + dirpath + "/star_host_Aligned.ERCC_only.out.sam")
             erccReadCounts = int(subprocess.check_output("cut -f 1 " + dirpath + "/star_host_Aligned.ERCC_only.out.sam" + " | sort -k 1 | uniq | wc -l", shell=True).decode('utf-8').strip())
 
             # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
@@ -527,12 +527,14 @@ def preprocessing(args: argparse.Namespace):
     # go through clumpify log file
     with open(dirpath + "/clumpify.log", "r") as f:
         numReadsAfterSortmerna = 0
+        numInputReads = 0
         nonHostRRNA = 0
         numDuplicates = 0
         for line in f:
             if "Reads In:" in line:
-                if args.nucleuc_acid == "RNA":
-                    numReadsAfterSortmerna = int(int(line.split(":")[1].strip())/2)
+                numInputReads = int(int(line.split(":")[1].strip())/2)
+                if args.nucleic_acid == "RNA":
+                    numReadsAfterSortmerna = numInputReads
                     nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
                     summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
                     summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
@@ -541,7 +543,7 @@ def preprocessing(args: argparse.Namespace):
                     summaryFileWriter.write("nonHostRRNA\t" + "N/A" + "\n")
             if "Reads Out:" in line:
                 numReadsAfterClumpify = int(int(line.split(":")[1].strip())/2)
-                numDuplicates = numReadsAfterSortmerna - numReadsAfterClumpify
+                numDuplicates = numInputReads - numReadsAfterClumpify
                 summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
                 summaryFileWriter.write("duplicates\t" + str(numDuplicates) + "\n")
 

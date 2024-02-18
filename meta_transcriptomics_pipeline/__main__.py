@@ -119,7 +119,6 @@ def parse_args():
         type=str,
         default="RNA",
         choices=["DNA", "RNA"],
-        default=multiprocessing.cpu_count(),
         help="The nucleic acid type of the input. Must be either DNA or RNA."
     )
 
