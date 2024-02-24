@@ -84,6 +84,7 @@ def preprocessing(args: argparse.Namespace):
                     " --in2 " + args.inp2 +\
                     " --out1 " + qc1 +\
                     " --out2 " + qc2 +\
+                    " --dedup " +\
                     " --json " + fastp_json +\
                     " -b " + args.read_length + " -B " + args.read_length +\
                     " --qualified_quality_phred  " + args.qualified_quality_phred +\
@@ -297,9 +298,9 @@ def preprocessing(args: argparse.Namespace):
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
-    noRna = dirpath + "/noRrna"
-    noRna1 = dirpath + "/noRrna_fwd.fq"
-    noRna2 = dirpath + "/noRrna_rev.fq"
+    fullyQc1 = dirpath + "/fullyQc_fwd.fq"
+    fullyQc2 = dirpath + "/fullyQc_rev.fq"
+    noRna = dirpath + "/fullyQc"
 
     # sortmerna index files are generated in the home directory by default, 
     # need to delete this as sortmerna will fail if this directory exists
@@ -326,24 +327,9 @@ def preprocessing(args: argparse.Namespace):
         run_shell_command(sortmerna_command)
         end = time.time()
         print("Sortmerna rRNA depletion took: " + str(end - start))
-        clumpifyIn1 = noRna1
-        clumpifyIn2 = noRna2
     else:
-        clumpifyIn1 = host_subtract_1
-        clumpifyIn2 = host_subtract_2
-
-    #################################### CLUMPIFY DEDUP #######################
-
-    fullyQc1 = dirpath + "/fullyQc_fwd.fq"
-    fullyQc2 = dirpath + "/fullyQc_rev.fq"
-
-    clumpify_command = "clumpify.sh  in1=" + clumpifyIn1 + " in2=" + clumpifyIn2 +\
-                            " out1=" + fullyQc1 + " out2=" + fullyQc2 + " dedupe=t &> " + dirpath + "/clumpify.log" + " -Xmx" + str(args.memory) + "g"
-    
-    start = time.time()
-    run_shell_command(clumpify_command)
-    end = time.time()
-    print("Deduplication via clumpify took: " + str(end - start))
+        shutil.copy(host_subtract_1, fullyQc1)
+        shutil.copy(host_subtract_2, fullyQc2)
 
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
     '''
@@ -471,7 +457,6 @@ def preprocessing(args: argparse.Namespace):
     seqtk_command = "seqtk" + " seq -a " + combined_file_fq + " > " + combined_file_fa
     run_shell_command(seqtk_command)
 
-
     # creating alignment folder
     alignments_path = args.dirpath
 
@@ -494,6 +479,7 @@ def preprocessing(args: argparse.Namespace):
 
     numReadsAtStart = 0
     numReadsAfterFastq = 0
+    duplicates = 0
 
     start = time.time()
 
@@ -501,10 +487,12 @@ def preprocessing(args: argparse.Namespace):
         fastp_data = json.load(fp_json)
         numReadsAtStart = int(fastp_data["summary"]["before_filtering"]["total_reads"]/2)
         numReadsAfterFastq = int(fastp_data["summary"]["after_filtering"]["total_reads"]/2)
+        duplicates = int(fastp_data["duplication"]["rate"])
 
     summaryFileWriter.write("Start\t" + str(numReadsAtStart) + "\n")
     summaryFileWriter.write("Fastq\t" + str(numReadsAfterFastq) + "\n")
     summaryFileWriter.write("lowQuality\t" + str(numReadsAtStart - numReadsAfterFastq) + "\n")
+    summaryFileWriter.write("duplicates\t" + str(duplicates) + "\n")
     
     numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
     summaryFileWriter.write("Star\t" + str(numReadsAfterStar) + "\n")
@@ -524,30 +512,16 @@ def preprocessing(args: argparse.Namespace):
 
     summaryFileWriter.write("nonERCCHostReads\t" + str(nonERCCHostReads) + "\n")
 
-    # go through clumpify log file
-    with open(dirpath + "/clumpify.log", "r") as f:
-        numReadsAfterSortmerna = 0
-        numInputReads = 0
-        nonHostRRNA = 0
-        numDuplicates = 0
-        for line in f:
-            if "Reads In:" in line:
-                numInputReads = int(int(line.split(":")[1].strip())/2)
-                if args.nucleic_acid == "RNA":
-                    numReadsAfterSortmerna = numInputReads
-                    nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
-                    summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
-                    summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
-                else:
-                    summaryFileWriter.write("Sortmerna\t" + "N/A" + "\n")
-                    summaryFileWriter.write("nonHostRRNA\t" + "N/A" + "\n")
-            if "Reads Out:" in line:
-                numReadsAfterClumpify = int(int(line.split(":")[1].strip())/2)
-                numDuplicates = numInputReads - numReadsAfterClumpify
-                summaryFileWriter.write("Clumpify\t" + str(numReadsAfterClumpify) + "\n")
-                summaryFileWriter.write("duplicates\t" + str(numDuplicates) + "\n")
+    numReadsAfterSortmerna = "N/A"
+    nonHostRRNA = 0
+    numGoodReads = countNumSeqs(fullyQc1, False)
+    if args.nucleic_acid == "RNA":
+        numReadsAfterSortmerna = numGoodReads
+        nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
 
-    totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numDuplicates + numReadsAfterClumpify
+    summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+
+    totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numGoodReads
     summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
 
     if did_megahit_fail is False:
@@ -595,7 +569,7 @@ def preprocessing(args: argparse.Namespace):
     # no need to check for errors
     start = time.time()
     for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, host_subtract_1, host_subtract_2, host_spare, 
-                  snap_host_mapping, noRna1, noRna2, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab", 
+                  snap_host_mapping, dirpath + "/star_host_ReadsPerGene.out.tab", dirpath + "/star_host_SJ.out.tab", 
                   aligned + "_fwd.fq", aligned + "_rev.fq", dirpath + "/star_host_Aligned.ERCC_only.out.sam"]:
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
