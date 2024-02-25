@@ -294,16 +294,18 @@ htmlCode = """
     <div class="info" id="qc_info">
         <h1 style="text-align: center;">Quality Control</h1>
         <p>
-            <b>Description:</b> This step uses Fastp to remove reads that have low quality, low complexity or are too short (less than 50bp). It also strips away the adapters.
+            <b>Description:</b> This step uses Fastp to remove reads that have low quality, low complexity or are too short (less than 50bp). It also strips away the adapters and any duplicate read pairs.
         </p>
         <b>Number of Reads After Fastq:</b> <br>
         <b>Number of Low Quality Reads:</b> <br>
+        <b>Duplication Rate:</b> <br>
         <b>Outputs:</b> fastp_1.fastq, fastp_2.fastq <br> <br>
         <div class="code_style">
             <code>
                 fastp --in1 input1.fastq.gz --in2 input2.fastq.gz \​ <br>
                 --out1 fastp_1.fastq --out2 fastp_1.fastq \​ <br>
                 -b 100 -B 100 \​ <br>
+                --dedup \​ <br>
                 --qualified_quality_phred 15 \​ <br>
                 --unqualified_percent_limit 45 \​ <br>
                 --length_required 50 \​ <br>
@@ -381,28 +383,12 @@ htmlCode = """
             </code>
         </div>
     </div>
-    <div class="info" id="deduplication_info">
-        <h1 style="text-align: center;">Deduplication</h1>
-        <p>
-            <b>Description:</b> Remove duplicate sequences, these may have been the same read amplified multiple times during PCR. This is the final step in the quality control phase of the pipeline and the reads we get out from this step will be used for quantification and analysis.
-        </p>
-        <b>Number of Reads After Deduplication:</b> <br>
-        <b>Number of Duplicate Reads:</b> <br>
-        <b>Total Reads Processed:</b> <br>
-        <b>Inputs:</b> noRna_fwd.fq, noRna_rev.fq  <br>
-        <b>Outputs:</b> fullyQc_fwd.fq, fullyQc_rev.fq <br> <br>
-        <div class="code_style">
-            <code>
-                clumpify.sh in1=noRna_fwd.fq in2=noRna_rev.fq \​ <br>
-                out1=fullyQc_fwd.fq out2=fullyQc_rev.fq dedupe=t​ <br>
-            </code>
-        </div>
-    </div>
     <div class="info" id="assembly_info">
         <h1 style="text-align: center;">Assembly</h1>
         <p>
             <b>Description:</b> Assemble our reads using megahit and identify unassembled/assembled reads.
         </p>
+        <b>Total Reads Processed Just Before this Point:</b> <br>
         <b>Number of Contigs Assembled:</b> <br>
         <b>Number of Reads Assembled into Contigs:</b> <br>
         <b>Number of Reads Unassembled:</b> <br>
@@ -593,12 +579,10 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 htmlCode = htmlCode.replace("Number of Reads After rRNA Depletion:</b> ", "Number of Reads After rRNA Depletion:</b> " + str(curr[1]))
             if curr[0] == "nonHostRRNA":
                 htmlCode = htmlCode.replace("Number of Non-host rRNA Reads:</b> ", "Number of Non-host rRNA Reads:</b> " + str(curr[1]))
-            if curr[0] == "Clumpify":
-                htmlCode = htmlCode.replace("Number of Reads After Deduplication:</b> ", "Number of Reads After Deduplication:</b> " + str(curr[1]))
             if curr[0] == "duplicates":
-                htmlCode = htmlCode.replace("Number of Duplicate Reads:</b> ", "Number of Duplicate Reads:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Duplication Rate:</b> ", "Duplication Rate:</b> " + str(curr[1]))
             if curr[0] == "totalReadsChecked":
-                htmlCode = htmlCode.replace("Total Reads Processed:</b> ", "Total Reads Processed:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Total Reads Processed Just Before this Point:</b> ", "Total Reads Processed Just Before this Point:</b> " + str(curr[1]))
             if curr[0] == "numContigs":
                 htmlCode = htmlCode.replace("Number of Contigs Assembled:</b> ", "Number of Contigs Assembled:</b> " + str(curr[1]))
             if curr[0] == "numAssembledReads":

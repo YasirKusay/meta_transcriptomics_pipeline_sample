@@ -513,13 +513,17 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.write("nonERCCHostReads\t" + str(nonERCCHostReads) + "\n")
 
     numReadsAfterSortmerna = "N/A"
-    nonHostRRNA = 0
+    nonHostRRNA = "N/A"
     numGoodReads = countNumSeqs(fullyQc1, False)
     if args.nucleic_acid == "RNA":
         numReadsAfterSortmerna = numGoodReads
         nonHostRRNA = numReadsAfterSnap - numReadsAfterSortmerna
 
     summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
+    summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
+
+    if nonHostRRNA == "N/A":
+        nonHostRRNA = 0
 
     totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numGoodReads
     summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
