@@ -48,10 +48,9 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
-        "snap_host_index",
+        "kraken2_host_index",
         type=str,
-        help="Path to the pre-built SNAP host index folder. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via SNAP.\n" +\
-        "SNAP generates a folder containing the index and the path to this folder needs to be specified."
+        help="Path to the pre-built KRAKEN2 host index folder. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via KRAKEN2.\n"
     )
 
     parser_preprocessing.add_argument(

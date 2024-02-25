@@ -320,16 +320,25 @@ htmlCode = """
     </div>
     <div class="info" id="human_subtraction_info">
         <h1 style="text-align: center;">Human Subtraction</h1>
-        <b>Description:</b> This step removes human sequences from the library. It uses STAR to align the library against an index of the HG38 assembly built using STAR and we extract the reads that failed to map (i.e. the non-human reads). To maximise the amount of reads removed, this step is repeated using SNAP to align the remaining reads against the HG38 index built using SNAP. <br> <br>
+        <b>Description:</b> This step removes human sequences from the library. It uses Kraken2 to align the library against a combined index of the HG38 library plus the ERCC library to remove as many reads as possible for the next step which is more intensive. STAR then removes any remaining nonhuman reads with an index built from the HG38 library. <br> <br>
         <b>Number of Reads Remaining After Human Depletion:</b> <br>
+        <b>Number of Reads Remaining After Kraken2 Command:</b> <br>
         <b>Number of Reads Remaining After STAR Command:</b> <br>
-        <b>Number of Reads Remaining After SNAP Command:</b> <br>
         <b>Number of ERCC Reads Removed:</b> <br>
         <b>Number of non-ERCC Host Reads:</b> <br>
         <b>Inputs:</b> fastp_1.fastq, fastp_2.fastq <br>
         <b>Outputs:</b> host_depleted1.fastq, host_depleted2.fastq <br> <br>
         <div class="code_style">
             <code>
+                # Kraken2 <br> <br>
+                kraken2 --db kraken2_ercc_host_db \​ <br>
+                --report kraken2.nonhuman.report \​ <br>
+                --output kraken2.nonhuman.output \​ <br>
+                --use-mpa-style \​ <br>
+                --paired fastp_1.fastq fastp_2.fastq \​ <br>
+                --unclassified-out kraken2_nonhuman_#.fastq \​ <br>
+                --threads N <br> <br>
+
                 # STAR ALIGNMENT <br>
                 # The STAR step outputs the reads that failed to map (the nonhuman reads) into star_host_Unmapped_1/2.fastq<br> <br>
                 STAR --genomeDir (star_host_index) \​ <br>
@@ -345,38 +354,23 @@ htmlCode = """
                 --quantMode TranscriptomeSAM GeneCounts \​ <br>
                 --clip3pNbases 0 \​ <br>
                 --runThreadN N <br> <br>
-
-                # SNAP ALIGNMENT <br>
-                snap-aligner paired (snap_host_index) \ ​<br>
-                star_host_Unmapped_1.fastq star_host_Unmapped_2.fastq \​ <br>
-                 -o snap_host_mapped.bam -t N + -I <br> <br>
-
-                # USE SAMTOOLS TO RETREIVE UNALIGNED READS FROM SNAP OUTPUT <br> <br>
-                samtools fastq -f 12 -@ N \​ <br>
-                -1 host_depleted1.fastq \​ <br>
-                -2 host_depleted2.fastq \​ <br>
-                -s undetermined.fastq \​ <br>
-                snap_host_mapped.bam <br> <br>
             </code>
         </div>
-        <p>
-            <b>Explanation of Code:</b> In samtools fastq, -f 12 means we want to use filtering option 12 to remove reads where both pairs failed to map. This means we want to filter out reads that failed to align (4) and mates that failed to map (8). Hence 4 + 8 = 12.
-        </p>
     </div>
     <div class="info" id="rrna_depletion_info">
         <h1 style="text-align: center;">rRNA Depletion</h1>
         <b>Description:</b> This step removed any rRNA reads from the library by aligning them against the "default" sortmerna database available from <a href="https://github.com/sortmerna/sortmerna/releases">here</a>. It is important to run this step after the human read depletion step as sortmerna is very slow and RAM hungry, hence removing as much reads as possible prior to this step will increase performance. <br> <br>
         <b>Number of Reads After rRNA Depletion:</b> <br>
         <b>Number of Non-host rRNA Reads:</b> <br>
-        <b>Inputs:</b> host_depleted1.fastq, host_depleted2.fastq  <br>
-        <b>Outputs:</b> noRna_fwd.fq, noRna_rev.fq <br> <br>
+        <b>Inputs:</b> star_host_Unmapped_1.fastq, star_host_Unmapped_2.fastq  <br>
+        <b>Outputs:</b> fullyQc_fwd.fq, fullyQc_rev.fq <br> <br>
         <div class="code_style">
             <code>
                 sortmerna --ref (sortmerna_rrna_database) \​ <br>
                 --fastx \​ <br>
                 --aligned aligned \​ <br>
-                --other noRrna \​ <br>
-                --reads host_depleted1.fastq --reads host_depleted2.fastq \​ <br>             
+                --other fullyQc \​ <br>
+                --reads star_host_Unmapped_1.fastq --reads star_host_Unmapped_2.fastq \​ <br>             
                 --out2 TRUE \​ <br>
                 --paired_in TRUE \​ <br>
                 --threads N \ <br>
@@ -566,11 +560,11 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 htmlCode = htmlCode.replace("Number of Reads After Fastq:</b> ", "Number of Reads After Fastp:</b> " + str(curr[1]))
             if curr[0] == "lowQuality":
                 htmlCode = htmlCode.replace("Number of Low Quality Reads:</b> ", "Number of Low Quality Reads:</b> " + str(curr[1]))
-            if curr[0] == "Snap":
-                htmlCode = htmlCode.replace("Number of Reads Remaining After Human Depletion:</b> ", "Number of Reads Remaining After Human Depletion:</b> " + str(curr[1]))
-                htmlCode = htmlCode.replace("Number of Reads Remaining After SNAP Command:</b> ", "Number of Reads Remaining After SNAP Command:</b> " + str(curr[1]))
             if curr[0] == "Star":
+                htmlCode = htmlCode.replace("Number of Reads Remaining After Human Depletion:</b> ", "Number of Reads Remaining After Human Depletion:</b> " + str(curr[1]))
                 htmlCode = htmlCode.replace("Number of Reads Remaining After STAR Command:</b> ", "Number of Reads Remaining After STAR Command:</b> " + str(curr[1]))
+            if curr[0] == "Kraken2_Human":
+                htmlCode = htmlCode.replace("Number of Reads Remaining After Kraken2 Command:</b> ", "Number of Reads Remaining After Kraken2 Command:</b> " + str(curr[1]))
             if curr[0] == "erccReadCounts":
                 htmlCode = htmlCode.replace("Number of ERCC Reads Removed:</b> ", "Number of ERCC Reads Removed:</b> " + str(curr[1]))
             if curr[0] == "nonERCCHostReads":
