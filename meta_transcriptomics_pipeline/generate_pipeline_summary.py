@@ -183,11 +183,6 @@ htmlCode = """
                     rRNA Depletion
                 </div>
             </div>
-            <div class="box" id="deduplication">
-                <div class="box_text">
-                    Deduplication
-                </div>
-            </div>
             <div class="box" id="assembly">
                 <div class="box_text">
                     Assembly

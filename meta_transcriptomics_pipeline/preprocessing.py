@@ -360,6 +360,7 @@ def preprocessing(args: argparse.Namespace):
         # we must retrieve the unaligned reads
         reads_mapped_to_contigs_file_unsorted = dirpath + "/reads_mapped_to_contigs_unsorted.sam"
         align_reads_to_contigs_cmd = "bbwrap.sh" + " ref=" + contigs +\
+                                    " path=" + dirpath + "/." + \
                                     " in=" + fullyQc1 +\
                                     " in2=" + fullyQc2 +\
                                     " out=" + reads_mapped_to_contigs_file_unsorted + " -Xmx" + str(args.memory) + "g"
