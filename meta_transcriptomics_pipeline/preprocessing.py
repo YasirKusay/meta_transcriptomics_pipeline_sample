@@ -487,7 +487,8 @@ def preprocessing(args: argparse.Namespace):
     if erccReadCounts is None:
         erccReadCounts = 0
     
-    nonERCCHostReads = (numReadsAfterFastq - numReadsAfterStar - erccReadCounts) + (numReadsAfterKraken - numReadsAfterStar)
+    #nonERCCHostReads = (numReadsAfterFastq - numReadsAfterStar - erccReadCounts) + (numReadsAfterKraken - numReadsAfterStar)
+    nonERCCHostReads = (numReadsAfterFastq - numReadsAfterKraken) + (numReadsAfterKraken - numReadsAfterStar - erccReadCounts) # first gets number of reads removed by kraken, next gets number of reads removed by STAR, that are nonERCC
 
     summaryFileWriter.write("nonERCCHostReads\t" + str(nonERCCHostReads) + "\n")
 
