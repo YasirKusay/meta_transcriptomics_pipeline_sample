@@ -50,7 +50,7 @@ def parse_args():
     parser_preprocessing.add_argument(
         "kraken2_host_index",
         type=str,
-        help="Path to the pre-built KRAKEN2 host index folder. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via KRAKEN2.\n"
+        help="Path to the pre-built KRAKEN2 host index folder. The complete host genome needs to be indexed. For the human genome, we used the HPRC reference that is available from: https://zenodo.org/records/8339732.\n"
     )
 
     parser_preprocessing.add_argument(

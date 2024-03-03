@@ -101,6 +101,23 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("Fastp took: " + str(end - start))
 
+    prinseq1 = dirpath + "prinseq_lc_good_out_R1.fastq"
+    prinseq2 = dirpath + "prinseq_lc_good_out_R2.fastq"
+    prinseq_s_1 = dirpath + "prinseq_lc_single_out_R1.fastq"
+    prinseq_s_2 = dirpath + "prinseq_lc_single_out_R2.fastq"
+    prinseq_bad_1 = dirpath + "prinseq_lc_bad_out_R1.fastq"
+    prinseq_bad_2 = dirpath + "prinseq_lc_bad_out_R2.fastq"
+
+    prinseq_command = "prinseq++" +\
+                      " -fastq " + qc1 +\
+                      " -fastq2 " + qc2 +\
+                      " -lc_dust 0.07 " +\
+                      " -out_name " + dirpath + "prinseq_lc"
+    
+    start = time.time()
+    #run_shell_command(prinseq_command)
+    end = time.time()
+    print("Prinseq took: " + str(end - start))
 
     #################################### KRAKEN2 HOST ########################
     # --paired uses input
@@ -108,8 +125,8 @@ def preprocessing(args: argparse.Namespace):
                       " --report " + dirpath + "/kraken2.nonhuman.report " +\
                       " --output " + dirpath + "/kraken2.nonhuman.output " +\
                       " --use-mpa-style " +\
-                      " --paired " + qc1 + "  " + qc2 +\
-                      " --unclassified-out " + dirpath + "/kraken2_nonhuman_#.fastq"
+                      " --paired " + prinseq1 + "  " + prinseq2 +\
+                      " --unclassified-out " + dirpath + "/kraken2_nonhuman#.fastq"
     
     start = time.time()
     run_shell_command(kraken2_command)
@@ -472,6 +489,11 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.write("Fastq\t" + str(numReadsAfterFastq) + "\n")
     summaryFileWriter.write("lowQuality\t" + str(numReadsAtStart - numReadsAfterFastq) + "\n")
     summaryFileWriter.write("duplicates\t" + str(duplicates) + "\n")
+
+    # numReadsAfterPrinseq = countNumSeqs(prinseq1, False)
+    numReadsAfterPrinseq = numReadsAfterFastq
+    summaryFileWriter.write("Prinseq\t" + str(numReadsAfterPrinseq) + "\n")
+    summaryFileWriter.write("LC_Reads\t" + str(numReadsAfterFastq - numReadsAfterPrinseq) + "\n")
     
     numReadsAfterKraken = countNumSeqs(dirpath + "/kraken2_nonhuman_1.fastq", False)
     summaryFileWriter.write("Kraken2_Human\t" + str(numReadsAfterKraken) + "\n")
@@ -552,7 +574,8 @@ def preprocessing(args: argparse.Namespace):
     # zipping any unecessary files with pigz (supports multithreaded zipping)
     # no need to check for errors
     start = time.time()
-    for toZip in [qc1, qc2, star_host_dedup1, star_host_dedup2, dirpath + "/kraken2.nonhuman.report", dirpath + "/kraken2.nonhuman.output",
+    for toZip in [qc1, qc2, prinseq1, prinseq2, prinseq_s_1, prinseq_s_2, prinseq_bad_1, prinseq_bad_2, 
+                  star_host_dedup1, star_host_dedup2, dirpath + "/kraken2.nonhuman.report", dirpath + "/kraken2.nonhuman.output",
                   dirpath + "/kraken2_nonhuman_1.fastq", dirpath + "/kraken2_nonhuman_2.fastq", dirpath + "/star_host_ReadsPerGene.out.tab",
                   dirpath + "/star_host_SJ.out.tab", aligned + "_fwd.fq", aligned + "_rev.fq", dirpath + "/star_host_Aligned.ERCC_only.out.sam"]:
         if os.path.exists(toZip + ".gz"):

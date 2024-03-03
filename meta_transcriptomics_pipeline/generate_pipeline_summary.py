@@ -289,14 +289,17 @@ htmlCode = """
     <div class="info" id="qc_info">
         <h1 style="text-align: center;">Quality Control</h1>
         <p>
-            <b>Description:</b> This step uses Fastp to remove reads that have low quality, low complexity or are too short (less than 50bp). It also strips away the adapters and any duplicate read pairs.
+            <b>Description:</b> This step uses Fastp to remove reads that have low quality, low complexity or are too short (less than 50bp). It also strips away the adapters and any duplicate read pairs. In addition, it uses prinseq++ to remove additional low complexity sequences via the dust algorithm as the fastp algorithm for removing low complexity sequences is too basic.
         </p>
         <b>Number of Reads After Fastq:</b> <br>
         <b>Number of Low Quality Reads:</b> <br>
         <b>Duplication Rate:</b> <br>
-        <b>Outputs:</b> fastp_1.fastq, fastp_2.fastq <br> <br>
+        <b>Number of Reads After Prinseq:</b> <br>
+        <b>Number of Low Complexity Reads Removed Via Prinseq:</b> <br>
+        <b>Outputs:</b> fastp_1.fastq, fastp_2.fastq, prinseq_lc_good_out_R1.fastq, prinseq_lc_good_out_R2.fastq<br> <br>
         <div class="code_style">
             <code>
+                # FASTP
                 fastp --in1 input1.fastq.gz --in2 input2.fastq.gz \​ <br>
                 --out1 fastp_1.fastq --out2 fastp_1.fastq \​ <br>
                 -b 100 -B 100 \​ <br>
@@ -307,6 +310,13 @@ htmlCode = """
                 --low_complexity_filter \​ <br>
                 --detect_adapter_for_pe \​ <br>
                 --thread N <br>
+
+                # PRINSEQ
+                prinseq++ \​ <br>
+                -fastq fastp_1.fastq \​ <br>
+                -fastq2 fastp_2.fastq \​ <br>
+                -lc_dust 0.07 \​ <br>
+                -out_name prinseq_lc
             </code>
         </div>
         <p>
@@ -315,13 +325,13 @@ htmlCode = """
     </div>
     <div class="info" id="human_subtraction_info">
         <h1 style="text-align: center;">Human Subtraction</h1>
-        <b>Description:</b> This step removes human sequences from the library. It uses Kraken2 to align the library against a combined index of the HG38 library plus the ERCC library to remove as many reads as possible for the next step which is more intensive. STAR then removes any remaining nonhuman reads with an index built from the HG38 library. <br> <br>
+        <b>Description:</b> This step removes human sequences from the library. It uses Kraken2 to align the library against the HPRC index to remove as many reads as possible for the next step which is more intensive. STAR then removes any remaining nonhuman reads with an index built from the T2T reference plus the ERCC library to remove as ERCC reads as well. <br> <br>
         <b>Number of Reads Remaining After Human Depletion:</b> <br>
         <b>Number of Reads Remaining After Kraken2 Command:</b> <br>
         <b>Number of Reads Remaining After STAR Command:</b> <br>
         <b>Number of ERCC Reads Removed:</b> <br>
         <b>Number of non-ERCC Host Reads:</b> <br>
-        <b>Inputs:</b> fastp_1.fastq, fastp_2.fastq <br>
+        <b>Inputs:</b> prinseq_lc_good_out_R1.fastq, prinseq_lc_good_out_R2.fastq <br>
         <b>Outputs:</b> host_depleted1.fastq, host_depleted2.fastq <br> <br>
         <div class="code_style">
             <code>
@@ -555,6 +565,10 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 htmlCode = htmlCode.replace("Number of Reads After Fastq:</b> ", "Number of Reads After Fastp:</b> " + str(curr[1]))
             if curr[0] == "lowQuality":
                 htmlCode = htmlCode.replace("Number of Low Quality Reads:</b> ", "Number of Low Quality Reads:</b> " + str(curr[1]))
+            if curr[0] == "Prinseq":
+                htmlCode = htmlCode.replace("Number of Reads After Prinseq:</b> ", "Number of Reads After Prinseq:</b> " + str(curr[1]))
+            if curr[0] == "LC_Reads":
+                htmlCode = htmlCode.replace("Number of Low Complexity Reads Removed Via Prinseq:</b> ", "Number of Low Complexity Reads Removed Via Prinseq:</b> " + str(curr[1]))
             if curr[0] == "Star":
                 htmlCode = htmlCode.replace("Number of Reads Remaining After Human Depletion:</b> ", "Number of Reads Remaining After Human Depletion:</b> " + str(curr[1]))
                 htmlCode = htmlCode.replace("Number of Reads Remaining After STAR Command:</b> ", "Number of Reads Remaining After STAR Command:</b> " + str(curr[1]))
