@@ -325,18 +325,18 @@ htmlCode = """
     </div>
     <div class="info" id="human_subtraction_info">
         <h1 style="text-align: center;">Human Subtraction</h1>
-        <b>Description:</b> This step removes human sequences from the library. It uses Kraken2 to align the library against the HPRC index to remove as many reads as possible for the next step which is more intensive. STAR then removes any remaining nonhuman reads with an index built from the T2T reference plus the ERCC library to remove as ERCC reads as well. <br> <br>
+        <b>Description:</b> This step removes human sequences from the library. It uses Kraken2 to align the library against the HPRC index to remove as many reads as possible for the next step which is more intensive. Bowtie2 then removes any remaining nonhuman reads with an index built from the T2T reference and the HLA reference plus the ERCC library to remove as ERCC reads as well. <br> <br>
         <b>Number of Reads Remaining After Human Depletion:</b> <br>
         <b>Number of Reads Remaining After Kraken2 Command:</b> <br>
-        <b>Number of Reads Remaining After STAR Command:</b> <br>
+        <b>Number of Reads Remaining After Bowtie2 Command:</b> <br>
         <b>Number of ERCC Reads Removed:</b> <br>
         <b>Number of non-ERCC Host Reads:</b> <br>
         <b>Inputs:</b> prinseq_lc_good_out_R1.fastq, prinseq_lc_good_out_R2.fastq <br>
-        <b>Outputs:</b> host_depleted1.fastq, host_depleted2.fastq <br> <br>
+        <b>Outputs:</b> host_depleted_1.fastq, host_depleted_2.fastq <br> <br>
         <div class="code_style">
             <code>
                 # Kraken2 <br> <br>
-                kraken2 --db kraken2_ercc_host_db \​ <br>
+                kraken2 --db kraken2_host_db \​ <br>
                 --report kraken2.nonhuman.report \​ <br>
                 --output kraken2.nonhuman.output \​ <br>
                 --use-mpa-style \​ <br>
@@ -344,21 +344,18 @@ htmlCode = """
                 --unclassified-out kraken2_nonhuman_#.fastq \​ <br>
                 --threads N <br> <br>
 
-                # STAR ALIGNMENT <br>
-                # The STAR step outputs the reads that failed to map (the nonhuman reads) into star_host_Unmapped_1/2.fastq<br> <br>
-                STAR --genomeDir (star_host_index) \​ <br>
-                --readFilesIn fastp_1.fastq fastp_2.fastq \​ <br>
-                --outFileNamePrefix "/star_host_" \​ <br>
-                --outFilterMultimapNmax 99999 \​ <br>
-                --outFilterScoreMinOverLread 0.5 \​ <br>
-                --outFilterMatchNminOverLread 0.5 \​ <br>
-                --outFilterMismatchNmax 999 \​ <br>
-                --outSAMtype BAM SortedByCoordinate \​ <br>
-                --outReadsUnmapped Fastx" \​ <br>
-                --outSAMattributes Standard \​ <br>
-                --quantMode TranscriptomeSAM GeneCounts \​ <br>
-                --clip3pNbases 0 \​ <br>
-                --runThreadN N <br> <br>
+                # BOWTIE2 ALIGNMENT <br>
+                bowtie2 -x bowtie2_host_index \ <br>
+                --very-sensitive-local -p NUM_THREADS \ <br>
+                -1 kraken2_nonhuman_1.fastq \ <br>
+                -2 kraken2_nonhuman_2.fastq \ <br>
+                -q -S bowtie2_host.sam <br> <br>
+
+                # Still need to extract the unaligned reads after the Bowtie2 step <br>
+                samtools fastq \ <br>
+                -1 host_depleted_1.fastq \ <br>
+                -2 host_depleted_2.fastq \ <br>
+                -0 /dev/null -s /dev/null -n -f 13 bowtie2_host.sam <br> <br>
             </code>
         </div>
     </div>
@@ -367,7 +364,7 @@ htmlCode = """
         <b>Description:</b> This step removed any rRNA reads from the library by aligning them against the "default" sortmerna database available from <a href="https://github.com/sortmerna/sortmerna/releases">here</a>. It is important to run this step after the human read depletion step as sortmerna is very slow and RAM hungry, hence removing as much reads as possible prior to this step will increase performance. <br> <br>
         <b>Number of Reads After rRNA Depletion:</b> <br>
         <b>Number of Non-host rRNA Reads:</b> <br>
-        <b>Inputs:</b> star_host_Unmapped_1.fastq, star_host_Unmapped_2.fastq  <br>
+        <b>Inputs:</b> host_depleted_1.fastq, host_depleted_2.fastq  <br>
         <b>Outputs:</b> fullyQc_fwd.fq, fullyQc_rev.fq <br> <br>
         <div class="code_style">
             <code>
@@ -375,7 +372,7 @@ htmlCode = """
                 --fastx \​ <br>
                 --aligned aligned \​ <br>
                 --other fullyQc \​ <br>
-                --reads star_host_Unmapped_1.fastq --reads star_host_Unmapped_2.fastq \​ <br>             
+                --reads host_depleted_1.fastq --reads host_depleted_2.fastq \​ <br>             
                 --out2 TRUE \​ <br>
                 --paired_in TRUE \​ <br>
                 --threads N \ <br>
@@ -569,9 +566,9 @@ def generate_pipeline_summary(summaryFile, outputFile):
                 htmlCode = htmlCode.replace("Number of Reads After Prinseq:</b> ", "Number of Reads After Prinseq:</b> " + str(curr[1]))
             if curr[0] == "LC_Reads":
                 htmlCode = htmlCode.replace("Number of Low Complexity Reads Removed Via Prinseq:</b> ", "Number of Low Complexity Reads Removed Via Prinseq:</b> " + str(curr[1]))
-            if curr[0] == "Star":
+            if curr[0] == "Bowtie2":
                 htmlCode = htmlCode.replace("Number of Reads Remaining After Human Depletion:</b> ", "Number of Reads Remaining After Human Depletion:</b> " + str(curr[1]))
-                htmlCode = htmlCode.replace("Number of Reads Remaining After STAR Command:</b> ", "Number of Reads Remaining After STAR Command:</b> " + str(curr[1]))
+                htmlCode = htmlCode.replace("Number of Reads Remaining After Bowtie2 Command:</b> ", "Number of Reads Remaining After Bowtie2 Command:</b> " + str(curr[1]))
             if curr[0] == "Kraken2_Human":
                 htmlCode = htmlCode.replace("Number of Reads Remaining After Kraken2 Command:</b> ", "Number of Reads Remaining After Kraken2 Command:</b> " + str(curr[1]))
             if curr[0] == "erccReadCounts":

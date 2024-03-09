@@ -115,7 +115,7 @@ def preprocessing(args: argparse.Namespace):
                       " -out_name " + dirpath + "prinseq_lc"
     
     start = time.time()
-    #run_shell_command(prinseq_command)
+    run_shell_command(prinseq_command)
     end = time.time()
     print("Prinseq took: " + str(end - start))
 
@@ -134,30 +134,41 @@ def preprocessing(args: argparse.Namespace):
     print("Human depletion via kraken2 took: " + str(end - start))
 
 
-    #################################### STAR HOST ###########################
+    #################################### BOWTIE2 HOST ###########################
 
-    star_prefix = dirpath + "/star_host_"
+    bowtie2_sam_out = dirpath + "/bowtie2_host.sam"
 
-    star_command = "STAR --genomeDir " + args.star_host_index + " --runThreadN " + str(args.threads) +\
-                    " --readFilesIn " + dirpath + "/kraken2_nonhuman_1.fastq" + " " + dirpath + "/kraken2_nonhuman_2.fastq" + " --outFileNamePrefix " + star_prefix +\
-                    " --outFilterMultimapNmax 99999 --outFilterScoreMinOverLread 0.5 --outFilterMatchNminOverLread 0.5" +\
-                    " --outFilterMismatchNmax 999 --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx" +\
-                    " --outSAMattributes Standard --quantMode TranscriptomeSAM GeneCounts --clip3pNbases 0"
+    bowtie2_command = "bowtie2 -x " + args.bowtie2_host_index + \
+                      " --very-sensitive-local -p " + str(args.threads) + \
+                      " -1 " + dirpath + "/kraken2_nonhuman_1.fastq" +\
+                      " -2 " + dirpath + "/kraken2_nonhuman_2.fastq" +\
+                      " -q -S " + bowtie2_sam_out
     
     start = time.time()
-    run_shell_command(star_command)
+    run_shell_command(bowtie2_command)
     end = time.time()
-    print("Human depletion via star took: " + str(end - start))
+    print("Human depletion via bowtie2 took: " + str(end - start))
+    
+    host_depleted_1 = dirpath + "/host_depleted_1.fastq"
+    host_depleted_2 = dirpath + "/host_depleted_2.fastq"
+    
+    bowtie2_samtools_extract = "samtools fastq " + \
+                               " -1 " + host_depleted_1 +\
+                               " -2 " + host_depleted_2 +\
+                               " -0 /dev/null -s /dev/null -n -f 13 " + bowtie2_sam_out
+    
+    start = time.time()
+    run_shell_command(bowtie2_samtools_extract)
+    end = time.time()
+    print("Extracting non-human reads from bowtie2 took: " + str(end - start))
 
-    star_host_dedup1 = star_prefix + "Unmapped_1.fastq"
-    star_host_dedup2 = star_prefix + "Unmapped_2.fastq"
+    bowtie2_sam_out_sorted = dirpath + "/bowtie2_host_sorted.sam"
+    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + bowtie2_sam_out + " -o " + bowtie2_sam_out_sorted
 
-    os.rename(star_prefix + "Unmapped.out.mate1", star_host_dedup1)
-    os.rename(star_prefix + "Unmapped.out.mate2", star_host_dedup2)
 
     # need to extract ERCC coverages (if they exist)
-    if os.path.exists(dirpath + "/star_coverage.txt"):
-        os.remove(dirpath + "/star_coverage.txt")
+    if os.path.exists(dirpath + "/bowtie2_coverage.txt"):
+        os.remove(dirpath + "/bowtie2_coverage.txt")
     if os.path.exists(dirpath + "/ercc_coverage.txt"):
         os.remove(dirpath + "/ercc_coverage.txt")
 
@@ -166,13 +177,13 @@ def preprocessing(args: argparse.Namespace):
     # check if the output file is empty
     if args.ercc_expected_concentration is not None and os.path.exists(args.ercc_expected_concentration) is True and os.stat(args.ercc_expected_concentration).st_size > 0:
         start = time.time()
-        run_shell_command("pileup.sh in=" + dirpath + "/star_host_Aligned.sortedByCoord.out.bam" + " out=" + dirpath + "/star_coverage.txt" + " -Xmx" + str(args.memory) + "g" + " secondary=false")
+        run_shell_command("pileup.sh in=" + bowtie2_sam_out_sorted + " out=" + dirpath + "/bowtie2_coverage.txt" + " -Xmx" + str(args.memory) + "g" + " secondary=false")
         end = time.time()
 
-        print("pileup.sh on the star output took: " + str(end - start))
+        print("pileup.sh on the bowtie2 output took: " + str(end - start))
 
         # running this manually as if we fail to grep anything, it will return NOT 1 and hence will exit.
-        subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/star_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
+        subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/bowtie2_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
 
         # dict stores ercc as keys, and its values is a list with the expected as first value and readcount (actual value) as the second value
         # the first value within these sublists will be the "x" within the plot and the secon value will be the "y"
@@ -192,9 +203,9 @@ def preprocessing(args: argparse.Namespace):
                     curr = line.split("\t")
                     regions.append(curr[0])
 
-            run_shell_command("samtools index " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam")
-            run_shell_command("samtools view -F 260 " + dirpath + "/star_host_Aligned.sortedByCoord.out.bam " + " ".join(regions) + " -o " + dirpath + "/star_host_Aligned.ERCC_only.out.sam")
-            erccReadCounts = int(subprocess.check_output("cut -f 1 " + dirpath + "/star_host_Aligned.ERCC_only.out.sam" + " | sort -k 1 | uniq | wc -l", shell=True).decode('utf-8').strip())
+            run_shell_command("samtools index " + bowtie2_sam_out_sorted)
+            run_shell_command("samtools view -F 260 " + bowtie2_sam_out_sorted + " " + " ".join(regions) + " -o " + dirpath + "/bowtie2_host_Aligned.ERCC_only.out.sam")
+            erccReadCounts = int(subprocess.check_output("cut -f 1 " + dirpath + "/bowtie2_host_Aligned.ERCC_only.out.sam" + " | sort -k 1 | uniq | wc -l", shell=True).decode('utf-8').strip())
 
             # sort the ercc_expected_concentration file just in case, such that our ercc_coverage.txt file can be compared simultaneously
             with open(args.ercc_expected_concentration) as f:
@@ -287,9 +298,9 @@ def preprocessing(args: argparse.Namespace):
                 plt.ylabel("Log10 coverage per gene")
                 plt.savefig(dirpath + '/../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
         else:
-            print("The coverage file generated from the STAR output (preprocessing/star_coverage.txt) is empty. ERCC step has failed but the pipeline will continue. In the future, please recheck the STAR index provided.")    
+            print("The coverage file generated from the bowtie2 output (preprocessing/bowtie2_coverage.txt) is empty. ERCC step has failed but the pipeline will continue. In the future, please recheck the bowtie2 index provided.")    
     else:
-        print("Detected ERCC sequences in the star index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
+        print("Detected ERCC sequences in the bowtie2 index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -311,7 +322,7 @@ def preprocessing(args: argparse.Namespace):
                     " --aligned " + aligned +\
                     " --other " + noRna +\
                     " --fastx " +\
-                    " --reads " + star_host_dedup1 + " --reads " + star_host_dedup2 +\
+                    " --reads " + host_depleted_1 + " --reads " + host_depleted_2 +\
                     " --threads " + str(args.threads) +\
 		            " --out2 TRUE " +\
 		            " --paired_in TRUE" +\
@@ -323,8 +334,8 @@ def preprocessing(args: argparse.Namespace):
         end = time.time()
         print("Sortmerna rRNA depletion took: " + str(end - start))
     else:
-        shutil.copy(star_host_dedup1, fullyQc1)
-        shutil.copy(star_host_dedup2, fullyQc2)
+        shutil.copy(host_depleted_1, fullyQc1)
+        shutil.copy(host_depleted_2, fullyQc2)
 
     # QUICK ALIGNMENT, JUST ALIGN REMAINING READS USING KRAKEN AGAINST KRAKEN_PLUS
     '''
@@ -490,16 +501,15 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.write("lowQuality\t" + str(numReadsAtStart - numReadsAfterFastq) + "\n")
     summaryFileWriter.write("duplicates\t" + str(duplicates) + "\n")
 
-    # numReadsAfterPrinseq = countNumSeqs(prinseq1, False)
-    numReadsAfterPrinseq = numReadsAfterFastq
+    numReadsAfterPrinseq = countNumSeqs(prinseq1, False)
     summaryFileWriter.write("Prinseq\t" + str(numReadsAfterPrinseq) + "\n")
     summaryFileWriter.write("LC_Reads\t" + str(numReadsAfterFastq - numReadsAfterPrinseq) + "\n")
     
     numReadsAfterKraken = countNumSeqs(dirpath + "/kraken2_nonhuman_1.fastq", False)
     summaryFileWriter.write("Kraken2_Human\t" + str(numReadsAfterKraken) + "\n")
 
-    numReadsAfterStar = countNumSeqs(star_host_dedup1, False)
-    summaryFileWriter.write("Star\t" + str(numReadsAfterStar) + "\n")
+    numReadsAfterBowtie2 = countNumSeqs(host_depleted_1, False)
+    summaryFileWriter.write("Bowtie2\t" + str(numReadsAfterBowtie2) + "\n")
 
     if erccReadCounts is None:
         summaryFileWriter.write("erccReadCounts\t" + str("N/A") + "\n")
@@ -509,8 +519,8 @@ def preprocessing(args: argparse.Namespace):
     if erccReadCounts is None:
         erccReadCounts = 0
     
-    #nonERCCHostReads = (numReadsAfterFastq - numReadsAfterStar - erccReadCounts) + (numReadsAfterKraken - numReadsAfterStar)
-    nonERCCHostReads = (numReadsAfterFastq - numReadsAfterKraken) + (numReadsAfterKraken - numReadsAfterStar - erccReadCounts) # first gets number of reads removed by kraken, next gets number of reads removed by STAR, that are nonERCC
+    #nonERCCHostReads = (numReadsAfterFastq - numReadsAfterBowtie2 - erccReadCounts) + (numReadsAfterKraken - numReadsAfterBowtie2)
+    nonERCCHostReads = (numReadsAfterPrinseq - numReadsAfterKraken) + (numReadsAfterKraken - numReadsAfterBowtie2 - erccReadCounts) # first gets number of reads removed by kraken, next gets number of reads removed by Bowtie2, that are nonERCC
 
     summaryFileWriter.write("nonERCCHostReads\t" + str(nonERCCHostReads) + "\n")
 
@@ -519,7 +529,7 @@ def preprocessing(args: argparse.Namespace):
     numGoodReads = countNumSeqs(fullyQc1, False)
     if args.nucleic_acid == "RNA":
         numReadsAfterSortmerna = numGoodReads
-        nonHostRRNA = numReadsAfterStar - numReadsAfterSortmerna
+        nonHostRRNA = numReadsAfterBowtie2 - numReadsAfterSortmerna
 
     summaryFileWriter.write("Sortmerna\t" + str(numReadsAfterSortmerna) + "\n")
     summaryFileWriter.write("nonHostRRNA\t" + str(nonHostRRNA) + "\n")
@@ -527,7 +537,7 @@ def preprocessing(args: argparse.Namespace):
     if nonHostRRNA == "N/A":
         nonHostRRNA = 0
 
-    totalReads = (numReadsAtStart - numReadsAfterFastq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numGoodReads
+    totalReads = (numReadsAtStart - numReadsAfterFastq) + (numReadsAfterFastq - numReadsAfterPrinseq) + nonERCCHostReads + erccReadCounts + nonHostRRNA + numGoodReads
     summaryFileWriter.write("totalReadsChecked\t" + str(totalReads) + "\n")
 
     if did_megahit_fail is False:
@@ -575,9 +585,9 @@ def preprocessing(args: argparse.Namespace):
     # no need to check for errors
     start = time.time()
     for toZip in [qc1, qc2, prinseq1, prinseq2, prinseq_s_1, prinseq_s_2, prinseq_bad_1, prinseq_bad_2, 
-                  star_host_dedup1, star_host_dedup2, dirpath + "/kraken2.nonhuman.report", dirpath + "/kraken2.nonhuman.output",
-                  dirpath + "/kraken2_nonhuman_1.fastq", dirpath + "/kraken2_nonhuman_2.fastq", dirpath + "/star_host_ReadsPerGene.out.tab",
-                  dirpath + "/star_host_SJ.out.tab", aligned + "_fwd.fq", aligned + "_rev.fq", dirpath + "/star_host_Aligned.ERCC_only.out.sam"]:
+                  host_depleted_1, host_depleted_2, dirpath + "/kraken2.nonhuman.report", dirpath + "/kraken2.nonhuman.output",
+                  dirpath + "/kraken2_nonhuman_1.fastq", dirpath + "/kraken2_nonhuman_2.fastq", bowtie2_sam_out,
+                  bowtie2_sam_out_sorted, aligned + "_fwd.fq", aligned + "_rev.fq", dirpath + "/bowtie2_host_Aligned.ERCC_only.out.sam"]:
         if os.path.exists(toZip + ".gz"):
             os.remove(toZip + ".gz")
         zip_command = "pigz " + toZip + " -p " + str(args.threads)

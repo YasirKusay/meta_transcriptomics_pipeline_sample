@@ -42,9 +42,9 @@ def parse_args():
     )
 
     parser_preprocessing.add_argument(
-        "star_host_index",
+        "bowtie2_host_index",
         type=str,
-        help="Path to the pre-built STAR host index. The complete host genome needs to be indexed. For the human genome, we used GRCh38_latest_genomic.fna available from https://www.ncbi.nlm.nih.gov/genome/guide/human/ and index it via STAR.\n"
+        help="Path to the pre-built STAR host index. The complete host genome needs to be indexed. For the human genome, we used a combination of the T2T assembles, HLA assemblies and mitochondrial reference and index it via bowtie2.\n"
     )
 
     parser_preprocessing.add_argument(
