@@ -101,18 +101,18 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("Fastp took: " + str(end - start))
 
-    prinseq1 = dirpath + "prinseq_lc_good_out_R1.fastq"
-    prinseq2 = dirpath + "prinseq_lc_good_out_R2.fastq"
-    prinseq_s_1 = dirpath + "prinseq_lc_single_out_R1.fastq"
-    prinseq_s_2 = dirpath + "prinseq_lc_single_out_R2.fastq"
-    prinseq_bad_1 = dirpath + "prinseq_lc_bad_out_R1.fastq"
-    prinseq_bad_2 = dirpath + "prinseq_lc_bad_out_R2.fastq"
+    prinseq1 = dirpath + "/prinseq_lc_good_out_R1.fastq"
+    prinseq2 = dirpath + "/prinseq_lc_good_out_R2.fastq"
+    prinseq_s_1 = dirpath + "/prinseq_lc_single_out_R1.fastq"
+    prinseq_s_2 = dirpath + "/prinseq_lc_single_out_R2.fastq"
+    prinseq_bad_1 = dirpath + "/prinseq_lc_bad_out_R1.fastq"
+    prinseq_bad_2 = dirpath + "/prinseq_lc_bad_out_R2.fastq"
 
     prinseq_command = "prinseq++" +\
                       " -fastq " + qc1 +\
                       " -fastq2 " + qc2 +\
                       " -lc_dust 0.07 " +\
-                      " -out_name " + dirpath + "prinseq_lc"
+                      " -out_name " + dirpath + "/prinseq_lc"
     
     start = time.time()
     run_shell_command(prinseq_command)
@@ -162,8 +162,13 @@ def preprocessing(args: argparse.Namespace):
     end = time.time()
     print("Extracting non-human reads from bowtie2 took: " + str(end - start))
 
-    bowtie2_sam_out_sorted = dirpath + "/bowtie2_host_sorted.sam"
-    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + bowtie2_sam_out + " -o " + bowtie2_sam_out_sorted
+    bowtie2_sam_out_sorted = dirpath + "/bowtie2_host_sorted.bam"
+    samtools_sort_command = "samtools sort -@ " + str(args.threads) + " " + bowtie2_sam_out + " -o " + bowtie2_sam_out_sorted
+
+    start = time.time()
+    run_shell_command(samtools_sort_command)
+    end = time.time()
+    print("Sorting bowtie2 sam output by coordinates " + str(end - start))
 
 
     # need to extract ERCC coverages (if they exist)
@@ -494,7 +499,7 @@ def preprocessing(args: argparse.Namespace):
         fastp_data = json.load(fp_json)
         numReadsAtStart = int(fastp_data["summary"]["before_filtering"]["total_reads"]/2)
         numReadsAfterFastq = int(fastp_data["summary"]["after_filtering"]["total_reads"]/2)
-        duplicates = int(fastp_data["duplication"]["rate"])
+        duplicates = float(fastp_data["duplication"]["rate"])
 
     summaryFileWriter.write("Start\t" + str(numReadsAtStart) + "\n")
     summaryFileWriter.write("Fastq\t" + str(numReadsAfterFastq) + "\n")
