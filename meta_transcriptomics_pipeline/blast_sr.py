@@ -1,7 +1,10 @@
 import argparse
+import logging
 import time
 import os
 from meta_transcriptomics_pipeline.helpers import run_shell_command
+
+log = logging.getLogger(__name__)
 
 def blast_sr(args: argparse.Namespace):
     dirpath = args.dirpath
@@ -21,4 +24,4 @@ def blast_sr(args: argparse.Namespace):
     run_shell_command(blast_command)
 
     end = time.time()
-    print("blast alignment against nt took: " + str(end - start))
+    log.info("blast alignment against nt took: " + str(end - start))

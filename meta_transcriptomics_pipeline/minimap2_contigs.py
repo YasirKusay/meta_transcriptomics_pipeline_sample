@@ -1,9 +1,12 @@
 import argparse
+import logging
 import time
 import os
 import shutil
 from meta_transcriptomics_pipeline.helpers import run_shell_command, check_megahit_success
 from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
+
+log = logging.getLogger(__name__)
 
 def minimap2_contigs(args: argparse.Namespace):
     start = time.time()
@@ -21,7 +24,7 @@ def minimap2_contigs(args: argparse.Namespace):
     # The submission scripts (it is too difficult to to update given there are multiple)
     # Copies of it
     if check_megahit_success(contig_path + "/log") == False:
-        print("Skipping minimap2_contigs as megahit had failed.")
+        log.error("Skipping minimap2_contigs as megahit had failed.")
         return
 
     os.mkdir(tempdir)
@@ -29,6 +32,6 @@ def minimap2_contigs(args: argparse.Namespace):
     minimap2_command = "minimap2 -c -t " + str(args.threads) + " --split-prefix " + tempdir + "/temp" + " " + args.minimap2_index + " " + new_contigs + " > " + minimap2_contig_out
     run_shell_command(minimap2_command)
     end = time.time()
-    print("minimap2 contig alignment against nt took: " + str(end - start))
+    log.info("minimap2 contig alignment against nt took: " + str(end - start))
     
     paf2blast6(minimap2_contig_out, dirpath + "/alignments")

@@ -1,4 +1,5 @@
 import argparse
+import logging
 import math
 import subprocess
 import operator
@@ -12,6 +13,8 @@ from meta_transcriptomics_pipeline.helpers import run_shell_command, check_megah
 from meta_transcriptomics_pipeline.separate_reads_by_size import separate_reads_by_size
 from meta_transcriptomics_pipeline.get_lineage_info import get_lineage_info
 from meta_transcriptomics_pipeline.count_num_lines import countNumSeqs
+
+log = logging.getLogger(__name__)
 
 def process_fast_mode_output(kraken_out, outfile, total_reads):
     results = {}
@@ -99,7 +102,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(fastp_command)
     end = time.time()
-    print("Fastp took: " + str(end - start))
+    log.info("Fastp took: " + str(end - start))
 
     prinseq1 = dirpath + "/prinseq_lc_good_out_R1.fastq"
     prinseq2 = dirpath + "/prinseq_lc_good_out_R2.fastq"
@@ -117,7 +120,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(prinseq_command)
     end = time.time()
-    print("Prinseq took: " + str(end - start))
+    log.info("Prinseq took: " + str(end - start))
 
     #################################### KRAKEN2 HOST ########################
     # --paired uses input
@@ -131,7 +134,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(kraken2_command)
     end = time.time()
-    print("Human depletion via kraken2 took: " + str(end - start))
+    log.info("Human depletion via kraken2 took: " + str(end - start))
 
 
     #################################### BOWTIE2 HOST ###########################
@@ -147,7 +150,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(bowtie2_command)
     end = time.time()
-    print("Human depletion via bowtie2 took: " + str(end - start))
+    log.info("Human depletion via bowtie2 took: " + str(end - start))
     
     host_depleted_1 = dirpath + "/host_depleted_1.fastq"
     host_depleted_2 = dirpath + "/host_depleted_2.fastq"
@@ -160,7 +163,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(bowtie2_samtools_extract)
     end = time.time()
-    print("Extracting non-human reads from bowtie2 took: " + str(end - start))
+    log.info("Extracting non-human reads from bowtie2 took: " + str(end - start))
 
     bowtie2_sam_out_sorted = dirpath + "/bowtie2_host_sorted.bam"
     samtools_sort_command = "samtools sort -@ " + str(args.threads) + " " + bowtie2_sam_out + " -o " + bowtie2_sam_out_sorted
@@ -168,7 +171,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     run_shell_command(samtools_sort_command)
     end = time.time()
-    print("Sorting bowtie2 sam output by coordinates " + str(end - start))
+    log.info("Sorting bowtie2 sam output by coordinates " + str(end - start))
 
 
     # need to extract ERCC coverages (if they exist)
@@ -185,7 +188,7 @@ def preprocessing(args: argparse.Namespace):
         run_shell_command("pileup.sh in=" + bowtie2_sam_out_sorted + " out=" + dirpath + "/bowtie2_coverage.txt" + " -Xmx" + str(args.memory) + "g" + " secondary=false")
         end = time.time()
 
-        print("pileup.sh on the bowtie2 output took: " + str(end - start))
+        log.info("pileup.sh on the bowtie2 output took: " + str(end - start))
 
         # running this manually as if we fail to grep anything, it will return NOT 1 and hence will exit.
         subprocess.run("egrep -e \"^ERCC\" " + dirpath + "/bowtie2_coverage.txt" + " > " + dirpath + "/ercc_coverage.txt", shell=True)
@@ -303,9 +306,9 @@ def preprocessing(args: argparse.Namespace):
                 plt.ylabel("Log10 coverage per gene")
                 plt.savefig(dirpath + '/../final_plots/ercc_plot.png', dpi=300) # dpi to control resolution
         else:
-            print("The coverage file generated from the bowtie2 output (preprocessing/bowtie2_coverage.txt) is empty. ERCC step has failed but the pipeline will continue. In the future, please recheck the bowtie2 index provided.")    
+            log.warning("The coverage file generated from the bowtie2 output (preprocessing/bowtie2_coverage.txt) is empty. ERCC step has failed but the pipeline will continue. In the future, please recheck the bowtie2 index provided.")    
     else:
-        print("Detected ERCC sequences in the bowtie2 index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
+        log.warning("Detected ERCC sequences in the bowtie2 index but the file that will be used to compare the expected ercc concentration has not been provided/or is empty. Please provide this file to --ercc_expected_concentration.")
 
     #################################### SORTMERNA ############################
     aligned = dirpath + "/aligned"
@@ -337,7 +340,7 @@ def preprocessing(args: argparse.Namespace):
         start = time.time()
         run_shell_command(sortmerna_command)
         end = time.time()
-        print("Sortmerna rRNA depletion took: " + str(end - start))
+        log.info("Sortmerna rRNA depletion took: " + str(end - start))
     else:
         shutil.copy(host_depleted_1, fullyQc1)
         shutil.copy(host_depleted_2, fullyQc2)
@@ -379,7 +382,7 @@ def preprocessing(args: argparse.Namespace):
     start = time.time()
     subprocess.run(megahit_command, shell=True) # running it this method as our normal method will exit if megahit failed
     end = time.time()
-    print("Assembly via megahit took: " + str(end - start))
+    log.info("Assembly via megahit took: " + str(end - start))
 
     # need to check a few things to see if megahit failed by looking at the last line of the log file
     log_path = megahit_out_path + "/log"
@@ -401,7 +404,7 @@ def preprocessing(args: argparse.Namespace):
         start = time.time()
         run_shell_command(align_reads_to_contigs_cmd)
         end = time.time()
-        print("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
+        log.info("bbwrap.sh alignment of the fullyQC reads to their contigs took: " + str(end - start))
 
         reads_mapped_to_contigs_file = dirpath + "/reads_mapped_to_contigs.sam"
         samtools_sort_command = "samtools sort -@ " + str(args.threads) + " -n " + reads_mapped_to_contigs_file_unsorted + " -o " + reads_mapped_to_contigs_file
@@ -409,7 +412,7 @@ def preprocessing(args: argparse.Namespace):
         start = time.time()
         run_shell_command(samtools_sort_command)
         end = time.time()
-        print("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
+        log.info("The time taken to sort the samtools file generated after mapping the reads onto the contigs is: " + str(end - start))
 
         # now lets retrieve the reads that did not align
 
@@ -420,7 +423,7 @@ def preprocessing(args: argparse.Namespace):
         start = time.time()
         run_shell_command(align_command)
         end = time.time()
-        print("Retreiving the unassembled reads from the previous step took: " + str(end - start))
+        log.info("Retreiving the unassembled reads from the previous step took: " + str(end - start))
 
         # need to convert file above from fa to fq, simply done using seqtk
         contigs_fq = megahit_out_path + "/final_contigs.fq"
@@ -584,7 +587,7 @@ def preprocessing(args: argparse.Namespace):
     summaryFileWriter.close()
 
     end = time.time()
-    print("Writing the statistics for the pipeline summary took: " + str(end - start))
+    log.info("Writing the statistics for the pipeline summary took: " + str(end - start))
 
     # zipping any unecessary files with pigz (supports multithreaded zipping)
     # no need to check for errors
@@ -599,7 +602,7 @@ def preprocessing(args: argparse.Namespace):
         run_shell_command(zip_command)
     
     end = time.time()
-    print("Zipping the output files took: " + str(end - start))
+    log.info("Zipping the output files took: " + str(end - start))
 
     try:
         os.remove(reads_mapped_to_contigs_file_unsorted)

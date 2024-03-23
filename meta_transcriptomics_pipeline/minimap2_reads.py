@@ -1,9 +1,12 @@
 import argparse
+import logging
 import time
 import os
 import shutil
 from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.paf2blast6 import paf2blast6
+
+log = logging.getLogger(__name__)
 
 def minimap2_reads(args: argparse.Namespace):
     start = time.time()
@@ -21,6 +24,6 @@ def minimap2_reads(args: argparse.Namespace):
     run_shell_command(minimap2_command)
 
     end = time.time()
-    print("minimap2 long read alignment against nt took: " + str(end - start))
+    log.info("minimap2 long read alignment against nt took: " + str(end - start))
 
     paf2blast6(minimap2_long_reads_out, dirpath + "/alignments")

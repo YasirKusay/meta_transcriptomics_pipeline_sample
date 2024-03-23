@@ -1,6 +1,9 @@
 import argparse
+import logging
 import time
 from meta_transcriptomics_pipeline.helpers import run_shell_command
+
+log = logging.getLogger(__name__)
 
 # explanation of how diamond flags work
 # if you are experiencing memory issues, its better to raise the chunks (-c) rather than lower the block size (-b)
@@ -32,4 +35,4 @@ def diamond(args: argparse.Namespace):
     start = time.time()
     run_diamond(args.diamond_index, combined_file, nr_combined_file, args.threads)
     end = time.time()
-    print("contig alignment against nr took: " + str(end - start))
+    log.info("contig alignment against nr took: " + str(end - start))

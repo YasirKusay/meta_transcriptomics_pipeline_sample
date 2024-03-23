@@ -1,4 +1,5 @@
 import argparse
+import logging
 import subprocess
 import time
 import os
@@ -18,6 +19,8 @@ from meta_transcriptomics_pipeline.generate_pipeline_summary import generate_pip
 from meta_transcriptomics_pipeline.generate_table_output import generate_table_output
 from meta_transcriptomics_pipeline.helpers import run_shell_command
 from meta_transcriptomics_pipeline.generate_full_read_contig_info import generate_full_read_contig_info
+
+log = logging.getLogger(__name__)
 
 def fetch_taxids(infile):
     taxids = []
@@ -110,7 +113,7 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
     #     results[key] = (results[key]/total_reads) * 100
  
     unassigned_reads = total_reads - num_reads
-    print("There is a total of: " + str(unassigned_reads) + " that were not successfully aligned.")
+    log.warning("There is a total of: " + str(unassigned_reads) + " that were not successfully aligned.")
 
     # lets exclude unknown from final output
     # if (unassigned_reads != 0):
@@ -134,7 +137,7 @@ def countReads(infile, total_reads, outfile, contaminants, bad_taxids):
         elif taxid in bad_taxids:
             numReadBad += sorted_results[taxid]
 
-    print("We have removed " + str(numReadContaminants) + " reads as they belong to a contaminant taxid and " + str(numReadBad) + " reads as they had taxids that are higher than the rank 'species'.")
+    log.warning("We have removed " + str(numReadContaminants) + " reads as they belong to a contaminant taxid and " + str(numReadBad) + " reads as they had taxids that are higher than the rank 'species'.")
 
     wf.close()
 
@@ -261,7 +264,7 @@ def finalisation(args: argparse.Namespace):
     run_shell_command("sed 's/ /\t/g' " + contigs_reads_taxids_temp + " | LC_COLLATE=C sort -k 1 | awk '!seen[$1]++' > " + contigs_reads_taxids) # change space to tabs
     os.remove(contigs_reads_taxids_temp)
     end = time.time()
-    print("taxid identification via accessions took: " + str(end - start))
+    log.info("taxid identification via accessions took: " + str(end - start))
 
     ncbi = NCBITaxa()
     seen_taxids = []
@@ -482,11 +485,11 @@ def finalisation(args: argparse.Namespace):
     decontam_dirpath = ""
 
     if args.decontamination_input_files is None:
-        print("Path to kraken index is not provided, skipping contamination removal")
+        log.warning("Path to kraken index is not provided, skipping contamination removal")
         contaminant_removal = False
     else:
         if os.path.isdir(args.decontamination_input_files) is False:
-            print("Directory that stores contaminant sequences does not exist, skipping contamination removal")
+            log.warning("Directory that stores contaminant sequences does not exist, skipping contamination removal")
             contaminant_removal = False
         else:  
             decontam_dirpath = args.decontamination_input_files
@@ -495,20 +498,20 @@ def finalisation(args: argparse.Namespace):
                 decontam_dirpath = decontam_dirpath[0:-1]
 
             if (os.path.isdir(decontam_dirpath + "/others") is False and os.path.isdir(decontam_dirpath + "/controls") is False) or (os.path.listdir(decontam_dirpath + "/others") == 0 and os.path.listdir(decontam_dirpath + "/controls") == 0):
-                print("No kraken outputs detected in " + decontam_dirpath + ". Please read manual regarding --decontamination_input_files. Skipping contamination removal step")
+                log.warning("No kraken outputs detected in " + decontam_dirpath + ". Please read manual regarding --decontamination_input_files. Skipping contamination removal step")
                 contaminant_removal = False
 
     contaminants = []
     rcf_out = analysis_path + "/rcf_out.txt"
     if contaminant_removal is True:
-        print("Starting decontamination")
+        log.info("Starting decontamination")
         others = args.other_sequences
         others.append(args.inp1)
         others.append(args.inp2)
         start = time.time()
         contaminants = remove_contaminants_control(args.control_sequences, args.other_sequences, rcf_out, args.taxdump_location, analysis_path)
         end = time.time()
-        print("Contaminant identification took: " + str(end - start))
+        log.info("Contaminant identification took: " + str(end - start))
 
     # now we can calculate read count method
     readCountsOutfile = analysis_path + "/readCountsOut.txt"
@@ -566,12 +569,13 @@ def finalisation(args: argparse.Namespace):
     n50 = float(subprocess.check_output('tail -n 2 ' + log_path + ' | head -n 1', shell=True).decode('utf-8').strip('\n').split(' ')[-2:-1][0])
 
     # now we can finally calculate TPM/FPKM
-    tpm_abundance_file = analysis_path + "/tpm_fpkm.txt"
-    get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file, contaminants, bad_taxids)
+    tpm_abundance_file_reads_contigs = analysis_path + "/tpm_fpkm_reads_contigs.txt"
+    tpm_abundance_file_taxids = analysis_path + "/tpm_fpkm_taxids.txt"
+    get_abundance(contig_unaligned_read_counts_len_taxid, num_reads, n50, tpm_abundance_file_reads_contigs, tpm_abundance_file_taxids, contaminants, bad_taxids)
 
     tpmAbundances = analysis_path + "/tpmAbundances.txt"
     wf = open(tpmAbundances, "w")
-    with open(tpm_abundance_file, "r") as f:
+    with open(tpm_abundance_file_taxids, "r") as f:
         for line in f:
             curr = line.split("\t")
             taxid = curr[0]
@@ -760,5 +764,8 @@ def finalisation(args: argparse.Namespace):
 
     complete_taxid_list = fetch_taxids(original_read_contigs_sorted)
     good_taxids_2, bad_taxids_2 = get_lineage_info(complete_taxid_list, args.taxdump_location, True)
+    
+    tpm_abundance_file_reads_contigs_sorted = analysis_path + "/tpm_fpkm_reads_contigs.txt"
+    run_shell_command("LC_COLLATE=C sort -k1 " + tpm_abundance_file_reads_contigs + " > " + tpm_abundance_file_reads_contigs_sorted)
 
-    generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, good_taxids_2, full_read_contig_info)
+    generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, tpm_abundance_file_reads_contigs_sorted, good_taxids_2, full_read_contig_info)

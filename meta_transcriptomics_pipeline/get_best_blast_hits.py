@@ -4,8 +4,11 @@
 # mapping file or the nr mapping file
 # best hits are decided by e value (1) and bit scores (2)
 
+import logging
 import os
 from meta_transcriptomics_pipeline.helpers import run_shell_command
+
+log = logging.getLogger(__name__)
 
 def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_outfile, best_nr_outfile):
 
@@ -124,8 +127,8 @@ def get_best_blast_hits(nt_alignments_file, nr_alignments_file, path, best_nt_ou
             else:
                 numBadTaxids += 1
 
-    print("We have excluded " + str(numBadScores) + " because they had unusual scores.")
-    print("We have excluded " + str(numBadTaxids) + " because they had an alignment to an empty accession.")
+    log.warning("We have excluded " + str(numBadScores) + " because they had unusual scores.")
+    log.warning("We have excluded " + str(numBadTaxids) + " because they had an alignment to an empty accession.")
     
     best_nt_output.close()
     best_nr_output.close()

@@ -1,5 +1,8 @@
+import logging
 from ete3 import NCBITaxa
 from meta_transcriptomics_pipeline.getScientificNames import getScientificNames
+
+log = logging.getLogger(__name__)
 
 # returns a dictionary
 def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
@@ -17,7 +20,7 @@ def get_lineage_info(taxids, taxdump_location, addSubspeciesLineage=False):
         try:
             curr_lineage_full = ncbi.get_lineage(curr_taxid) # gets lineage of current taxid, returns only the its taxids
         except:
-            print("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
+            log.warning("The lineage for the taxid: " + str(curr_taxid) + " was not found. Ignoring the taxid.")
             continue
 
         all_taxids += [str(item) for item in curr_lineage_full]

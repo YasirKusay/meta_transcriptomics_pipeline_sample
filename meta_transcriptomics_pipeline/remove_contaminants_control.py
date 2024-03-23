@@ -1,4 +1,7 @@
+import logging
 from meta_transcriptomics_pipeline.helpers import run_shell_command
+
+log = logging.getLogger(__name__)
 
 def run_rcf(taxdump_location, kraken_controls_out, kraken_others_out, rcf_out, tmp_path):
     rcf_command = "rcf -n " + taxdump_location + " -k " + " -k ".join(kraken_controls_out) + " -k " +  " -k ".join(kraken_others_out) + " -c " + str(len(kraken_controls_out)) + " -o " + tmp_path + "/rcf_out_temp" + " -s KRAKEN -y 25 -d | sed -e 's/\x1b\[[0-9;]*m//g' > " + rcf_out
@@ -24,7 +27,7 @@ def identify_contaminants(rcf_outfile):
 # controls and others are lists
 def remove_contaminants_control(kraken_controls_out, kraken_others_out, rcf_out, taxdump_location, tmp_path):
     # now we can run the actual recentrifuge command
-    print("Running RCF")
+    log.warning("Running RCF")
     if run_rcf(taxdump_location, kraken_controls_out, kraken_others_out, rcf_out, tmp_path) is None:
         return None
 

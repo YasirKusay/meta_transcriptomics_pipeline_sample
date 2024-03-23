@@ -1,7 +1,7 @@
 import os
 import operator
 
-def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxids):
+def get_abundance(joined, total_reads, n50, output_file_reads_contigs, output_file_taxids, contaminants, bad_taxids):
     taxids = {}
     lengths = {}
     counts = {}
@@ -39,21 +39,30 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxid
     # function adapted: calcExpressionValues
     # only difference is I did not use expected length, using the real length instead
 
+    counts_ratio = {}
     for key in lengths:
-        counts[key] = counts[key]/denom
+        counts_ratio[key] = counts[key]/denom
 
     fpkm = {}
     # calculate FPKM
     for key in lengths:
-        fpkm[key] = (counts[key] * 1e9)/lengths[key]
+        fpkm[key] = (counts_ratio[key] * 1e9)/lengths[key]
 
     denom = 0.0
     for key in lengths:
         denom += fpkm[key]
 
+    # also writing the tpm/counts of the individual reads/contigs into a file
     tpm = {}
+    if os.path.isfile(output_file_reads_contigs):
+        os.remove(output_file_reads_contigs)
+    wf = open(output_file_reads_contigs, "w")
+
     for key in lengths:
         tpm[key] = fpkm[key]/(denom * 1e6)
+        wf.write(key + "\t" + str(counts[key]) + "\t" + str(tpm[key]) + "\n")
+
+    wf.close()
 
     final_tpm = {}
     # calculating tpm but for the taxids
@@ -66,9 +75,9 @@ def get_abundance(joined, total_reads, n50, output_file, contaminants, bad_taxid
     for key in final_tpm:
         final_tpm[key] = final_tpm[key] * 1e12
 
-    if os.path.isfile(output_file):
-        os.remove(output_file)
-    wf = open(output_file, "w")
+    if os.path.isfile(output_file_taxids):
+        os.remove(output_file_taxids)
+    wf = open(output_file_taxids, "w")
     final_tpm_sorted = dict( sorted(final_tpm.items(), key=operator.itemgetter(1),reverse=True))
     for key in final_tpm_sorted:
         if (key not in contaminants or key not in bad_taxids):

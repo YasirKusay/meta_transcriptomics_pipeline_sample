@@ -1,11 +1,14 @@
 import argparse
 import multiprocessing
+import logging
 from meta_transcriptomics_pipeline.blast_sr import blast_sr
 from meta_transcriptomics_pipeline.diamond import diamond
 from meta_transcriptomics_pipeline.finalisation import finalisation
 from meta_transcriptomics_pipeline.minimap2_contigs import minimap2_contigs
 from meta_transcriptomics_pipeline.minimap2_reads import minimap2_reads
 from meta_transcriptomics_pipeline.preprocessing import preprocessing
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(asctime)s: %(message)s')
 
 def parse_args():
     parser = argparse.ArgumentParser(
