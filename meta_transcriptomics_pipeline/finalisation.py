@@ -765,7 +765,4 @@ def finalisation(args: argparse.Namespace):
     complete_taxid_list = fetch_taxids(original_read_contigs_sorted)
     good_taxids_2, bad_taxids_2 = get_lineage_info(complete_taxid_list, args.taxdump_location, True)
     
-    tpm_abundance_file_reads_contigs_sorted = analysis_path + "/tpm_fpkm_reads_contigs.txt"
-    run_shell_command("LC_COLLATE=C sort -k1 " + tpm_abundance_file_reads_contigs + " > " + tpm_abundance_file_reads_contigs_sorted)
-
-    generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, tpm_abundance_file_reads_contigs_sorted, good_taxids_2, full_read_contig_info)
+    generate_full_read_contig_info(combined_best_blast_hits, original_read_contigs_sorted, tpm_abundance_file_reads_contigs, good_taxids_2, full_read_contig_info)
