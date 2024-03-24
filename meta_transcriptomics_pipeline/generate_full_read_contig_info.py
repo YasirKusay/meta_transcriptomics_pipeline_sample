@@ -3,7 +3,7 @@ def generate_full_read_contig_info(combined_blast_scores_sorted, read_contigs_ma
     wf = open(outfile, "w")
 
     header = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore", "qlen"]
-    header += ["count", "tpm"]
+    header += ["db", "count", "tpm"]
     header +=  ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 
     wf.write("\t".join(header) + "\n")
