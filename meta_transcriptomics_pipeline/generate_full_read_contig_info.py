@@ -38,7 +38,10 @@ def generate_full_read_contig_info(combined_blast_scores_sorted, read_contigs_ma
 
             if curr_blast_read == curr_mf_read and curr_mf_taxid in taxid_lineages.keys():
                 # curr_blast_line_split[:-3] if you want to exclude query length/whether the match was a read/protein
-                wf.write(line.strip() + "\t" + counts[curr_blast_read] + "\t" + taxids[curr_blast_read] + "\t".join(taxid_lineages[curr_mf_taxid]) + "\n")
+                try:
+                    wf.write(line.strip() + "\t" + counts[curr_blast_read] + "\t" + taxids[curr_blast_read] + "\t" + "\t".join(taxid_lineages[curr_mf_taxid]) + "\n")
+                except:
+                    wf.write(line.strip() + "\t" + "Unknown" + "\t" + "Unknown" + "\t" + "\t".join(taxid_lineages[curr_mf_taxid]) + "\n")
 
                 # files in the combined_blast_scores_sorted file may contain duplicate reads
                 # immediately fetch the next mf line to prevent the same read being added multiple
